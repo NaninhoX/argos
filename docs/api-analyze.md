@@ -50,3 +50,7 @@ Em `POST`, o corpo JSON aceita os mesmos campos; a regra de saída pode vir em `
 | 503 | `dados_indisponiveis` | candles não puderam ser lidos; nenhum número é devolvido |
 
 Se a Binance não responder, a resposta é `200` com `data.source = "snapshot"` e `data.liveError` preenchido: o resultado vale para os dados até o corte do snapshot.
+
+## Resposta curta
+
+`brief=1` devolve só `engine`, `input`, `data` e `resultHash` (mais `disclaimer`, `ms` e `cacheHit`). Serve para monitorar e para conferir que dois ambientes chegam ao mesmo resultado sem baixar o resumo inteiro.

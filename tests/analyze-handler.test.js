@@ -93,3 +93,13 @@ test('health: informa versão e presença de configuração, sem valores', () =>
   assert.equal(JSON.stringify(r.body).includes('segredo'), false);
   assert.equal(JSON.stringify(r.body).includes('senha'), false);
 });
+
+test('analyze: brief=1 devolve só a identificação do resultado, com o mesmo hash do resumo completo', async () => {
+  const full = await handleAnalyze({ query: { symbol: 'SOLUSDT', tf: '1d' }, deps: offline });
+  const brief = await handleAnalyze({ query: { symbol: 'SOLUSDT', tf: '1d', brief: '1' }, deps: offline });
+  assert.equal(brief.status, 200);
+  assert.deepEqual(Object.keys(brief.body).sort(), ['cacheHit', 'data', 'disclaimer', 'engine', 'input', 'ms', 'resultHash']);
+  assert.equal(brief.body.resultHash, full.body.resultHash);
+  assert.deepEqual(brief.body.data, full.body.data);
+  assert.ok(JSON.stringify(brief.body).length < 2500);
+});
