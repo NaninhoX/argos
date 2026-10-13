@@ -25,13 +25,28 @@ Escrito em 13/10/2026 para ser executado na sessão seguinte. Decisões de Miche
 
 ## Regras do movimento (valem para as dez ideias)
 
-1. **Sóbrio.** Durações de 160, 240 e 360 ms; uma curva só (`cubic-bezier(.2,.7,.2,1)`); sem ricochete, brilho ou confete. O produto vende rigor.
+1. **Sóbrio, com três famílias de movimento e só três.** Interface (troca de aba, clique): 160 ms, curva firme e curta. Revelação (seção, cartão, linha do herói): 240 a 360 ms, saída suave (`cubic-bezier(.2,.7,.2,1)`). Crescimento de dado (barra de intervalo, célula da matriz): 360 a 480 ms, aceleração progressiva. Sem ricochete, brilho, partículas ou tremor. O produto vende rigor.
 2. **Só `transform` e `opacity`.** Nada que mude o layout durante a animação. Sem biblioteca externa e sem CDN: a demo tem de rodar sem internet.
 3. **Número estatístico não conta de zero.** Taxa de acerto, p, IC, Brier e taxa-base aparecem prontos (com fade), porque um contador mostraria valores que o motor nunca calculou. Contador só para contagens inteiras (72 testes, 42.489 previsões, N de gatilhos), e termina exatamente no texto original.
 4. **Sem JavaScript, tudo visível.** O estado inicial escondido só vale quando o `<html>` tem a classe `motion-ok`, posta pelo script. Conteúdo nunca depende da animação para aparecer.
 5. **Desliga de três formas:** `prefers-reduced-motion`, parâmetro `?motion=off` na URL (serve para testar e como plano B na demo) e a constante `REDUCED` já usada no `live.js`.
 6. **Uma vez por elemento.** Animação de entrada não repete ao rolar de volta. A do herói e a da matriz rodam uma vez por visita.
 7. **Não atrasa o trabalho.** Nenhuma animação bloqueia clique, leitura por leitor de tela ou o cálculo do motor. Sequência inteira do herói em até 2,5 s.
+
+## Lições do guia de motion (aiidelist.com/blog/opus-5-5-motion-design, lido em 13/10)
+
+O guia trata de vídeo gerado por código (Remotion, HyperFrames, Canvas), não de animação de site, mas os princípios de direção servem aqui:
+
+- **Uma frase por animação.** Antes de animar, escrever o que a pessoa deve entender ao fim. Herói: "o setup mais popular perdeu para o acaso, e o Argos publica isso". Matriz: "de 72 testes, quase nenhum resiste". Se a animação não serve à frase, sai.
+- **Continuidade em vez de corte.** O movimento parece autoral quando um objeto já visível vira a ponte para o seguinte. Aplicação: o marcador da taxa-base do herói é o mesmo traço que reaparece nas barras de intervalo e na legenda da matriz; a linha do "como funciona" termina na borda do cartão da matriz.
+- **Pausa intencional.** De 300 a 600 ms de quietude antes do veredito do herói e antes do destaque final da matriz. Movimento constante tira a ênfase.
+- **Tempo mínimo de leitura.** Todo texto principal fica parado e legível por pelo menos 1,2 s antes da próxima mudança.
+- **Curva conforme a função**, não uma predefinição para tudo (daí as três famílias da regra 1).
+- **Lista do que não entra:** partículas, brilho, gradiente gratuito, rotação 3D sem motivo, tremor, elástico em tudo, ilustração genérica de SaaS.
+- **Determinístico.** Nada de `Math.random` sem semente: a mesma página anima igual toda vez, o que também permite conferir por captura.
+- **Conferir por quadros antes de dar por pronto.** Na Etapa 3, capturar cada sequência em instantes fixos (início, meio, pausa, fim) e olhar corte de texto, hierarquia e espaçamento, em vez de julgar só pelo resultado final. Para isso `ArgosMotion` aceita `?motion=freeze:<ms>`, que leva as sequências a um instante e para.
+
+Ideia à parte, fora desta iteração: o mesmo método serve para um filme de 15 a 20 s do produto (MP4 gerado por código, com dados e telas reais) para abrir o pitch. Fica na fila, a decidir por Michel.
 
 ## Etapas
 
@@ -48,7 +63,7 @@ Mecânica, sem mudar regra nenhuma.
 ### Etapa 1 — Fundação do movimento (eu)
 
 - `web/css/motion.css`: variáveis de duração e curva; utilitários `[data-reveal]`, `[data-stagger]`; bloco único de `prefers-reduced-motion` e de `html.motion-off`.
-- `web/js/motion.js` (script clássico, global `ArgosMotion`): liga `motion-ok` ou `motion-off`; `reveal()` com `IntersectionObserver`; `countUp(el)` só para inteiros; `stagger(container, seletor)`; `once(chave)` por visita. Funções puras exportadas para teste em Node (`tests/motion.test.js`: o contador termina no texto exato, formato pt-BR, recusa número com vírgula decimal).
+- `web/js/motion.js` (script clássico, global `ArgosMotion`): liga `motion-ok` ou `motion-off`; aceita `?motion=off` e `?motion=freeze:<ms>`; `reveal()` com `IntersectionObserver`; `countUp(el)` só para inteiros; `stagger(container, seletor)`; `once(chave)` por visita. Funções puras exportadas para teste em Node (`tests/motion.test.js`: o contador termina no texto exato, formato pt-BR, recusa número com vírgula decimal).
 
 ### Etapa 2 — As dez ideias (dois agentes Sonnet 5.5 em paralelo, arquivos disjuntos)
 
