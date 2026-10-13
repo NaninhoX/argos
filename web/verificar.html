@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Verificar prova | Argos Sentinel</title>
 <meta name="description" content="Confere no seu navegador a prova de data de um registro do Argos Sentinel: hash, árvore de Merkle, manifesto do dia e carimbo OpenTimestamps.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
 <style>
   /* Tema copiado do :root e do body de web/index.html, com as mesmas fontes. Sem rede, o navegador usa
@@ -186,11 +187,12 @@
     .actions .btn { flex: 1 1 100%; }
   }
 </style>
+<link rel="stylesheet" href="css/brand.css">
 </head>
 <body>
 <header class="top">
   <div class="wrap bar">
-    <a class="brand" href="index.html"><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></a>
+    <a class="brand" href="index.html"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></a>
     <a class="back" href="index.html">Voltar ao Argos</a>
   </div>
 </header>
@@ -216,6 +218,7 @@
 <footer class="wrap">
   <p id="disclaimer" hidden></p>
   <p><a href="index.html">Voltar ao Argos</a></p>
+  <p class="brand-line"><span class="stratum-lockup"><img src="img/stratum-simbolo.svg" width="34" height="34" alt=""><span class="sl-text"><span class="sl-name">STRATUM</span><span class="sl-sub">RESEARCH</span></span></span><span class="brand-motto">Evidência · Disciplina · Transparência</span></p>
 </footer>
 
 <script type="module" src="js/verificar.js"></script>

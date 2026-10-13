@@ -5,12 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Argos Sentinel · Teste estatístico de setups contra o acaso</title>
 <meta name="description" content="Argos Sentinel, da Stratum Research, testa setups de análise técnica contra entradas aleatórias, com intervalo de confiança, p ajustado e calibração. Pesquisa estatística, sem recomendação de investimento.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/landing.css">
 <link rel="stylesheet" href="css/platform.css">
 <link rel="stylesheet" href="css/extras.css">
 <link rel="stylesheet" href="css/heatmap.css">
+<link rel="stylesheet" href="css/brand.css">
+<link rel="stylesheet" href="css/motion.css">
+<link rel="stylesheet" href="css/landing-motion.css">
+<link rel="stylesheet" href="css/platform-motion.css">
+<script src="js/motion.js"></script>
 </head>
 <body>
 
@@ -20,7 +26,7 @@
 
 <nav>
   <div class="nav-inner">
-    <div class="brand"><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
+    <div class="brand"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
     <div class="nav-links">
       <a href="#ao-vivo" onclick="openLive(); return false;">Ao vivo</a>
       <a href="#como-funciona">Como funciona</a>
@@ -228,7 +234,7 @@ alertcondition(ta.crossover(r, 30))</pre>
 
 <footer>
   <div class="wrap footer-inner">
-    <span>ARGOS SENTINEL — Stratum Research</span>
+    <span class="brand-line"><span class="stratum-lockup"><img src="img/stratum-simbolo.svg" width="34" height="34" alt=""><span class="sl-text"><span class="sl-name">STRATUM</span><span class="sl-sub">RESEARCH</span></span></span><span class="by">Argos Sentinel, por Stratum Research</span></span>
     <span>Research quantitativo e risk advisory · Não é gestora registrada na CVM</span>
     <a href="#calibracao" class="footer-calib-link">Relatório de Calibração Público →</a>
   </div>
@@ -240,7 +246,7 @@ alertcondition(ta.crossover(r, 30))</pre>
 <div id="page-dashboard" class="page dashboard-page">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
+      <div class="brand"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
       <nav class="tabs" role="tablist" aria-label="Telas da plataforma">
         <a role="tab" id="tab-live" aria-controls="dash-live" aria-selected="true" tabindex="0" data-screen="live" class="active"><span class="live-dot" aria-hidden="true"></span>Ao vivo</a>
         <a role="tab" id="tab-sandbox" aria-controls="dash-sandbox" aria-selected="false" tabindex="-1" data-screen="sandbox">Sandbox</a>
@@ -600,6 +606,7 @@ alertcondition(ta.crossover(r, 30))</pre>
   <button id="nav-dashboard" aria-pressed="false" onclick="showPage('dashboard')">Plataforma</button>
 </div>
 
+<script src="js/landing-motion.js"></script>
 <script src="js/nav.js"></script>
 
 <!-- TradingView Lightweight Charts™ v5.2.1 · Copyright (c) 2026 TradingView, Inc. · Apache License 2.0 · https://www.tradingview.com/ -->

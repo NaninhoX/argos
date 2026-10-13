@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 6 92 92" role="img" aria-label="Stratum Research">
+  <defs>
+    <linearGradient id="ouro" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D4B15C"/>
+      <stop offset="1" stop-color="#B08D3E"/>
+    </linearGradient>
+  </defs>
+  <!-- quatro camadas, de baixo para cima; a de cima é a evidência que sobra depois do teste -->
+  <path d="M60 52 L104 74 L60 96 L16 74 Z" fill="#3A4252"/>
+  <path d="M60 38 L104 60 L60 82 L16 60 Z" fill="#5E6B7C"/>
+  <path d="M60 24 L104 46 L60 68 L16 46 Z" fill="#8E97A6"/>
+  <path d="M60 8 L104 30 L60 52 L16 30 Z" fill="url(#ouro)"/>
+</svg>

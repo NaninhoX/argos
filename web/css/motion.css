@@ -1,0 +1,57 @@
+/* Argos · movimento (fundação). Carrega depois de platform.css e antes de landing-motion.css e platform-motion.css.
+
+   Regras da casa:
+   1. Três famílias de movimento e só três: interface, revelação, crescimento de dado.
+   2. Só transform e opacity. Nada que mude o layout durante a animação.
+   3. Estado inicial escondido só existe sob html.motion-ok (posto por js/motion.js). Sem script, tudo visível.
+   4. Desliga com prefers-reduced-motion e com ?motion=off (html.motion-off). */
+
+:root {
+  --m-ui: 160ms;      --e-ui: cubic-bezier(.3, 0, .2, 1);       /* interface: troca de aba, clique */
+  --m-reveal: 320ms;  --e-reveal: cubic-bezier(.2, .7, .2, 1);  /* revelação: seção, cartão, linha do herói */
+  --m-data: 420ms;    --e-data: cubic-bezier(.45, 0, .15, 1);   /* crescimento de dado: barra, célula */
+  --m-shift: 12px;
+}
+
+/* ---------- revelação ao rolar: [data-reveal] entra uma vez; --m-delay faz a escada ---------- */
+html.motion-ok [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--m-shift), 0);
+  transition: opacity var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms), transform var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms);
+}
+html.motion-ok [data-reveal="fade"] { transform: none; }
+html.motion-ok [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* ---------- sequência: [data-seq] com passos [data-step]; cada passo entra ao ganhar .is-in ---------- */
+html.motion-ok [data-seq] [data-step] {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  transition: opacity var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms), transform var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms);
+}
+html.motion-ok [data-seq] [data-step="fade"] { transform: none; }
+html.motion-ok [data-seq] [data-step].is-in,
+html.motion-ok [data-seq].seq-done [data-step] { opacity: 1; transform: none; }
+html.motion-ok [data-seq].seq-instant [data-step] { transition: none; }
+/* sequências que rodam uma vez por visita: já vistas, aparecem prontas desde a primeira pintura */
+html.m-seen-hero [data-seq="hero"] [data-step],
+html.m-seen-mx [data-seq="mx"] [data-step] { opacity: 1; transform: none; transition: none; }
+
+/* ---------- quadros-chave compartilhados ---------- */
+@keyframes m-fade-in { from { opacity: 0; } }
+@keyframes m-rise-in { from { opacity: 0; transform: translate3d(0, var(--m-shift), 0); } }
+@keyframes m-grow-x { from { transform: scaleX(0); } }
+@keyframes m-grow-y { from { transform: scaleY(0); } }
+@keyframes m-sheen { from { opacity: .45; } to { opacity: .9; } }
+
+/* ---------- desligado ---------- */
+html.motion-off *, html.motion-off *::before, html.motion-off *::after,
+html.motion-freeze *, html.motion-freeze *::before, html.motion-freeze *::after {
+  animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important; transition-delay: 0s !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html [data-reveal], html [data-seq] [data-step] { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+@media print {
+  html [data-reveal], html [data-seq] [data-step] { opacity: 1 !important; transform: none !important; }
+}

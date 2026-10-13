@@ -1,0 +1,5 @@
+/* Argos · movimento da plataforma (abas, barras de intervalo, mapa, esqueleto, registro). Usa a fundação de motion.css. */
+
+/* ---------- 6 · troca de tela: fade curto de interface, sem deslocamento e sem mexer no foco ---------- */
+html.motion-ok .page.visible,
+html.motion-ok .dashboard-page .dash-screen.visible { animation: m-fade-in var(--m-ui) var(--e-ui); }

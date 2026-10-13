@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- abaixo de 20 px o símbolo se reduz à camada dourada, com uma só camada de apoio -->
+  <rect width="32" height="32" rx="6" fill="#0D1420"/>
+  <path d="M16 13 L27 18.5 L16 24 L5 18.5 Z" fill="#5E6B7C"/>
+  <path d="M16 7 L27 12.5 L16 18 L5 12.5 Z" fill="#D4B15C"/>
+</svg>
