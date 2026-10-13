@@ -1,0 +1,62 @@
+/* Argos · base: variáveis, reset, tipografia e a barra Site / Plataforma. Carrega antes de landing.css e platform.css. */
+
+  :root {
+    --bg: #0D1420;
+    --bg-elevated: #141E2C;
+    --navy: #1E2A3A;
+    --navy-line: #2A3A4E;
+    --gold: #B08D3E;
+    --gold-bright: #D4B15C;
+    --ink: #E8E3D8;
+    --ink-dim: #9BA4B2;
+    --ink-faint: #7D8898; /* contraste mínimo de 4,5:1 sobre --bg, --bg-panel e --bg-elevated */
+    --red: #C4544A;
+    --green: #5FA37E;
+
+    --serif: 'Source Serif 4', Cambria, Georgia, serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: inherit; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--gold); color: var(--bg); }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ============================================================
+     META NAV — switches between Landing and Dashboard app
+     ============================================================ */
+  .meta-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+    background: rgba(13,20,32,0.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #263447;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    display: flex; gap: 6px; justify-content: center;
+  }
+  .meta-nav button {
+    flex: 1; max-width: 140px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 10px 8px; border-radius: 6px;
+    border: 1px solid #263447; background: #141E2C; color: #9BA4B2;
+    transition: all 0.15s;
+  }
+  .meta-nav button.active { border-color: #B08D3E; color: #D4B15C; background: rgba(176,141,62,0.12); }
+
+  .page { display: none; padding-bottom: 64px; }
+  .page.visible { display: block; }
+
+  @media (max-width: 640px) {
+    .dashboard-page footer.disclaimer { margin-top: 24px; padding-bottom: 80px; }
+    #page-landing footer { padding-bottom: 80px; }
+  }

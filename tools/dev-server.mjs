@@ -13,7 +13,7 @@ buildWeb(); // motor e dados do navegador sempre em dia com engine/ e data/
 const webDir = path.join(root, 'web');
 const apiDir = path.join(root, 'api');
 const port = Number(process.env.PORT || 3000);
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' };
 
 // .env local (fora do Git): CHAVE=valor por linha
 const envFile = path.join(root, '.env');
