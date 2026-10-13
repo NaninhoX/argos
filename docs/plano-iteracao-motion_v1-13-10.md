@@ -91,11 +91,11 @@ Commit local por etapa. `CHANGELOG.md` e `CLAUDE.md` atualizados. **Sem push.** 
 
 Etapa 0: meio dia. Etapa 1: duas horas. Etapa 2: os dois agentes, em paralelo. Etapa 3: uma a duas horas. Cabe numa sessão se a Etapa 0 não trouxer surpresa de cascata.
 
-## Decisões que Michel pode adiantar
+## Decisões de Michel (aprovadas em 13/10)
 
-1. **Intensidade.** Recomendo a sóbria descrita acima. Se quiser algo mais marcado no herói, dizer antes.
-2. **Fontes.** Hoje vêm do Google Fonts. Para a demo sem internet, vale trazer os arquivos das duas fontes para dentro do projeto (cerca de 300 KB). Faço junto com a Etapa 0 se autorizado.
-3. **Repetição.** Herói e matriz animam uma vez por visita (recomendado) ou a cada vez que entram na tela.
+1. **Intensidade: sóbria**, como descrita nas regras acima.
+2. **Fontes dentro do projeto: sim.** Na Etapa 0, baixar os arquivos `woff2` da Source Serif 4 e da JetBrains Mono (só os pesos usados: serif 400, 500, 600, 700 e itálico 400; mono 400, 500, 600) para `web/fonts/`, declarar com `@font-face` em `base.css` com `font-display: swap`, e tirar os `<link>` do Google Fonts de `index.html` e de `verificar.html`. As duas fontes têm licença SIL OFL, que permite hospedar; guardar o texto da licença em `web/fonts/`. Conferir que a página não faz mais nenhuma requisição a `fonts.googleapis.com` ou `fonts.gstatic.com`.
+3. **Repetição: uma vez por visita** para o herói e a matriz.
 
 ## Riscos
 
