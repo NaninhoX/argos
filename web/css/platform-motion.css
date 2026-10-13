@@ -95,3 +95,56 @@ html.motion-ok .lv .lv-reg.is-new::after {
   background: var(--gold-dim); box-shadow: inset 0 0 0 1px var(--gold);
   opacity: 0; animation: m-hl-fade 1200ms var(--e-ui) var(--m-hl-skip, 0ms) both;
 }
+
+/* ---------- 11 · entrada da tela Ao vivo ---------- */
+/* Argos · movimento da plataforma · live-enter. Usa a fundação de motion.css. */
+
+/* ---------- 12 · entrada das outras telas e dos resultados novos ---------- */
+/* Argos · movimento da plataforma · screens. Usa a fundação de motion.css. */
+
+/* ---------- 13 · faixa do IC do Sandbox e do Query ---------- */
+/* Argos · movimento da plataforma · faixa do IC no Sandbox e no Query. Depende de js/motion.js (keyframes m-grow-x e
+   m-fade-in e as durações de motion.css). É a mesma ideia da seção 7 de platform-motion.css (tela Ao vivo), agora para
+   as .ci-bar que platform.js desenha. Só existe sob html.motion-ok; a classe ci-grow dura 1200 ms (pmotion-cibar.js).
+   Sem ela, faixa e ponto estão no estado final. Só opacity e transform. */
+html.motion-ok .ci-bar.ci-grow .ci-fill {
+  animation: m-grow-x var(--m-data) var(--e-data) backwards;
+  animation-delay: 240ms;
+}
+html.motion-ok .ci-bar.ci-grow .ci-point {
+  animation: m-fade-in var(--m-reveal) var(--e-reveal) backwards;
+  animation-delay: calc(240ms + var(--m-data));
+}
+
+/* ---------- 14 · gráficos de calibração que se desenham (site e plataforma) ---------- */
+/* Argos · movimento da plataforma · cal. Usa a fundação de motion.css (--m-reveal, --e-reveal, --e-data).
+
+   Gráficos de calibração (site e plataforma): a linha se desenha do início ao fim (cal-arm -> cal-go) e, depois,
+   pontos e áreas entram com fade. Só sob html.motion-ok: sem ele, ou com movimento desligado, o gráfico é o da
+   marcação. pmotion-cal.js põe as classes e as tira ao terminar (~1000 ms). Só opacity e stroke-dashoffset. */
+
+/* armado: linha fora de vista (traço inteiro de espaço) e pontos e áreas invisíveis */
+html.motion-ok svg.cal-arm .rel-line,
+html.motion-ok svg.cal-arm .roll-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+html.motion-ok svg.cal-arm .rel-pt,
+html.motion-ok svg.cal-arm .area-pos,
+html.motion-ok svg.cal-arm .area-neg { opacity: 0; }
+
+/* disparado: a linha corre do início ao fim; depois os pontos e as áreas entram */
+html.motion-ok svg.cal-go .rel-line,
+html.motion-ok svg.cal-go .roll-line {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 480ms var(--e-data);
+}
+html.motion-ok svg.cal-go .rel-pt,
+html.motion-ok svg.cal-go .area-pos,
+html.motion-ok svg.cal-go .area-neg {
+  opacity: 1;
+  transition: opacity var(--m-reveal) var(--e-reveal) 480ms;
+}
+
+/* ---------- 15 · troca do painel de detalhe ---------- */
+/* Argos · movimento da plataforma · live. Usa a fundação de motion.css. */
+
+/* troca do painel de detalhe ao escolher outra linha do banco (live.js, selectSetup): esmaecer de interface */
+html.motion-ok .lv #lvDetail.m-swap { animation: m-fade-in var(--m-ui) var(--e-ui); }

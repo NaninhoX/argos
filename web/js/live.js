@@ -279,24 +279,40 @@
       rev: 'Vocabulário verificado: ' + (scan.length ? scan.length + ' ' + pl(scan.length, 'termo sinalizado', 'termos sinalizados') : 'nenhum termo de instrução ou promessa') + ' · envio a cliente só após revisão humana'
     };
   }
+  // Animação das etapas (uma por vez). pipeBusy: o laço roda; pipeK: próxima etapa do laço; pipePromise: o que run() aguarda; pipeEnd: encerra o laço à força.
+  let pipeBusy = false, pipeK = 0, pipePromise = null, pipeEnd = null;
   function renderPipeline(A, animate) {
     const res = pipeResults(A), ol = $('lvPipe');
-    ol.innerHTML = PIPE.map((p) => '<li id="lvP_' + p.id + '" class="' + (p.fixed === 'off' ? 'off' : p.fixed === 'human' ? 'human' : '') + '"><span class="ic" aria-hidden="true"></span><span class="nm">' + p.nm + '</span><span class="pill ' + p.pill[0] + '">' + p.pill[1] + '</span><span class="rs" data-final="' + esc(res[p.id]) + '">' + (animate ? '' : esc(res[p.id])) + '</span></li>').join('');
+    const cont = !animate && pipeBusy; // análise nova no meio da animação: ela segue, sem recomeçar
+    ol.innerHTML = PIPE.map((p) => '<li id="lvP_' + p.id + '" class="' + (p.fixed === 'off' ? 'off' : p.fixed === 'human' ? 'human' : '') + '"><span class="ic" aria-hidden="true"></span><span class="nm">' + p.nm + '</span><span class="pill ' + p.pill[0] + '">' + p.pill[1] + '</span><span class="rs" data-final="' + esc(res[p.id]) + '">' + (animate || cont ? '' : esc(res[p.id])) + '</span></li>').join('');
     $('lvPipeTime').textContent = 'motor em ' + fmtN(A.ms, 0) + ' ms';
+    if (cont) {
+      // o que o laço já passou fica pronto; a etapa em andamento segue; as seguintes esperam o laço
+      PIPE.forEach((p, i) => {
+        const li = $('lvP_' + p.id), rs = li.querySelector('.rs');
+        if (i < pipeK - 1) { if (!p.fixed) li.classList.add('done'); rs.textContent = rs.getAttribute('data-final'); }
+        else if (i === pipeK - 1) { if (!p.fixed) li.classList.add('run'); else rs.textContent = rs.getAttribute('data-final'); }
+      });
+      return pipePromise;
+    }
     PIPE.forEach((p) => { if (!animate && !p.fixed) $('lvP_' + p.id).classList.add('done'); });
     if (!animate) return Promise.resolve();
+    if (pipeEnd) pipeEnd(); // laço anterior, se ainda corria, termina já: quem o aguarda não fica preso
     clearTimeout(state.pipeTimer);
     const steps = PIPE.map((p) => p.id), delay = REDUCED ? 0 : 420;
-    return new Promise((resolve) => {
+    pipeBusy = true; pipeK = 0;
+    pipePromise = new Promise((resolve) => {
+      pipeEnd = resolve;
       let k = 0;
       const tick = () => {
         if (k > 0) { const prev = $('lvP_' + steps[k - 1]); if (prev) { prev.classList.remove('run'); if (!PIPE[k - 1].fixed) prev.classList.add('done'); const rs = prev.querySelector('.rs'); rs.textContent = rs.getAttribute('data-final'); } }
-        if (k >= steps.length) { resolve(); return; }
+        if (k >= steps.length) { pipeBusy = false; resolve(); return; }
         const li = $('lvP_' + steps[k]); if (li && !PIPE[k].fixed) li.classList.add('run'); if (li && PIPE[k].fixed) { const rs = li.querySelector('.rs'); rs.textContent = rs.getAttribute('data-final'); }
-        k++; state.pipeTimer = setTimeout(tick, PIPE[k - 1].fixed ? delay / 3 : delay);
+        k++; pipeK = k; state.pipeTimer = setTimeout(tick, PIPE[k - 1].fixed ? delay / 3 : delay);
       };
       tick();
     });
+    return pipePromise;
   }
 
   // ------------------------------------------------------- banco de setups
@@ -358,7 +374,9 @@
   function selectSetup(id, scroll) {
     state.selected = id;
     document.querySelectorAll('#lvBank tbody tr').forEach((tr) => { const on = tr.getAttribute('data-id') === id; tr.classList.toggle('sel', on); tr.setAttribute('aria-selected', on); });
-    setMarkers(); renderDetail(state.A); renderLegend(null);
+    setMarkers(); renderDetail(state.A);
+    if (MOT()) { const d = $('lvDetail'); d.classList.remove('m-swap'); void d.offsetWidth; d.classList.add('m-swap'); } // troca do painel: esmaecer de interface (160 ms)
+    renderLegend(null);
     touchUrl();
     if (scroll) { const el = document.querySelector('#dash-live .chart-card'); if (el) el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); }
   }
@@ -1219,7 +1237,7 @@
     if (mo.sig === null) document.querySelectorAll('#dash-live .sk').forEach((n) => n.remove()); // primeira análise na tela: o esqueleto de carregamento sai (o que ficou de fora do innerHTML)
     mo.sig = qSig();
     emitAnalysis(); // gancho para outros módulos (ex.: heatmap.js): análise calculada e desenhada
-    await renderPipeline(A, animate);
+    await renderPipeline(A, animate || (asked && !!MOT()));
   }
   function setPressed(groupId, v) { document.querySelectorAll('#' + groupId + ' button').forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-v') === v)); }
   async function switchTo(sym, tf, sel) {

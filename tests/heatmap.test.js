@@ -321,3 +321,126 @@ test('mapa: o modelo não altera a análise nem o recorte e é determinístico',
   assert.equal(h(a), h(b));
   assert.equal(h({ view, setups: A.setups, base: A.base, reg: A.reg, outs: A.outs }), before);
 });
+
+// ---- desenho e cartão da dica, sem navegador: DOM mínimo só com o que o mapa usa --------------------------------
+/** DOM mínimo: elementos com atributos, classes, filhos e ouvintes guardados, para o teste disparar os eventos. */
+function fakeDom() {
+  const doc = {
+    activeElement: null, byId: new Map(), listeners: [], documentElement: { clientWidth: 1024 },
+    createTextNode: (text) => ({ nodeType: 3, text }),
+    getElementById(id) { return this.byId.get(id) || null; },
+    addEventListener(type, fn) { this.listeners.push({ type, fn }); },
+    removeEventListener(type, fn) { this.listeners = this.listeners.filter((l) => l.type !== type || l.fn !== fn); },
+    dispatchEvent() { return true; },
+    createElement(tag) {
+      const node = {
+        tagName: tag.toUpperCase(), ownerDocument: doc, parent: null, children: [], attrs: {}, className: '', id: '',
+        hidden: false, style: { setProperty(k, v) { this[k] = v; } }, listeners: [], classes: new Set(),
+        classList: { add: (c) => node.classes.add(c), remove: (c) => node.classes.delete(c), contains: (c) => node.classes.has(c) },
+        offsetWidth: 220, offsetHeight: 90,
+        getBoundingClientRect: () => ({ left: 100, top: 200, right: 140, bottom: 240, width: 40, height: 40 }),
+        setAttribute(k, v) { this.attrs[k] = String(v); },
+        getAttribute(k) { return Object.hasOwn(this.attrs, k) ? this.attrs[k] : null; },
+        removeAttribute(k) { delete this.attrs[k]; },
+        appendChild(c) { c.parent = node; node.children.push(c); if (c.id) doc.byId.set(c.id, c); return c; },
+        addEventListener(type, fn, capture) { node.listeners.push({ type, fn, capture: !!capture }); },
+        closest() { // só 'button.hm-cell' é usado pelo mapa
+          for (let n = node; n && n.tagName; n = n.parent) {
+            if (n.tagName === 'BUTTON' && n.className.split(' ').includes('hm-cell')) return n;
+          }
+          return null;
+        },
+        set textContent(v) { node.children = v === '' ? [] : [{ nodeType: 3, text: String(v) }]; },
+      };
+      return node;
+    },
+  };
+  doc.body = doc.createElement('body');
+  return doc;
+}
+function walk(node, fn) {
+  fn(node);
+  for (const c of node.children || []) walk(c, fn);
+}
+/** Textos do cartão na ordem em que aparecem: título, pares rótulo/valor e, por último, a nota. */
+function cardText(tip) {
+  const out = [];
+  walk(tip, (n) => { if (n.nodeType === 3) out.push(n.text); });
+  return out;
+}
+const pct = (x) => (x * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+
+test('mapa: a célula não tem title (a dica é o cartão próprio) e mantém aria-label; cabeçalhos e etiqueta usam data-tip', () => {
+  const { m } = setupFor('BTCUSDT', '4h');
+  const doc = fakeDom();
+  const container = doc.createElement('section');
+  H.render(container, m, { meta: 'BTC/USDT 4h' });
+  const buttons = [], titled = [], tips = [];
+  walk(container, (n) => {
+    if (n.attrs && Object.hasOwn(n.attrs, 'title')) titled.push(n);
+    if (n.tagName === 'BUTTON') buttons.push(n);
+    if (n.attrs && n.attrs['data-tip'] !== undefined) tips.push(n.attrs['data-tip']);
+  });
+  assert.equal(buttons.length, m.total);
+  assert.deepEqual(titled, [], 'nenhum elemento do mapa usa title');
+  assert.deepEqual(buttons.map((b) => b.getAttribute('aria-label')), m.rows.flatMap((r) => r.cells.map((c) => c.label)));
+  assert.deepEqual(tips, m.columns.flatMap((c) => (c.current ? [c.label, 'Regime do último candle'] : [c.label])));
+});
+
+test('mapa: dica da célula abre com o mouse (não com o toque), mostra título, linhas e nota; fecha ao sair, com Escape e ao clicar', () => {
+  const { m } = setupFor('BTCUSDT', '4h');
+  const doc = fakeDom();
+  const container = doc.createElement('section');
+  win.document = doc; // a dica fecha com Escape e clique pelo documento da página (window.document)
+  try {
+    H.render(container, m, { meta: '' });
+    const cells = [];
+    walk(container, (n) => { if (n.tagName === 'BUTTON') cells.push(n); });
+    const fire = (type, ev) => container.listeners.filter((l) => l.type === type).forEach((l) => l.fn(ev));
+    const hover = (cell, pointerType = 'mouse') => { fire('pointerenter', { pointerType, target: cell }); return doc.getElementById('hmTip'); };
+
+    const cell = cells.find((b) => b.getAttribute('data-state') === 'cheia');
+    const row = m.rows.find((r) => r.id === cell.getAttribute('data-setup'));
+    const col = m.columns.find((c) => c.code === cell.getAttribute('data-regime'));
+    const model = row.cells.find((c) => c.regime === col.code);
+
+    assert.equal(hover(cell, 'touch'), null, 'toque não abre a dica');
+    const tip = hover(cell);
+    assert.equal(tip.hidden, false);
+    assert.ok(tip.classList.contains('on'));
+    assert.equal(tip.parent, doc.body, 'anexada ao corpo da página');
+    assert.equal(tip.getAttribute('role'), 'tooltip');
+    assert.equal(cell.getAttribute('aria-describedby'), 'hmTip');
+    const parts = cardText(tip);
+    const pairs = parts.slice(1, -1);
+    assert.equal(parts[0], `${row.nome} · ${col.label}`, 'título: setup · regime');
+    assert.deepEqual(pairs.filter((_, i) => i % 2 === 0), ['Taxa de acerto', 'IC 95%', 'Método do IC', 'Taxa-base do regime', 'Diferença', 'Gatilhos']);
+    const values = pairs.filter((_, i) => i % 2 === 1);
+    assert.equal(values[0], pct(model.rate));
+    assert.equal(values[1], `${pct(model.ci[0])} a ${pct(model.ci[1])}`);
+    assert.ok(cell.getAttribute('aria-label').endsWith(parts[parts.length - 1]), 'a nota é o mesmo estado que a descrição acessível diz');
+
+    fire('pointerleave', { target: cell });
+    assert.equal(tip.hidden, true, 'sair da célula fecha');
+    assert.equal(cell.getAttribute('aria-describedby'), null);
+
+    cell.matches = (sel) => sel === ':focus-visible';
+    fire('focusin', { target: cell });
+    assert.equal(tip.hidden, false, 'foco vindo do teclado abre');
+    doc.listeners.filter((l) => l.type === 'keydown').forEach((l) => l.fn({ key: 'Escape' }));
+    assert.equal(tip.hidden, true, 'Escape fecha');
+
+    fire('focusin', { target: cell });
+    fire('click', { target: cell });
+    assert.equal(tip.hidden, true, 'clique fecha');
+
+    // célula com N efetivo abaixo do corte: só a contagem e a nota, sem taxa
+    const few = cells.find((b) => b.getAttribute('data-state') === 'insuficiente');
+    const fewTip = hover(few);
+    const fewParts = cardText(fewTip);
+    assert.deepEqual(fewParts.slice(1, -1).filter((_, i) => i % 2 === 0), ['Gatilhos']);
+    assert.ok(few.getAttribute('aria-label').endsWith(fewParts[fewParts.length - 1]));
+  } finally {
+    delete win.document;
+  }
+});

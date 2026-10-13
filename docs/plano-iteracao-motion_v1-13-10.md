@@ -160,3 +160,27 @@ Não conferido ou em aberto:
 - As barras do Sandbox e do Query (`.ci-bar`) não crescem; só as da tela Ao vivo.
 - O rodapé do site ainda diz "risk advisory" (aguarda o advogado).
 - Página bloqueando `motion.js` não foi testada no navegador; a garantia é estática (toda regra que esconde começa por `html.motion-ok`).
+
+## Segunda rodada: movimento na plataforma (13/10/2026)
+
+Michel achou que a plataforma não mostrava movimento: quase tudo dependia de uma ação e a tela abria pronta. Feito, em commits locais:
+
+- Entrada em escada na primeira abertura de cada tela (Ao vivo, Sandbox, Query, Regime, Calibração) e dos resultados novos do Sandbox e do Query.
+- Barras de intervalo crescendo também na primeira abertura da tela Ao vivo e nos resultados do Sandbox e do Query.
+- Gráficos de calibração que se desenham (site e plataforma), uma vez por gráfico.
+- Etapas do pipeline acendendo uma a uma quando a pergunta muda; a análise que chega com os candles ao vivo não interrompe mais a sequência.
+- Fade na troca do painel de detalhe ao selecionar outra linha.
+- Cartão de dica próprio no mapa setup × regime, no lugar da dica nativa do navegador (mesmos números e formatadores da célula).
+
+Ganchos novos: `argos:screen` (nav.js, uma tela ficou visível) e `argos:result` (platform.js, resultado novo desenhado). Os módulos ficam em `web/js/platform-motion.js`.
+
+Teste pedido por Michel, seis agentes Haiku 5.5 em paralelo contra os dois Sonnet 5.5 da primeira rodada:
+
+| | Sonnet 5.5 (2 agentes) | Haiku 5.5 (6 agentes) |
+|---|---|---|
+| Tokens dos agentes | 513 mil | 842 mil |
+| Tempo de relógio | 16,5 min | 7,4 min |
+| Correções que precisei fazer no código entregue | nenhuma | nenhuma |
+| Preparação minha antes de lançar | regras e critérios de pronto | ganchos de evento, um arquivo por agente e passo a passo de cada tarefa |
+
+Leitura: o Haiku entregou certo quando a tarefa cabia em arquivos próprios e vinha com o passo a passo; cada agente gasta de 110 a 150 mil tokens só para se situar, mesmo em tarefa de trinta linhas. As duas rodadas não tinham o mesmo tamanho (a do Sonnet incluía o herói, a matriz e mudanças largas no `live.js`), então a tabela compara custo e tempo, não capacidade.

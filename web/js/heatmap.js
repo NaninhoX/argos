@@ -11,6 +11,7 @@
 
    Entrada: evento `argos:analysis` no document, detail { A, E }.
    Saída: evento `argos:select` no document, detail { setupId, regime }.
+   Dica: cartão próprio (div.hm-tip) com o mouse ou o foco do teclado; a célula não usa title.
    ===================================================================== */
 (function (root) {
   'use strict';
@@ -95,9 +96,22 @@
   }
 
   // ------------------------------------------------------------ modelo (puro, sem DOM)
+  /** Taxa-base do regime com o N da amostra base; 'indisponível' se o motor não a tem. */
+  function baseText(cell) {
+    return ok(cell.base.rate) ? fmtPct(cell.base.rate) + ' (N ' + fmtInt(cell.base.n) + ')' : 'indisponível';
+  }
+  /** Frase de estado da célula: fim da descrição acessível e pé da dica. Não calcula nada. */
+  function stateNote(cell) {
+    if (cell.state === 'vazia') return 'Sem gatilhos encerrados neste regime.';
+    if (cell.state === 'insuficiente') return 'N efetivo abaixo de ' + MIN_EFFECTIVE + ': evidência insuficiente, célula sem cor.';
+    if (cell.state === 'cheia') return 'O IC 95% exclui a taxa-base do regime. Recorte descritivo, sem teste estatístico nem correção para múltiplos testes.';
+    return cell.ciContainsBase === null
+      ? 'Não há taxa-base neste regime para comparar. Recorte descritivo.'
+      : 'O IC 95% contém a taxa-base do regime. Recorte descritivo.';
+  }
   function describe(nome, col, cell) {
     var head = nome + ', ' + col.label + (col.current ? ' (regime atual)' : '') + ': ';
-    var baseTxt = ok(cell.base.rate) ? fmtPct(cell.base.rate) + ' (N ' + fmtInt(cell.base.n) + ')' : 'indisponível';
+    var baseTxt = baseText(cell);
     if (cell.state === 'vazia') {
       return head + 'sem gatilhos encerrados neste regime. Taxa-base do regime: ' + baseTxt + '.';
     }
@@ -109,13 +123,7 @@
       'taxa-base do regime ' + baseTxt
     ];
     if (ok(cell.deltaPP)) parts.push('diferença ' + fmtPP(cell.deltaPP));
-    var tail = cell.state === 'insuficiente'
-      ? 'N efetivo abaixo de ' + MIN_EFFECTIVE + ': evidência insuficiente, célula sem cor.'
-      : cell.state === 'cheia'
-        ? 'O IC 95% exclui a taxa-base do regime. Recorte descritivo, sem teste estatístico nem correção para múltiplos testes.'
-        : cell.ciContainsBase === null
-          ? 'Não há taxa-base neste regime para comparar. Recorte descritivo.'
-          : 'O IC 95% contém a taxa-base do regime. Recorte descritivo.';
+    var tail = stateNote(cell);
     var body = parts.join('; ');
     return head + body + (/.$/.test(body) ? ' ' : '. ') + tail; // "p.p." já termina em ponto
   }
@@ -277,8 +285,8 @@
     b.setAttribute('data-setup', cell.setupId);
     b.setAttribute('data-regime', cell.regime);
     b.setAttribute('data-state', cell.state);
-    b.setAttribute('aria-label', cell.label);
-    b.setAttribute('title', cell.label);
+    b.setAttribute('aria-label', cell.label); // sem title: a dica é o cartão próprio (tipOf)
+    if (tipOf) tipOf.set(b, { title: row.nome + ' · ' + col.label, cell: cell });
     if (cell.fill) {
       b.style.setProperty('background-color', cell.fill);
       b.style.setProperty('color', cell.fg);
@@ -310,13 +318,13 @@
     m.columns.forEach(function (col) {
       var th = add(hr, el(doc, 'th', 'hm-colh' + (col.current ? ' hm-now' : '')));
       th.setAttribute('scope', 'col');
-      th.setAttribute('title', col.label);
+      th.setAttribute('data-tip', col.label);
       if (col.current) th.setAttribute('aria-current', 'true');
       add(th, el(doc, 'span', 'hm-rg', col.short));
       space(doc, th);
       if (col.current) {
         var tag = add(th, el(doc, 'span', 'hm-tag', 'agora'));
-        tag.setAttribute('title', 'Regime do último candle');
+        tag.setAttribute('data-tip', 'Regime do último candle');
         space(doc, th);
       }
       add(th, el(doc, 'span', 'hm-base', 'taxa-base ' + fmtPct(col.base.rate)));
@@ -334,9 +342,146 @@
     return table;
   }
 
+  // ------------------------------------------------------------ dica da célula
+  // Um cartão só (div.hm-tip), criado na primeira vez e anexado ao corpo da página, fora do .hm-card.
+  // Abre com o mouse (no toque não abre: o toque já seleciona a célula) e com o foco vindo do teclado.
+  // Fecha ao sair, ao perder o foco, com Escape, com rolagem ou redimensionamento, e ao clicar.
+  // Os dados vêm do modelo guardado em tipOf: nada é recalculado.
+  var TIP_ID = 'hmTip';
+  var TIP_GAP = 8;   // distância entre a célula e o cartão (px)
+  var TIP_EDGE = 8;  // margem mínima até a borda da janela (px)
+  var tipOf = typeof WeakMap === 'function' ? new WeakMap() : null; // botão → { title, cell }
+  var tipBtn = null;    // botão com a dica aberta
+  var tipQuiet = false; // true enquanto o foco volta à célula depois de um redesenho
+
+  /** Linhas "rótulo, valor" do cartão, com os formatadores do arquivo. Sem N efetivo suficiente, não mostra taxa. */
+  function tipRows(cell) {
+    var rows = [];
+    if (cell.state === 'vazia') return rows; // sem gatilho: a nota já diz tudo
+    if (cell.state !== 'insuficiente') {
+      rows.push(['Taxa de acerto', fmtPct(cell.rate)]);
+      rows.push(['IC 95%', fmtPct(cell.ci[0]) + ' a ' + fmtPct(cell.ci[1])]);
+      rows.push(['Método do IC', methodLabel(cell.method)]);
+      rows.push(['Taxa-base do regime', baseText(cell)]);
+      if (ok(cell.deltaPP)) rows.push(['Diferença', fmtPP(cell.deltaPP)]);
+    }
+    rows.push(['Gatilhos', 'N ' + fmtInt(cell.n) + ' · efetivo ' + fmtInt(cell.nEff)]);
+    return rows;
+  }
+
+  /** Cartão da dica já existente no documento, ou null. */
+  function tipNode(doc) {
+    return doc && doc.getElementById ? doc.getElementById(TIP_ID) : null;
+  }
+
+  /** Cria o cartão na primeira vez, anexado ao corpo da página; depois devolve o mesmo. */
+  function ensureTip(doc) {
+    if (!doc || !doc.createElement || !doc.body) return null;
+    var t = tipNode(doc);
+    if (t) return t;
+    t = doc.createElement('div');
+    t.id = TIP_ID;
+    t.className = 'hm-tip';
+    t.setAttribute('role', 'tooltip');
+    t.hidden = true;
+    doc.body.appendChild(t);
+    return t;
+  }
+
+  /** Monta o conteúdo com createElement e textContent (nunca innerHTML). */
+  function fillTip(doc, tip, info) {
+    tip.textContent = '';
+    add(tip, el(doc, 'p', 'hm-tip-t', info.title));
+    var rows = tipRows(info.cell);
+    if (rows.length) {
+      var dl = add(tip, el(doc, 'dl', 'hm-tip-g'));
+      rows.forEach(function (r) {
+        add(dl, el(doc, 'dt', null, r[0]));
+        add(dl, el(doc, 'dd', null, r[1]));
+      });
+    }
+    add(tip, el(doc, 'p', 'hm-tip-n', stateNote(info.cell)));
+  }
+
+  /** Posição fixa: centrada acima da célula, a 8 px; abaixo, se não couber; sempre dentro da janela. */
+  function placeTip(tip, btn) {
+    var doc = tip.ownerDocument;
+    var de = doc.documentElement || {};
+    var vw = root.innerWidth || de.clientWidth || 0;
+    tip.style.left = '0px'; // mede sem a posição anterior: a largura do cartão depende dela
+    tip.style.top = '0px';
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var r = btn.getBoundingClientRect();
+    var left = Math.max(TIP_EDGE, Math.min(r.left + r.width / 2 - w / 2, vw - w - TIP_EDGE));
+    var top = r.top - TIP_GAP - h;
+    if (top < TIP_EDGE) top = r.bottom + TIP_GAP;
+    tip.style.left = Math.round(left) + 'px';
+    tip.style.top = Math.round(top) + 'px';
+  }
+
+  /** Fecha a dica. Sem animação de saída: o atributo hidden tira o cartão na hora. */
+  function hideTip(doc) {
+    if (tipBtn) { tipBtn.removeAttribute('aria-describedby'); tipBtn = null; }
+    listenDismiss(doc, false);
+    var tip = tipNode(doc);
+    if (tip) { tip.classList.remove('on'); tip.hidden = true; }
+  }
+
+  /** Abre a dica da célula `btn`. Medir o cartão já com hidden tirado força o estilo com opacidade 0, então `on` anima. */
+  function showTip(btn) {
+    var doc = btn.ownerDocument;
+    var info = tipOf && tipOf.get(btn);
+    var tip = ensureTip(doc);
+    if (!info || !tip) return;
+    if (tipBtn && tipBtn !== btn) tipBtn.removeAttribute('aria-describedby');
+    tipBtn = btn;
+    fillTip(doc, tip, info);
+    tip.hidden = false;
+    placeTip(tip, btn);
+    tip.classList.add('on');
+    btn.setAttribute('aria-describedby', TIP_ID);
+    listenDismiss(doc, true);
+  }
+
+  function onTipKey(ev) {
+    if (ev && (ev.key === 'Escape' || ev.key === 'Esc')) hideTip(root.document);
+  }
+  function onTipMove() { hideTip(root.document); }
+  /** Enquanto a dica está aberta: Escape (teclado), rolagem de qualquer contêiner e redimensionamento a fecham. */
+  function listenDismiss(doc, on) {
+    var how = on ? 'addEventListener' : 'removeEventListener';
+    if (doc && doc[how]) doc[how]('keydown', onTipKey);
+    if (root[how]) { root[how]('scroll', onTipMove, true); root[how]('resize', onTipMove); }
+  }
+
+  function cellBtnOf(target) {
+    return target && target.closest ? target.closest('button.hm-cell') : null;
+  }
+  // Delegação no contêiner (ligada uma vez, em render). pointerenter com captura chega às células.
+  function onTipEnter(ev) {
+    if (ev.pointerType !== 'mouse') return;
+    var b = cellBtnOf(ev.target);
+    if (b && b !== tipBtn) showTip(b);
+  }
+  function onTipLeave(ev) {
+    if (ev.target && ev.target === tipBtn) hideTip(ev.target.ownerDocument);
+  }
+  function isFocusVisible(node) {
+    try { return !!(node.matches && node.matches(':focus-visible')); } catch (e) { return false; }
+  }
+  function onTipFocusIn(ev) {
+    if (tipQuiet) return;
+    var b = cellBtnOf(ev.target);
+    if (b && isFocusVisible(b)) showTip(b);
+  }
+  function onTipFocusOut(ev) {
+    if (cellBtnOf(ev.target)) hideTip(ev.target.ownerDocument);
+  }
+
   var bound = typeof WeakSet === 'function' ? new WeakSet() : null;
   function onCardClick(ev) {
     var t = ev && ev.target;
+    hideTip(root.document); // qualquer clique fecha a dica
     var b = t && t.closest ? t.closest('button.hm-cell') : null;
     if (!b) return;
     var setupId = b.getAttribute('data-setup'), regime = b.getAttribute('data-regime');
@@ -364,6 +509,7 @@
       focused = { s: act.getAttribute('data-setup'), r: act.getAttribute('data-regime') };
     }
 
+    hideTip(doc); // a dica pode apontar para uma célula que sai agora
     container.textContent = '';
     container.hidden = !m.rows.length;
     if (!m.rows.length) return container;
@@ -387,6 +533,10 @@
 
     if (!bound || !bound.has(container)) {
       container.addEventListener('click', onCardClick);
+      container.addEventListener('pointerenter', onTipEnter, true);
+      container.addEventListener('pointerleave', onTipLeave, true);
+      container.addEventListener('focusin', onTipFocusIn);
+      container.addEventListener('focusout', onTipFocusOut);
       if (bound) bound.add(container);
     }
 
@@ -394,7 +544,8 @@
       var all = container.querySelectorAll('button.hm-cell');
       for (var i = 0; i < all.length; i++) {
         if (all[i].getAttribute('data-setup') === focused.s && all[i].getAttribute('data-regime') === focused.r) {
-          try { all[i].focus({ preventScroll: true }); } catch (e) { /* foco é cortesia */ }
+          tipQuiet = true; // o foco devolvido não abre a dica sozinho
+          try { all[i].focus({ preventScroll: true }); } catch (e) { /* foco é cortesia */ } finally { tipQuiet = false; }
           break;
         }
       }
