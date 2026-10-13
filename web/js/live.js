@@ -6,6 +6,7 @@
 (function () {
   'use strict';
   const E = window.ArgosEngine, SNAP = window.ARGOS_SNAPSHOT, LWC = window.LightweightCharts, RV = window.ArgosRegimeView;
+  const US = window.ArgosUrlState; // estado da análise na URL (web/js/url-state.js); sem ele a URL simplesmente não é lida nem escrita
   const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
   const $ = (id) => document.getElementById(id);
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -34,6 +35,8 @@
   const state = {
     sym: 'BTCUSDT', tf: '4h', cfg: { mode: 'atr', tgt: 2, stp: 1, hold: 12 }, show: { ma: true, bb: true, vol: true },
     selected: null, A: null, series: {}, tab: 'engine', samp: null, dl: null,
+    win: null, // janela em dias (null = série inteira); só entra pela URL
+    urlOn: false, // a URL só é reescrita depois que ela já trazia a pergunta ou que a pessoa mexeu na análise
     regimeSel: 'ALL', // recorte do banco de setups: 'ALL' | 'CURRENT' | código do regime; mantido ao recalcular
     regs: {}, // registros de veredito pedidos ao servidor, por pergunta (ver regKey)
     ai: { text: '', running: false, done: false, ctl: null, key: null, log: [], err: '' }, pipeTimer: null, liveTimer: null, shownOnce: false
@@ -196,14 +199,14 @@
     const ma = state.show.ma ? '<span class="opt"><i class="key" style="background:#B08D3E"></i><span class="k">EMA20</span> <span class="v">' + fmtN(ind.ema20[i], 2) + '</span></span><span class="opt"><i class="key" style="background:#3987e5"></i><span class="k">EMA50</span> <span class="v">' + fmtN(ind.ema50[i], 2) + '</span></span><span class="opt"><i class="key" style="background:#d55181"></i><span class="k">MM200</span> <span class="v">' + fmtN(ind.sma200[i], 2) + '</span></span>' : '';
     $('lvLegend').innerHTML =
       '<div class="l1"><span class="k">' + fmtDate(d.t[i]) + '</span><span><span class="k">A</span> <span class="v">' + fmtN(d.o[i], 2) + '</span></span><span><span class="k">M</span> <span class="v">' + fmtN(d.h[i], 2) + '</span></span><span><span class="k">m</span> <span class="v">' + fmtN(d.l[i], 2) + '</span></span><span><span class="k">F</span> <span class="v">' + fmtN(d.c[i], 2) + '</span></span><span class="' + cls + '">' + fmtSPct(ch, 2) + '</span></div>' +
-      '<div class="l2">' + ma + '<span><span class="k">RSI</span> <span class="v">' + fmtN(ind.rsi[i], 1) + '</span></span><span><i class="key" style="background:' + R.color + ';height:6px;vertical-align:1px"></i><span class="k">Regime</span> <span class="v">' + R.short + '</span></span></div>' + trig;
+      '<div class="l2">' + ma + '<span><span class="k">RSI</span> <span class="v">' + fmtN(ind.rsi[i], 1) + '</span></span><span><i class="key" style="background:' + esc(R.color) + ';height:6px;vertical-align:1px"></i><span class="k">Regime</span> <span class="v">' + esc(R.short) + '</span></span></div>' + trig;
   }
   function renderFoot() {
     const regs = ['BULL_TREND', 'BEAR_TREND', 'HIGH_VOL_RANGING', 'LOW_VOL_RANGING', 'STRUCTURAL_BREAK'];
     $('lvFoot').innerHTML =
       '<span class="it">Velas: vazada = alta, cheia = baixa</span>' +
       '<span class="it"><span class="mk c" style="background:#199e70"></span>alvo</span><span class="it"><span class="mk s" style="background:#e66767"></span>stop</span><span class="it"><span class="mk c" style="background:#8D97A6"></span>prazo esgotado</span><span class="it"><span class="mk c" style="background:#D4B15C"></span>sem desfecho ainda</span>' +
-      '<span class="it" style="color:var(--ink-ghost)">|</span>' + regs.map((r) => '<span class="it"><span class="rg" style="background:' + E.REGIMES[r].color + '"></span>' + E.REGIMES[r].short + '</span>').join('') +
+      '<span class="it" style="color:var(--ink-ghost)">|</span>' + regs.map((r) => '<span class="it"><span class="rg" style="background:' + esc(E.REGIMES[r].color) + '"></span>' + esc(E.REGIMES[r].short) + '</span>').join('') +
       '<span class="it" style="margin-left:auto">Gráfico: TradingView Lightweight Charts™</span>';
   }
 
@@ -222,7 +225,7 @@
   function renderRead(A) {
     const T = A.tech, r = T.regime, R = E.REGIMES[r.regime];
     $('lvReadTime').textContent = fmtDate(T.time);
-    $('lvRegime').innerHTML = '<div class="regime-chip"><span class="sq" style="background:' + R.color + '"></span>' + r.regime + '</div><div class="regime-title">' + R.label + '</div><div class="conf"><i style="width:' + Math.round(r.confidence * 100) + '%;background:' + R.color + '"></i></div><div class="regime-why">Confiança ' + fmtN(r.confidence * 100, 0) + '% · ' + regimeWhy(r) + '</div>';
+    $('lvRegime').innerHTML = '<div class="regime-chip"><span class="sq" style="background:' + esc(R.color) + '"></span>' + esc(r.regime) + '</div><div class="regime-title">' + esc(R.label) + '</div><div class="conf"><i style="width:' + Math.round(r.confidence * 100) + '%;background:' + esc(R.color) + '"></i></div><div class="regime-why">Confiança ' + fmtN(r.confidence * 100, 0) + '% · ' + esc(regimeWhy(r)) + '</div>';
     const items = [
       ['Preço', fmtN(T.close, 2), '24h ' + fmtSPct(T.change24) + ' · 7d ' + fmtSPct(T.change7d)],
       ['Distância da MM200', fmtSPct(T.distMa200, 1), (T.aboveMa200 ? 'acima' : 'abaixo') + ' há ' + T.barsVsMa200 + ' candles'],
@@ -235,7 +238,7 @@
       ['Volume', (T.volZ >= 0 ? '+' : '−') + fmtN(Math.abs(T.volZ), 1) + ' σ', 'vs. média de 30 candles'],
       ['Canal de 20 candles', fmtPct(T.rangePos, 0) + ' da faixa', 'máx ' + fmtN(T.hh20, 2) + ' · mín ' + fmtN(T.ll20, 2)]
     ];
-    $('lvKv').innerHTML = items.map((x) => '<div class="kvi"><div class="l">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="d">' + x[2] + '</div></div>').join('');
+    $('lvKv').innerHTML = items.map((x) => '<div class="kvi"><div class="l">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div><div class="d">' + esc(x[2]) + '</div></div>').join('');
   }
   function renderTop(A) {
     const T = A.tech;
@@ -315,7 +318,7 @@
     box.hidden = false;
     const opts = [['ALL', 'Todos os regimes'], ['CURRENT', 'Regime atual (' + E.REGIMES[V.current].label + ')']].concat(V.regimes.map((r) => [r, E.REGIMES[r].label]));
     const sig = opts.map((o) => o.join('=')).join('|');
-    if (sel.getAttribute('data-sig') !== sig) { sel.innerHTML = opts.map((o) => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join(''); sel.setAttribute('data-sig', sig); }
+    if (sel.getAttribute('data-sig') !== sig) { sel.innerHTML = opts.map((o) => '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>').join(''); sel.setAttribute('data-sig', sig); }
     sel.value = state.regimeSel;
   }
   function renderBank(A) {
@@ -338,8 +341,8 @@
       const wrCell = empty ? '—' : fmtPct(v.winRate, 1) + ' <span class="num-dim">[' + fmtPct(v.ci[0], 0) + '–' + fmtPct(v.ci[1], 0) + ']</span>';
       const baseCell = c ? fmtPct(bRate, 1) + ' <span class="num-dim">(' + fmtInt(c.base.n) + ')</span>' : fmtPct(s.base, 1);
       const pCell = c ? '—' : fmtP(s.pTwo) + ' <span class="num-dim">(' + fmtP(s.q) + ')</span>';
-      const verdict = c ? '<span class="verdict ' + (c.insufficient ? 'neutral' : 'muted') + '">' + (c.insufficient ? 'Evidência insuficiente' : 'Recorte descritivo') + '</span>' : '<span class="verdict ' + s.verdict.tone + '">' + s.verdict.label + '</span>';
-      return '<tr data-id="' + s.id + '" tabindex="0" class="' + (s.id === state.selected ? 'sel' : '') + '" aria-selected="' + (s.id === state.selected) + '"><td class="c-name"><div><div class="sname">' + esc(s.nome) + '</div><div class="sgrp">' + esc(s.grupo) + '</div></div></td><td class="c-now">' + now + '</td><td class="c-n" data-l="N (efetivo)">' + nCell + '</td><td class="c-wr" data-l="Taxa de acerto · IC 95%">' + wrCell + '</td><td class="c-viz">' + viz + '</td><td class="c-base" data-l="' + (c ? 'Taxa-base no regime · N' : 'Taxa-base') + '">' + baseCell + '</td><td class="c-p" data-l="p · ajustado">' + pCell + '</td><td class="c-verdict">' + verdict + '</td></tr>';
+      const verdict = c ? '<span class="verdict ' + (c.insufficient ? 'neutral' : 'muted') + '">' + (c.insufficient ? 'Evidência insuficiente' : 'Recorte descritivo') + '</span>' : '<span class="verdict ' + esc(s.verdict.tone) + '">' + esc(s.verdict.label) + '</span>';
+      return '<tr data-id="' + esc(s.id) + '" tabindex="0" class="' + (s.id === state.selected ? 'sel' : '') + '" aria-selected="' + (s.id === state.selected) + '"><td class="c-name"><div><div class="sname">' + esc(s.nome) + '</div><div class="sgrp">' + esc(s.grupo) + '</div></div></td><td class="c-now">' + now + '</td><td class="c-n" data-l="N (efetivo)">' + nCell + '</td><td class="c-wr" data-l="Taxa de acerto · IC 95%">' + wrCell + '</td><td class="c-viz">' + viz + '</td><td class="c-base" data-l="' + (c ? 'Taxa-base no regime · N' : 'Taxa-base') + '">' + baseCell + '</td><td class="c-p" data-l="p · ajustado">' + pCell + '</td><td class="c-verdict">' + verdict + '</td></tr>';
     }).join('');
     $('lvBank').innerHTML = head + '<tbody>' + rows + '</tbody>';
     const d = A.d;
@@ -349,6 +352,7 @@
     state.selected = id;
     document.querySelectorAll('#lvBank tbody tr').forEach((tr) => { const on = tr.getAttribute('data-id') === id; tr.classList.toggle('sel', on); tr.setAttribute('aria-selected', on); });
     setMarkers(); renderDetail(state.A); renderLegend(null);
+    touchUrl();
     if (scroll) { const el = document.querySelector('#dash-live .chart-card'); if (el) el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); }
   }
 
@@ -364,13 +368,13 @@
     }
     const regs = Object.keys(s.byRegime).filter((r) => r !== 'UNKNOWN').sort((a, b) => s.byRegime[b].n - s.byRegime[a].n);
     const V = regimeOf(A); // mesmo N efetivo e mesmo corte (10) do recorte da tabela
-    const rb = regs.length ? regs.map((r) => { const x = s.byRegime[r], wr = x.w / x.n, c = V && V.bySetup[s.id][r], low = !!(c && c.insufficient); return '<div class="rbar"><span>' + E.REGIMES[r].short + (low ? '<span class="flag" title="N efetivo ' + c.nEff + ' (mínimo ' + RV.MIN_EFFECTIVE + ')">evidência insuficiente</span>' : '') + '</span><span class="tr"><span class="fl" style="width:' + Math.min(100, (wr / maxX) * 100) + '%;background:' + E.REGIMES[r].color + '"></span><span class="bt" style="left:' + Math.min(100, (A.base.rate / maxX) * 100) + '%"></span></span><span class="vv">' + fmtPct(wr, 0) + ' · N ' + x.n + '</span></div>'; }).join('') : '<p class="note">Sem gatilhos com desfecho.</p>';
+    const rb = regs.length ? regs.map((r) => { const x = s.byRegime[r], wr = x.w / x.n, c = V && V.bySetup[s.id][r], low = !!(c && c.insufficient); return '<div class="rbar"><span>' + esc(E.REGIMES[r].short) + (low ? '<span class="flag" title="N efetivo ' + c.nEff + ' (mínimo ' + RV.MIN_EFFECTIVE + ')">evidência insuficiente</span>' : '') + '</span><span class="tr"><span class="fl" style="width:' + Math.min(100, (wr / maxX) * 100) + '%;background:' + esc(E.REGIMES[r].color) + '"></span><span class="bt" style="left:' + Math.min(100, (A.base.rate / maxX) * 100) + '%"></span></span><span class="vv">' + fmtPct(wr, 0) + ' · N ' + x.n + '</span></div>'; }).join('') : '<p class="note">Sem gatilhos com desfecho.</p>';
     $('lvDetail').innerHTML =
-      '<div class="detail-h"><div><h3>' + esc(s.nome) + ' <span class="verdict ' + s.verdict.tone + '" style="vertical-align:3px;margin-left:6px">' + s.verdict.label + '</span></h3><p>' + esc(s.def) + '</p></div>' +
+      '<div class="detail-h"><div><h3>' + esc(s.nome) + ' <span class="verdict ' + esc(s.verdict.tone) + '" style="vertical-align:3px;margin-left:6px">' + esc(s.verdict.label) + '</span></h3><p>' + esc(s.def) + '</p></div>' +
       '<div class="detail-actions"><button type="button" class="btn btn-sm" id="lvShowTrig">Ver gatilhos no gráfico</button><button type="button" class="btn btn-sm" id="lvRegBtn" title="O servidor calcula e registra este veredito com data comprovável">Registrar este veredito</button><button type="button" class="btn btn-sm btn-ai" id="lvOpenPine">Levar para o TradingView (Pine)</button></div></div>' +
       '<div class="ai-note" id="lvRegBox" role="status" hidden></div>' +
       '<div class="dgrid">' +
-      stat('Gatilhos com desfecho', s.n + ' <span style="font-size:12px;color:var(--ink-faint)">(N efetivo ' + s.nEff + ')</span>', 'ρ serial ' + fmtN(s.rho, 2) + ' · evidência ' + ({ INSUFFICIENT: 'insuficiente', LOW: 'baixa', MODERATE: 'moderada', HIGH: 'alta' }[s.tier])) +
+      stat('Gatilhos com desfecho', s.n + ' <span style="font-size:12px;color:var(--ink-faint)">(N efetivo ' + s.nEff + ')</span>', 'ρ serial ' + fmtN(s.rho, 2) + ' · evidência ' + esc({ INSUFFICIENT: 'insuficiente', LOW: 'baixa', MODERATE: 'moderada', HIGH: 'alta' }[s.tier] || String(s.tier))) +
       stat('Taxa de acerto', fmtPct(s.winRate, 1), 'IC 95% ' + fmtPct(s.ci[0], 1) + '–' + fmtPct(s.ci[1], 1) + ' (' + (s.method === 'wilson' ? 'Wilson' : 'Bayes Beta-Binomial') + ')') +
       stat('Contra o acaso', (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp', 'taxa-base ' + fmtPct(s.base, 1) + ' · p ' + fmtP(s.pTwo) + ' · ajustado (' + s.family + ' testes) ' + fmtP(s.q)) +
       stat('Risco por gatilho', fmtSPct(s.cvar, 2), 'CVaR 5% · excursão adversa mediana ' + fmtSPct(s.maeMedian, 2)) +
@@ -387,7 +391,7 @@
   // (contrato em docs/api-proof.md, seção 2). O navegador manda só a pergunta, nunca número. Por isso a tela
   // mostra apenas o que o servidor devolveu (hash, hora, link da prova), não os números calculados aqui.
   const CAN_REGISTER = !IN_CLAUDE && /^https?:$/.test(location.protocol);
-  const regKey = () => [state.sym, state.tf, state.cfg.mode, state.cfg.tgt, state.cfg.stp, state.cfg.hold, state.selected].join('|');
+  const regKey = () => [state.sym, state.tf, state.cfg.mode, state.cfg.tgt, state.cfg.stp, state.cfg.hold, state.win || 'all', state.selected].join('|');
   function proofUrl(r) { // só caminho relativo do próprio site (a resposta do servidor não pode levar a outro endereço)
     if (typeof r.verifyUrl === 'string' && /^\/(?!\/)[^\s\\]*$/.test(r.verifyUrl)) return r.verifyUrl;
     return typeof r.id === 'string' && /^[0-9a-f-]{8,40}$/i.test(r.id) ? '/verificar.html?id=' + encodeURIComponent(r.id) : '';
@@ -426,10 +430,197 @@
       try { j = await r.json(); } catch (e) { j = null; }
     } catch (e) { put({ phase: 'err', msg: 'Não foi possível registrar o veredito: sem conexão com o servidor (código: sem_conexao).' }); return; }
     const code = j && j.error && typeof j.error === 'object' && j.error.code ? String(j.error.code) : '';
-    if ((r.status === 200 || r.status === 201) && j && typeof j.hash === 'string' && /^[0-9a-f]{64}$/i.test(j.hash)) { put({ phase: 'ok', res: j }); return; }
+    if ((r.status === 200 || r.status === 201) && j && typeof j.hash === 'string' && /^[0-9a-f]{64}$/i.test(j.hash)) {
+      put({ phase: 'ok', res: j });
+      try { rememberReg(j, body, A); } catch (e) { /* a lista local é conveniência: nunca atrapalha o registro */ }
+      return;
+    }
     if (r.status === 503 && code === 'banco_ausente') { put({ phase: 'err', msg: 'Registro indisponível neste ambiente: banco não configurado.' }); return; }
     if (r.status === 401) { put({ phase: 'auth', msg: hadCode ? 'Código incorreto. Digite de novo:' : 'Digite o código de acesso para registrar o veredito:' }); return; }
     put({ phase: 'err', msg: 'Não foi possível registrar o veredito (código: ' + (code || (r.ok ? 'resposta_invalida' : 'http_' + r.status)) + ').' });
+  }
+
+  // ------------------------------------ registros deste navegador (lista local)
+  // Cada veredito registrado a partir desta tela entra numa lista do próprio navegador (localStorage, uma chave com
+  // versão). A lista guarda só o que o servidor e a tela já mostram, sem dado pessoal. Os registros ficam no servidor:
+  // apagar a lista não apaga prova alguma. O estado do carimbo vem de GET /api/proof?id= (docs/api-proof.md, seção 3.1)
+  // e é consultado ao abrir a tela e no botão "Atualizar", nunca em laço.
+  const REG_KEY = 'argos.registros.v1'; // {"v":1,"items":[{id,hash,symbol,tf,setupId,setupName,verdict:{key,label,tone},at,verifyUrl}]}
+  const REG_MAX = 50;
+  const REG_REFRESH_MS = 60000; // ao reabrir a tela, o carimbo só é consultado de novo depois deste intervalo
+  const REG_EMPTY = 'Aqui aparecem os vereditos registrados neste navegador; o botão “Registrar este veredito”, no painel do setup, cria o registro.';
+  const HASH_RE = /^[0-9a-f]{64}$/i, ID_RE = /^[0-9a-f-]{8,40}$/i;
+  const TONES = ['good', 'warn', 'muted', 'bad', 'neutral'];
+  const STAMP = { // estado do carimbo: [tom, texto]
+    consultando: ['neutral', 'consultando…'],
+    aguardando: ['warn', 'aguardando o fechamento do dia'],
+    pendente: ['warn', 'dia fechado, carimbo pendente'],
+    ancorada: ['good', 'ancorada'],
+    confirmada: ['good', 'confirmada'],
+    falhou: ['bad', 'falhou'],
+    indisponivel: ['muted', 'indisponível']
+  };
+  const regs = { items: [], stamps: {}, busy: false, last: 0, persist: true, confirm: false, ui: null };
+  const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
+
+  function cleanReg(x) { // tudo que vem do localStorage (ou da resposta do servidor) é validado antes de ser usado
+    if (!x || typeof x !== 'object') return null;
+    const hash = typeof x.hash === 'string' && HASH_RE.test(x.hash) ? x.hash.toLowerCase() : null;
+    const t = typeof x.at === 'string' ? Date.parse(x.at) : NaN;
+    if (!hash || !isFinite(t)) return null;
+    const id = typeof x.id === 'string' && ID_RE.test(x.id) ? x.id : null, v = x.verdict && typeof x.verdict === 'object' ? x.verdict : {};
+    return {
+      id, hash,
+      symbol: typeof x.symbol === 'string' && /^[A-Z0-9]{3,20}$/.test(x.symbol) ? x.symbol : '',
+      tf: ['1h', '4h', '1d'].indexOf(x.tf) >= 0 ? x.tf : '',
+      setupId: typeof x.setupId === 'string' && /^[A-Z][A-Z0-9_]{0,39}$/.test(x.setupId) ? x.setupId : '',
+      setupName: clip(x.setupName, 80),
+      verdict: { key: clip(v.key, 24), label: clip(v.label, 80), tone: TONES.indexOf(v.tone) >= 0 ? v.tone : 'neutral' },
+      at: new Date(t).toISOString(),
+      verifyUrl: proofUrl({ verifyUrl: x.verifyUrl, id })
+    };
+  }
+  function regNormalize(list) { // sem repetição, do mais novo para o mais antigo, até REG_MAX
+    const seen = {}, out = [];
+    list.slice().sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).forEach((x) => { if (!seen[x.hash]) { seen[x.hash] = true; out.push(x); } });
+    return out.slice(0, REG_MAX);
+  }
+  function regLoad() { // null = o navegador não deixou ler
+    let raw;
+    try { raw = localStorage.getItem(REG_KEY); } catch (e) { return null; }
+    if (!raw) return [];
+    try {
+      const j = JSON.parse(raw);
+      return j && j.v === 1 && Array.isArray(j.items) ? regNormalize(j.items.map(cleanReg).filter(Boolean)) : [];
+    } catch (e) { return []; }
+  }
+  function regSave() {
+    try { localStorage.setItem(REG_KEY, JSON.stringify({ v: 1, items: regs.items })); regs.persist = true; } catch (e) { regs.persist = false; } // cheio, bloqueado ou sem storage
+  }
+  function rememberReg(res, body, A) {
+    const s = A.setups.find((x) => x.id === body.setupId); if (!s) return;
+    const item = cleanReg({
+      id: res.id, hash: res.hash, symbol: body.symbol, tf: body.tf, setupId: s.id, setupName: s.nome,
+      verdict: { key: s.verdict.key, label: s.verdict.label, tone: s.verdict.tone },
+      at: isFinite(Date.parse(res.emittedAt)) ? res.emittedAt : new Date().toISOString(), verifyUrl: res.verifyUrl
+    });
+    if (!item) return;
+    if (regs.persist) { const cur = regLoad(); if (cur) regs.items = cur; } // junta o que outra aba tenha gravado
+    regs.items = regNormalize([item].concat(regs.items));
+    regSave();
+    if (res.anchorPending && typeof res.anchorPending === 'object') regs.stamps[item.hash] = { s: 'aguardando' }; // vem na própria resposta do registro
+    else delete regs.stamps[item.hash];
+    regRender();
+    if (!regs.stamps[item.hash]) regRefresh([item]);
+  }
+  function stampOf(j, it) {
+    if (!j || typeof j !== 'object') return { s: 'indisponivel', why: 'resposta_invalida' };
+    const p = j.previsao;
+    if (p && typeof p === 'object' && typeof p.hash === 'string' && p.hash.toLowerCase() !== it.hash) return { s: 'indisponivel', why: 'hash_diferente' };
+    const a = j.anchor;
+    if (a && typeof a === 'object') return ['pendente', 'ancorada', 'confirmada', 'falhou'].indexOf(a.status) >= 0 ? { s: a.status } : { s: 'indisponivel', why: 'estado_desconhecido' };
+    if (j.anchorPending && typeof j.anchorPending === 'object') return { s: 'aguardando' };
+    return { s: 'indisponivel', why: 'sem_ancora' };
+  }
+  async function regFetch(it) {
+    const q = it.id ? 'id=' + encodeURIComponent(it.id) : 'hash=' + encodeURIComponent(it.hash);
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const r = await fetch((CFG.proof || '/api/proof') + '?' + q, { headers: { accept: 'application/json' }, cache: 'no-store', signal: ctl.signal });
+      if (!r.ok) return { s: 'indisponivel', why: 'http_' + r.status };
+      let j = null; try { j = await r.json(); } catch (e) { j = null; }
+      return stampOf(j, it);
+    } catch (e) { return { s: 'indisponivel', why: 'sem_conexao' }; }
+    finally { clearTimeout(to); }
+  }
+  async function regRefresh(only) { // `only`: lista de itens a consultar (um registro novo); sem ele, consulta a lista inteira
+    if (!CAN_REGISTER || (!only && regs.busy)) return;
+    const todo = (only || regs.items).filter((it) => !(regs.stamps[it.hash] && regs.stamps[it.hash].s === 'confirmada')); // confirmada não muda mais
+    if (!todo.length) return;
+    if (!only) regs.busy = true;
+    todo.forEach((it) => { regs.stamps[it.hash] = { s: 'consultando' }; });
+    regRender();
+    try {
+      for (let i = 0; i < todo.length; i += 4) {
+        await Promise.all(todo.slice(i, i + 4).map(async (it) => { regs.stamps[it.hash] = await regFetch(it); }));
+        regRender();
+      }
+    } finally {
+      if (!only) { regs.busy = false; regs.last = Date.now(); }
+      regRender();
+    }
+  }
+  function regRow(it) {
+    const t = Date.parse(it.at), st = regs.stamps[it.hash] || { s: CAN_REGISTER ? 'consultando' : 'indisponivel' }, sx = STAMP[st.s] || STAMP.indisponivel;
+    const pair = it.symbol ? PAIR(it.symbol) + (it.tf ? ' · ' + (TF_LABEL[it.tf] || it.tf) : '') : 'ativo não informado';
+    return '<li class="lv-reg"><div class="lv-reg-top"><span class="lv-reg-pair">' + esc(pair) + '</span><span class="lv-reg-setup">' + esc(it.setupName || it.setupId || 'setup não informado') + '</span>' +
+      '<span class="verdict ' + esc(it.verdict.tone) + '">' + esc(it.verdict.label || 'sem veredito') + '</span></div>' +
+      '<div class="lv-reg-meta"><span class="lv-reg-time">' + esc(fmtDate(t / 1000)) + '</span><span class="lv-reg-hash" title="' + esc(it.hash) + '">' + esc(it.hash.slice(0, 12) + '…' + it.hash.slice(-8)) + '</span>' +
+      '<button type="button" class="btn btn-sm" data-act="copy" data-hash="' + esc(it.hash) + '">Copiar hash</button>' +
+      (it.verifyUrl ? '<a class="btn btn-sm" href="' + esc(it.verifyUrl) + '" target="_blank" rel="noopener">Abrir prova ↗</a>' : '') + '</div>' +
+      '<div class="lv-reg-stamp">Carimbo: <span class="lv-stamp ' + esc(sx[0]) + '"' + (st.why ? ' title="' + esc(st.why) + '"' : '') + '>' + esc(sx[1]) + '</span></div></li>';
+  }
+  function regRender() {
+    const ui = regs.ui; if (!ui) return;
+    const n = regs.items.length;
+    ui.card.hidden = !CAN_REGISTER && !n; // sem servidor e sem lista, o cartão não tem o que mostrar
+    ui.count.textContent = n ? '(' + n + ')' : '';
+    ui.refresh.disabled = !CAN_REGISTER || !n || regs.busy;
+    ui.refresh.textContent = regs.busy ? 'Consultando…' : 'Atualizar';
+    ui.clear.disabled = !n;
+    ui.confirm.hidden = !(regs.confirm && n);
+    ui.foot.hidden = regs.persist;
+    ui.body.innerHTML = n ? '<ul class="lv-reg-list">' + regs.items.map(regRow).join('') + '</ul>' : '<p class="note">' + esc(REG_EMPTY) + '</p>';
+    ui.note.hidden = !n;
+  }
+  function regClear() {
+    regs.items = []; regs.stamps = {}; regs.confirm = false;
+    try { localStorage.removeItem(REG_KEY); } catch (e) { /* sem storage: só a lista da página é limpa */ }
+    regRender();
+    if (regs.ui) regs.ui.clear.focus();
+  }
+  function buildRegs() {
+    if (regs.ui || !$('lvDetail')) return;
+    const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
+    const btn = (txt, act) => { const b = el('button', 'btn btn-sm', txt); b.type = 'button'; b.setAttribute('data-act', act); return b; };
+    const card = el('section', 'card lv-regs'); card.id = 'lvRegs'; card.setAttribute('aria-labelledby', 'lvRegsH');
+    const head = el('div', 'lv-regs-h'), title = el('div'), h = el('h3', null, 'Registros deste navegador'), count = el('span', 'lv-regs-n');
+    h.id = 'lvRegsH'; h.appendChild(count);
+    title.appendChild(h); title.appendChild(el('p', 'lv-regs-sub', 'A lista fica só neste navegador. Os registros em si ficam no servidor, com a prova.'));
+    const acts = el('div', 'lv-regs-actions'), refresh = btn('Atualizar', 'refresh'), clear = btn('Limpar lista', 'clear');
+    acts.appendChild(refresh); acts.appendChild(clear); head.appendChild(title); head.appendChild(acts);
+    const confirm = el('div', 'ai-note lv-regs-confirm'), yes = btn('Limpar a lista', 'clear-yes'), no = btn('Cancelar', 'clear-no');
+    confirm.hidden = true; confirm.setAttribute('role', 'alertdialog'); confirm.setAttribute('aria-label', 'Confirmar a limpeza da lista');
+    confirm.appendChild(el('p', null, 'Isto limpa só a lista deste navegador. Os registros continuam no servidor e as provas continuam abertas pelos links.'));
+    confirm.appendChild(yes); confirm.appendChild(no);
+    const body = el('div', 'lv-regs-body'), note = el('p', 'note', 'O veredito mostrado é o que a tela exibia no momento do registro. O do servidor está na prova.');
+    const foot = el('p', 'note lv-regs-warn', 'Este navegador não deixou guardar a lista: ela vale só até a página ser fechada.');
+    foot.hidden = true; note.hidden = true;
+    [head, confirm, body, note, foot].forEach((n) => card.appendChild(n));
+    card.addEventListener('click', async (e) => {
+      const b = e.target && e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
+      const act = b.getAttribute('data-act');
+      if (act === 'refresh') regRefresh();
+      else if (act === 'clear') { regs.confirm = true; regRender(); no.focus(); }
+      else if (act === 'clear-no') { regs.confirm = false; regRender(); clear.focus(); }
+      else if (act === 'clear-yes') regClear();
+      else if (act === 'copy') {
+        const hv = b.getAttribute('data-hash') || ''; if (!HASH_RE.test(hv)) return;
+        const ok = await copyText(hv, null, '');
+        b.textContent = ok ? 'Copiado' : 'Não copiou';
+        setTimeout(() => { b.textContent = 'Copiar hash'; }, 1800);
+      }
+    });
+    $('lvDetail').insertAdjacentElement('afterend', card);
+    regs.ui = { card, count, refresh, clear, confirm, body, note, foot };
+    const cur = regLoad(); if (cur) regs.items = cur;
+    regRender();
+  }
+  function regOpen() { // ao abrir a tela: relê a lista (outra aba pode ter mudado) e consulta o carimbo uma vez
+    if (!regs.ui) return;
+    if (regs.persist) { const cur = regLoad(); if (cur) regs.items = cur; }
+    regRender();
+    if (Date.now() - regs.last > REG_REFRESH_MS) regRefresh();
   }
 
   // ------------------------------------------------ relatório (motor)
@@ -609,7 +800,7 @@
       if (/^\s*\|.*\|\s*$/.test(ln)) { flushP(); flushL(); (tbl = tbl || []).push(ln); continue; } else flushT();
       let m;
       if (!ln.trim()) { flushP(); flushL(); continue; }
-      if ((m = ln.match(/^#{1,2}\s+(.*)$/))) { flushP(); flushL(); const t = m[1].replace(/^(\d+)\.\s*/, (x, n) => '<span class="n">' + String(n).padStart(2, '0') + '</span>'); h += '<h3>' + (t.indexOf('class="n"') >= 0 ? t.replace(/^(<span class="n">\d+<\/span>)(.*)$/, (x, a, b) => a + inl(b)) : inl(t)) + '</h3>'; continue; }
+      if ((m = ln.match(/^#{1,2}\s+(.*)$/))) { flushP(); flushL(); const num = m[1].match(/^(\d+)\.\s*(.*)$/); h += '<h3>' + (num ? '<span class="n">' + String(num[1]).padStart(2, '0') + '</span>' + inl(num[2]) : inl(m[1])) + '</h3>'; continue; }
       if ((m = ln.match(/^#{3,6}\s+(.*)$/))) { flushP(); flushL(); h += '<h4>' + inl(m[1]) + '</h4>'; continue; }
       if (/^(-{3,}|\*{3,})$/.test(ln.trim())) { flushP(); flushL(); h += '<hr style="border:0;border-top:1px solid #D8CDB6;margin:18px 0">'; continue; }
       if ((m = ln.match(/^\s*[-*•]\s+(.*)$/))) { flushP(); if (list !== 'ul') { flushL(); h += '<ul>'; list = 'ul'; } h += '<li>' + inl(m[1]) + '</li>'; continue; }
@@ -634,7 +825,7 @@
   }
   function aiHeader() {
     const k = state.ai.key || runKey();
-    return '<div class="r-kicker"><span>Stratum Research · Relatório Estratégico</span><span>Argos AI · redigido por LLM</span></div><h2 class="r-title">' + esc(k.replace('_', ' · ').replace('USDT', '/USDT').replace('1d', '1D')) + '</h2><div class="r-meta">Redigido pelo Argos AI a partir de consultas ao motor Argos Sentinel · ' + nowBrt() + '<br>Todos os números vêm das ferramentas do motor; o texto é verificado contra o vocabulário da Política de Compliance.</div>';
+    return '<div class="r-kicker"><span>Stratum Research · Relatório Estratégico</span><span>Argos AI · redigido por LLM</span></div><h2 class="r-title">' + esc(k.replace('_', ' · ').replace('USDT', '/USDT').replace('1d', '1D')) + '</h2><div class="r-meta">Redigido pelo Argos AI a partir de consultas ao motor Argos Sentinel · ' + esc(nowBrt()) + '<br>Todos os números vêm das ferramentas do motor; o texto é verificado contra o vocabulário da Política de Compliance.</div>';
   }
   function aiBody() { const t = state.ai.text || ''; const k = t.search(/^#{1,3}\s/m); return k > 0 ? t.slice(k) : t; }
   function renderAiReport(final) {
@@ -645,7 +836,7 @@
   }
   function renderAiStatus() {
     const el = $('lvAiStatus');
-    const lines = state.ai.log.slice(-6).map((x) => '<div class="ln"><span class="a">' + (x.a || '→') + '</span><span>' + esc(x.t) + '</span></div>');
+    const lines = state.ai.log.slice(-6).map((x) => '<div class="ln"><span class="a">' + esc(x.a || '→') + '</span><span>' + esc(x.t) + '</span></div>');
     el.innerHTML = lines.join(''); el.hidden = !lines.length || state.tab !== 'ai';
   }
   function logAi(t, a) { state.ai.log.push({ t, a }); renderAiStatus(); }
@@ -948,17 +1139,23 @@
     if (!A) { A = E.analyze(d, cfg, { sym, tf, source: en.source, win: winDays || null }); acache.set(k, A); while (acache.size > 4) acache.delete(acache.keys().next().value); }
     return A;
   }
-  function analyzeCurrent() { return analysisFor(state.sym, state.tf, state.cfg, null); }
+  function analyzeCurrent() { return analysisFor(state.sym, state.tf, state.cfg, state.win); }
   async function run(animate, keepRange, forceSel) {
-    const A = analyzeCurrent(); state.A = A;
+    let A;
+    try { A = analyzeCurrent(); }
+    catch (e) { if (!state.win) throw e; state.win = null; A = analyzeCurrent(); } // janela vinda da URL que o motor não aceita: volta à série inteira
+    state.A = A;
     if (forceSel && A.setups.find((s) => s.id === forceSel)) state.selected = forceSel;
     else if (!state.selected || !A.setups.find((s) => s.id === state.selected) || !keepRange) state.selected = pickDefault(A);
     renderSource(); renderTop(A); renderChart(A, keepRange); renderLegend(null); renderRead(A); renderBank(A); renderDetail(A);
     if (state.tab === 'engine') renderEngineReport(); else selectTab('ai');
+    renderShare(); syncUrl();
+    emitAnalysis(); // gancho para outros módulos (ex.: heatmap.js): análise calculada e desenhada
     await renderPipeline(A, animate);
   }
   function setPressed(groupId, v) { document.querySelectorAll('#' + groupId + ' button').forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-v') === v)); }
   async function switchTo(sym, tf, sel) {
+    state.urlOn = true;
     state.sym = sym; state.tf = tf; setPressed('lvAsset', sym); setPressed('lvTf', tf);
     await run(false, false, sel);
     if (!IN_CLAUDE) refreshLive(sym, tf).then((ch) => { if (ch && state.sym === sym && state.tf === tf) run(false, true); else renderSource(); });
@@ -974,6 +1171,105 @@
     const mode = $('lvMode').value, tgt = parseFloat(String($('lvTgt').value).replace(',', '.')), stp = parseFloat(String($('lvStp').value).replace(',', '.')), hold = parseInt($('lvHold').value, 10);
     state.cfg = { mode: mode === 'pct' ? 'pct' : 'atr', tgt: isFinite(tgt) && tgt > 0 ? Math.min(20, tgt) : 2, stp: isFinite(stp) && stp > 0 ? Math.min(20, stp) : 1, hold: isFinite(hold) ? Math.max(2, Math.min(60, hold)) : 12 };
     $('lvExitSum').textContent = 'Regra de saída: ' + cfgText(state.cfg);
+  }
+
+  // ------------------------------------------------ a pergunta vai na URL
+  // O link guarda a pergunta (ativo, tempo gráfico, regra de saída, janela, setup, recorte de regime), nunca o resultado.
+  // Ler e montar os parâmetros são funções puras de url-state.js (ArgosUrlState); aqui só se liga isso ao estado da tela.
+  // A URL só é reescrita depois que ela já trazia a pergunta ou que a pessoa mexeu na análise: quem apenas abre o site
+  // não ganha parâmetros no endereço. O #hash de navegação (#ao-vivo, #plataforma) é mantido como está.
+  const urlRegimes = () => ['ALL', 'CURRENT'].concat(Object.keys(E.REGIMES).filter((r) => r !== 'UNKNOWN'));
+  const urlSetups = () => { const ids = (E.SETUPS || []).map((s) => s.id); return ids.length ? ids : undefined; };
+  const urlView = () => ({ sym: state.sym, tf: state.tf, cfg: state.cfg, win: state.win, setup: state.selected, regime: state.regimeSel });
+  function readUrl() { // preenche o estado e os campos com a pergunta da URL; devolve o setup pedido (ou null)
+    if (!US) return null;
+    let q = {};
+    try { q = US.parse(location.search, { regimes: urlRegimes(), setups: urlSetups() }) || {}; } catch (e) { q = {}; }
+    if (!Object.keys(q).length) return null;
+    state.urlOn = true;
+    if (q.sym) state.sym = q.sym;
+    if (q.tf) state.tf = q.tf;
+    if (q.cfg) {
+      if (q.cfg.mode) $('lvMode').value = q.cfg.mode;
+      if (q.cfg.tgt) $('lvTgt').value = q.cfg.tgt;
+      if (q.cfg.stp) $('lvStp').value = q.cfg.stp;
+      if (q.cfg.hold) $('lvHold').value = q.cfg.hold;
+    }
+    if (q.win) state.win = q.win;
+    if (q.regime) state.regimeSel = q.regime;
+    setPressed('lvAsset', state.sym); setPressed('lvTf', state.tf);
+    return q.setup || null;
+  }
+  function liveVisible() { const pg = $('page-dashboard'), dash = $('dash-live'); return !!(pg && dash && pg.classList.contains('visible') && dash.classList.contains('visible')); }
+  function syncUrl() {
+    if (!US || !state.urlOn) return;
+    try {
+      const qs = US.build(urlView(), { keep: location.search, regimes: urlRegimes(), setups: urlSetups() });
+      const hash = location.hash || (liveVisible() ? '#ao-vivo' : ''); // hash existente é mantido; sem ele, quem está em Ao vivo recarrega em Ao vivo
+      if (qs && ('?' + qs !== location.search || hash !== location.hash)) history.replaceState(history.state, '', '?' + qs + hash);
+    } catch (e) { /* sem history (arquivo local, quadro isolado): a análise segue sem URL */ }
+  }
+  function touchUrl() { state.urlOn = true; syncUrl(); }
+  function shareUrl() {
+    const qs = US ? US.build(urlView(), { regimes: urlRegimes(), setups: urlSetups() }) : '';
+    if (!qs) return '';
+    const nav = location.hash === '#plataforma' ? '#plataforma' : '#ao-vivo'; // sem #hash de navegação, o link abre em Ao vivo
+    return location.href.replace(/[?#].*$/, '') + '?' + qs + nav;
+  }
+  const SHARE_NOTE = 'O link guarda a pergunta, não o resultado: os números podem mudar se os candles mudarem. Para fixar o resultado, registre o veredito.';
+  const SHARE_LABEL = 'Copiar link desta análise';
+  let shareUi = null, shareTimer = 0;
+  function buildShare() {
+    const head = US && !shareUi && document.querySelector('#dash-live .live-head > div'); if (!head) return;
+    const box = document.createElement('div'); box.className = 'lv-share'; box.id = 'lvShare';
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn-sm'; btn.id = 'lvShareBtn'; btn.textContent = SHARE_LABEL;
+    btn.setAttribute('aria-live', 'polite'); btn.setAttribute('aria-describedby', 'lvShareNote');
+    const note = document.createElement('span'); note.className = 'lv-share-note'; note.id = 'lvShareNote';
+    const win = document.createElement('span'); win.className = 'lv-share-win'; win.hidden = true;
+    if (CAN_REGISTER) { btn.title = SHARE_NOTE; note.textContent = SHARE_NOTE; }
+    else { btn.disabled = true; btn.title = 'O link só existe na versão publicada da plataforma.'; note.textContent = 'O link só existe na versão publicada da plataforma.'; }
+    box.appendChild(btn); box.appendChild(win); box.appendChild(note); head.appendChild(box);
+    btn.addEventListener('click', async () => {
+      touchUrl(); // o endereço da barra passa a refletir a análise: serve de alternativa se a cópia falhar
+      const url = shareUrl(), ok = url ? await copyText(url, null, '') : false;
+      btn.textContent = ok ? 'Link copiado' : 'Não copiou';
+      clearTimeout(shareTimer); shareTimer = setTimeout(() => { btn.textContent = SHARE_LABEL; }, 2000);
+    });
+    win.addEventListener('click', (e) => {
+      const b = e.target && e.target.closest ? e.target.closest('[data-act="win-clear"]') : null; if (!b) return;
+      state.win = null; state.urlOn = true; run(false, true);
+    });
+    shareUi = { btn, win };
+  }
+  function renderShare() {
+    if (!shareUi) return;
+    const w = shareUi.win;
+    w.hidden = !state.win;
+    w.innerHTML = state.win ? 'Janela: últimos ' + esc(fmtInt(state.win)) + ' dias <button type="button" class="lv-linkbtn" data-act="win-clear">usar a série inteira</button>' : '';
+  }
+
+  // ------------------------------------------------ ganchos para outros módulos
+  // argos:analysis (saída): disparado ao fim de cada análise calculada e desenhada, com { A, E }.
+  // argos:select (entrada): { setupId, regime } seleciona o setup, aplica o recorte de regime ('ALL', 'CURRENT' ou o código)
+  // e rola até o banco de setups. Valor desconhecido é ignorado.
+  function emitAnalysis() {
+    try { document.dispatchEvent(new CustomEvent('argos:analysis', { detail: { A: state.A, E } })); } catch (e) { /* sem CustomEvent */ }
+  }
+  function revealBank() {
+    if (!liveVisible() && typeof window.openLive === 'function') { try { window.openLive(); } catch (e) { /* navegação indisponível */ } } // openLive é do nav.js
+    const go = () => { const h = $('lvBankH'), sec = h && h.closest ? h.closest('section') : null, el = sec || h; if (el && el.scrollIntoView) el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); };
+    if (window.requestAnimationFrame) requestAnimationFrame(go); else go();
+  }
+  function onExternalSelect(ev) {
+    const d = (ev && ev.detail) || {}, A = state.A; if (!A || typeof d !== 'object') return;
+    const id = typeof d.setupId === 'string' && A.setups.some((s) => s.id === d.setupId) ? d.setupId : null;
+    const V = regimeOf(A), rg = typeof d.regime === 'string' ? d.regime : null;
+    const regOk = !!(rg && V && (rg === 'ALL' || rg === 'CURRENT' || V.regimes.indexOf(rg) >= 0));
+    if (!id && !regOk) return;
+    if (regOk) { state.regimeSel = rg; renderBank(A); }
+    if (id) selectSetup(id, false);
+    touchUrl();
+    revealBank();
   }
 
   // Tela Regime: cartões calculados ao vivo (diário)
@@ -992,9 +1288,9 @@
     ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].forEach((sym) => {
       const d = entry(sym, '1d').d, ind = E.computeIndicators(d), reg = E.regimeSeries(d, ind), rs = E.regimeStats(reg), r = reg[d.n - 1], R = E.REGIMES[r.regime];
       const runs = rs.runs, cur = runs[runs.length - 1], prev = runs.length > 1 ? runs[runs.length - 2] : null, recent = cur && d.n - 1 - cur.start < 3 && prev;
-      const alert = r.regime === 'STRUCTURAL_BREAK' ? '<div class="regime-alert">⚠ Quebra estrutural (Chow p = ' + fmtP(r.chowP) + '). Estatísticas históricas têm confiabilidade reduzida durante a transição.</div>' : recent ? '<div class="regime-alert">⚠ Transição recente: ' + E.REGIMES[prev.regime].label + ' → ' + R.label + '.</div>' : '';
-      cards.push('<div class="regime-card' + (r.regime === 'STRUCTURAL_BREAK' ? ' is-break' : '') + '"><div class="regime-card-top"><div><div class="regime-asset">' + PAIR(sym) + ' · 1D</div><div class="regime-name ' + cls[r.regime] + '">' + R.label + '</div></div><div class="regime-conf-box"><div class="l">CONFIANÇA</div><div class="v">' + fmtN(r.confidence * 100, 0) + '%</div></div></div><div class="conf-bar"><div class="conf-bar-fill ' + cls[r.regime] + '" style="width:' + Math.round(r.confidence * 100) + '%;"></div></div><div class="regime-metrics"><div class="regime-metric"><div class="l">ADX (14)</div><div class="v">' + fmtN(r.adx, 2) + '</div></div><div class="regime-metric"><div class="l">Vol. realizada · percentil</div><div class="v">' + fmtN(r.rvPct, 0) + '°</div></div><div class="regime-metric"><div class="l">Preço / MM200</div><div class="v ' + (r.priceVsMa >= 0 ? 'pos' : '') + '">' + fmtN((1 + r.priceVsMa) * 100, 1) + '%</div></div><div class="regime-metric"><div class="l">Chow p-valor</div><div class="v' + (r.chowP < 0.01 ? ' warn' : '') + '">' + fmtN(r.chowP, 4) + '</div></div></div>' + alert + '<div class="regime-computed">Candle diário fechado em ' + fmtDay(d.t[d.n - 1]) + ' · em vigor há ' + (cur ? cur.end - cur.start + 1 : 0) + ' dias</div></div>');
-      interps.push('<div class="interp-card"><div class="interp-head"><span class="interp-dot ' + cls[r.regime] + '"></span><span>' + PAIR(sym) + ' — ' + R.label + '</span></div><p class="desc">' + INTERP[r.regime] + ' Critério: ' + regimeWhy(r) + '</p></div>');
+      const alert = r.regime === 'STRUCTURAL_BREAK' ? '<div class="regime-alert">⚠ Quebra estrutural (Chow p = ' + fmtP(r.chowP) + '). Estatísticas históricas têm confiabilidade reduzida durante a transição.</div>' : recent ? '<div class="regime-alert">⚠ Transição recente: ' + esc(E.REGIMES[prev.regime].label) + ' → ' + esc(R.label) + '.</div>' : '';
+      cards.push('<div class="regime-card' + (r.regime === 'STRUCTURAL_BREAK' ? ' is-break' : '') + '"><div class="regime-card-top"><div><div class="regime-asset">' + PAIR(sym) + ' · 1D</div><div class="regime-name ' + esc(cls[r.regime]) + '">' + esc(R.label) + '</div></div><div class="regime-conf-box"><div class="l">CONFIANÇA</div><div class="v">' + fmtN(r.confidence * 100, 0) + '%</div></div></div><div class="conf-bar"><div class="conf-bar-fill ' + esc(cls[r.regime]) + '" style="width:' + Math.round(r.confidence * 100) + '%;"></div></div><div class="regime-metrics"><div class="regime-metric"><div class="l">ADX (14)</div><div class="v">' + fmtN(r.adx, 2) + '</div></div><div class="regime-metric"><div class="l">Vol. realizada · percentil</div><div class="v">' + fmtN(r.rvPct, 0) + '°</div></div><div class="regime-metric"><div class="l">Preço / MM200</div><div class="v ' + (r.priceVsMa >= 0 ? 'pos' : '') + '">' + fmtN((1 + r.priceVsMa) * 100, 1) + '%</div></div><div class="regime-metric"><div class="l">Chow p-valor</div><div class="v' + (r.chowP < 0.01 ? ' warn' : '') + '">' + fmtN(r.chowP, 4) + '</div></div></div>' + alert + '<div class="regime-computed">Candle diário fechado em ' + fmtDay(d.t[d.n - 1]) + ' · em vigor há ' + (cur ? cur.end - cur.start + 1 : 0) + ' dias</div></div>');
+      interps.push('<div class="interp-card"><div class="interp-head"><span class="interp-dot ' + esc(cls[r.regime]) + '"></span><span>' + PAIR(sym) + ' — ' + esc(R.label) + '</span></div><p class="desc">' + esc(INTERP[r.regime]) + ' Critério: ' + esc(regimeWhy(r)) + '</p></div>');
     });
     host.innerHTML = cards.join(''); if (ih) ih.innerHTML = interps.join('');
     const src = document.getElementById('lvRegimeSrc'); if (src) { const dd = entry('BTCUSDT', '1d').d; src.textContent = 'Calculado agora no navegador · Binance Spot' + (IN_CLAUDE ? ' (snapshot real)' : '') + ' · último candle diário fechado em ' + fmtDay(dd.t[dd.n - 1]) + '.'; }
@@ -1007,10 +1303,11 @@
     $('lvMa').addEventListener('change', (e) => { state.show.ma = e.target.checked; applyVisibility(); renderLegend(null); });
     $('lvBb').addEventListener('change', (e) => { state.show.bb = e.target.checked; applyVisibility(); });
     $('lvVol').addEventListener('change', (e) => { state.show.vol = e.target.checked; applyVisibility(); });
-    ['lvMode', 'lvTgt', 'lvStp', 'lvHold'].forEach((id) => $(id).addEventListener('change', () => { readCfg(); run(false, true); }));
-    $('lvRun').addEventListener('click', async () => { readCfg(); $('lvRun').disabled = true; if (!IN_CLAUDE) await refreshLive(state.sym, state.tf); await run(true, true); $('lvRun').disabled = false; });
+    ['lvMode', 'lvTgt', 'lvStp', 'lvHold'].forEach((id) => $(id).addEventListener('change', () => { readCfg(); state.urlOn = true; run(false, true); }));
+    $('lvRun').addEventListener('click', async () => { readCfg(); state.urlOn = true; $('lvRun').disabled = true; if (!IN_CLAUDE) await refreshLive(state.sym, state.tf); await run(true, true); $('lvRun').disabled = false; });
     $('lvZin').addEventListener('click', () => zoom(0.7)); $('lvZout').addEventListener('click', () => zoom(1.45)); $('lvZfit').addEventListener('click', fitDefault);
-    $('lvRegSel').addEventListener('change', (e) => { state.regimeSel = e.target.value; if (state.A) renderBank(state.A); });
+    $('lvRegSel').addEventListener('change', (e) => { state.regimeSel = e.target.value; if (state.A) renderBank(state.A); touchUrl(); });
+    document.addEventListener('argos:select', onExternalSelect);
     $('lvBank').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) selectSetup(tr.getAttribute('data-id'), false); });
     $('lvBank').addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const tr = e.target.closest('tr[data-id]'); if (tr) { e.preventDefault(); selectSetup(tr.getAttribute('data-id'), false); } });
     $('lvTabEngine').addEventListener('click', () => selectTab('engine')); $('lvTabAi').addEventListener('click', () => selectTab('ai'));
@@ -1036,14 +1333,16 @@
     if (state.tab === 'ai') selectTab('ai');
   }
   function onShow() {
+    regOpen(); // lista de registros deste navegador: relê e consulta o carimbo (no máximo uma vez por minuto)
     if (!chart || !state.A) return;
     requestAnimationFrame(() => { if (!state.shownOnce) { state.shownOnce = true; fitDefault(); renderPipeline(state.A, true); } });
   }
   function init() {
     if (!E || !SNAP || !LWC || !$('lvChart')) return;
     $('lvAiNote').textContent = IN_CLAUDE || SERVER_LLM ? '' : 'Neste arquivo, o relatório é redigido pelo motor determinístico, com os mesmos números. A camada Argos AI (LLM) roda na versão publicada da plataforma.';
-    buildChart(); bind(); readCfg(); renderFoot();
-    run(true, false);
+    const urlSetup = readUrl(); // pergunta da URL (se houver) antes de ler os campos da regra de saída
+    buildChart(); bind(); readCfg(); renderFoot(); buildShare(); buildRegs();
+    run(true, false, urlSetup);
     setTimeout(renderRegimeScreen, 60);
     initCapabilities();
     if (!IN_CLAUDE) {
@@ -1053,7 +1352,7 @@
   }
   window.ArgosLive = {
     init, onShow, openCase, run: () => run(true, true), state,
-    check: { scan: scanTerms, reportMd: () => reportToMarkdown(buildReport(state.A)), switchTo },
+    check: { scan: scanTerms, reportMd: () => reportToMarkdown(buildReport(state.A)), switchTo, shareUrl },
     util: { E, IN_CLAUDE, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, cfgText, analysisFor, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
   };
 })();

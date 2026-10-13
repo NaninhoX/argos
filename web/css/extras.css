@@ -1,0 +1,49 @@
+/* =====================================================================
+   ARGOS · Extras da tela Ao vivo
+   - link desta análise (botão, aviso e etiqueta de janela), criados por live.js
+   - cartão "Registros deste navegador", criado por live.js depois do painel de detalhe
+   Usa as variáveis de cor do :root de index.html. Tudo sob .lv.
+   ===================================================================== */
+
+/* ---------------- link desta análise ---------------- */
+.lv .lv-share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 14px; }
+.lv .lv-share-note { flex: 1 1 260px; max-width: 64ch; font-size: 11px; line-height: 1.5; color: var(--ink-faint); }
+.lv .lv-share-win { font-size: 11.5px; line-height: 1.4; color: var(--gold-bright); border: 1px dashed rgba(176, 141, 62, 0.45); border-radius: 6px; padding: 5px 9px; }
+.lv .lv-linkbtn { background: none; border: 0; padding: 0 0 0 6px; font: inherit; color: var(--ink-dim); text-decoration: underline; cursor: pointer; min-height: 24px; }
+.lv .lv-linkbtn:hover { color: var(--ink); }
+
+/* ---------------- registros deste navegador ---------------- */
+.lv .lv-regs { margin-top: 14px; padding: 16px; scroll-margin-top: 84px; }
+.lv .lv-regs-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.lv .lv-regs h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 0 0 4px; }
+.lv .lv-regs-n { margin-left: 8px; font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--ink-faint); }
+.lv .lv-regs-sub { font-size: 12px; line-height: 1.55; color: var(--ink-faint); margin: 0; max-width: 70ch; }
+.lv .lv-regs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.lv .lv-regs-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border-style: solid; border-color: rgba(201, 162, 39, 0.4); background: var(--amber-dim); }
+.lv .lv-regs-confirm[hidden] { display: none; }
+.lv .lv-regs-confirm p { flex: 1 1 100%; margin: 0 0 2px; color: var(--ink-dim); }
+.lv .lv-regs-warn { color: #e2c46a; }
+.lv .lv-reg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lv .lv-reg { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--navy-line-soft); border-radius: 6px; background: rgba(13, 20, 32, 0.35); }
+.lv .lv-reg-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.lv .lv-reg-pair { font-size: 12px; font-weight: 600; color: var(--ink); }
+.lv .lv-reg-setup { font-family: var(--serif); font-size: 15px; color: var(--ink); }
+.lv .lv-reg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 11.5px; color: var(--ink-dim); }
+.lv .lv-reg-hash { font-family: var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.lv .lv-reg-stamp { font-size: 11.5px; color: var(--ink-faint); }
+.lv .lv-stamp { display: inline-block; padding: 2px 8px; border: 1px solid transparent; border-radius: 4px; color: var(--ink-dim); }
+.lv .lv-stamp.good { color: #8fd3b4; background: rgba(25, 158, 112, 0.1); border-color: rgba(25, 158, 112, 0.35); }
+.lv .lv-stamp.warn { color: #e2c46a; background: var(--amber-dim); border-color: rgba(201, 162, 39, 0.4); }
+.lv .lv-stamp.bad { color: #f0a39b; background: var(--red-dim); border-color: rgba(196, 84, 74, 0.4); }
+.lv .lv-stamp.muted { color: #c7ccd4; background: rgba(155, 164, 178, 0.08); border-color: rgba(155, 164, 178, 0.25); }
+.lv .lv-stamp.neutral { color: var(--ink-faint); background: rgba(94, 107, 124, 0.1); border-color: rgba(94, 107, 124, 0.35); }
+.lv .lv-regs a:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+
+/* destino de rolagem do banco de setups (argos:select): fica abaixo da barra fixa */
+.lv section.block[aria-labelledby="lvBankH"] { scroll-margin-top: 84px; }
+
+@media (max-width: 720px) {
+  .lv .lv-regs { padding: 14px; }
+  .lv .lv-reg-meta .btn { flex: 1 1 auto; justify-content: center; }
+  .lv .lv-reg-hash { flex: 1 1 100%; }
+}

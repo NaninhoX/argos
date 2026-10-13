@@ -1,25 +1,49 @@
 /* =====================================================================
    ARGOS · Plataforma v1.1 — Sandbox (Pine → teste), Query (formato API),
    Calibração (prequencial) e interações do site (matriz do estudo, gráficos).
-   Tudo roda no navegador sobre o mesmo motor da análise ao vivo.
+   O motor é o mesmo da análise ao vivo. O Sandbox lê o script com o leitor de
+   lib/pine-reader.js (gerado em js/pine-reader.js) e o Query consulta
+   GET /api/analyze, comparando o resultado do servidor com o do navegador
+   (resumo gerado em js/analysis-summary.js a partir do mesmo código do servidor).
    ===================================================================== */
 (function () {
   'use strict';
   // Telas em construção. false: a entrada continua no menu com a etiqueta "em construção" e a tela mostra só um aviso
-  // (o protótipo interativo não é montado). true: a tela volta a ser o protótipo. Para reabrir, troque false por true.
-  const FEATURES = { sandbox: false, query: false };
+  // (o conteúdo interativo não é montado). true: a tela volta a funcionar. Para fechar de novo, troque true por false.
+  const FEATURES = { sandbox: true, query: true };
   const L = window.ArgosLive; if (!L || !L.util) return;
   const U = L.util, E = U.E, $ = (id) => document.getElementById(id);
   const { fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDay, esc, PAIR, TF_LABEL, pl } = U;
+  const PR = window.ArgosPineReader, SUM = window.ArgosSummary;
+  const IN_CLAUDE = !!U.IN_CLAUDE;
   const DEF = { mode: 'atr', tgt: 2, stp: 1, hold: 12 };
+  const ASSETS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'], TFS = ['1h', '4h', '1d'], TF_SEC = { '1h': 3600, '4h': 14400, '1d': 86400 };
   const TONE = { EDGE: 'good', EDGE_SENSIVEL: 'warn', ABAIXO: 'bad', SEM_EDGE: 'muted', INSUFICIENTE: 'neutral' };
   const REG_CLS = { BULL_TREND: 'bull', BEAR_TREND: 'bear', HIGH_VOL_RANGING: 'hv', LOW_VOL_RANGING: 'lv', STRUCTURAL_BREAK: 'break', UNKNOWN: 'lv' };
-  const later = (fn) => new Promise((res) => requestAnimationFrame(() => setTimeout(() => res(fn()), 16)));
+  // Cede o quadro ao navegador antes de um cálculo pesado (o aviso de "carregando" aparece antes). O setTimeout cobre aba em segundo plano,
+  // onde requestAnimationFrame fica parado.
+  const later = (fn) => new Promise((res, rej) => {
+    let done = false;
+    const go = () => { if (done) return; done = true; setTimeout(() => { try { res(fn()); } catch (e) { rej(e); } }, 16); };
+    requestAnimationFrame(go); setTimeout(go, 80);
+  });
+  const nz = (x) => (x === null || x === undefined ? NaN : x);
+  const shortHash = (h) => (typeof h === 'string' && h.length > 20 ? h.slice(0, 12) + '…' + h.slice(-6) : String(h));
+  const isoDayOf = (iso) => { const t = Date.parse(iso); return isFinite(t) ? fmtDay(t / 1000) : '—'; };
   function setPressed(groupId, v) { document.querySelectorAll('#' + groupId + ' button').forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-v') === v)); }
   function pressed(groupId) { const b = document.querySelector('#' + groupId + ' button[aria-pressed="true"]'); return b ? b.getAttribute('data-v') : null; }
   function bindSeg(groupId, cb) { document.querySelectorAll('#' + groupId + ' button').forEach((b) => b.addEventListener('click', () => { setPressed(groupId, b.getAttribute('data-v')); if (cb) cb(b.getAttribute('data-v')); })); }
   function num(id, def, lo, hi) { const v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : def; }
-  const qid = () => 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const listHTML = (items, cls) => '<ul class="' + (cls || 'pr-list') + '">' + items.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  const stateHTML = (kind, title, text) => '<div class="pv-state ' + kind + '" role="' + (kind === 'err' ? 'alert' : 'status') + '"><div class="pv-state-h">' + esc(title) + '</div>' + (text ? '<p>' + esc(text) + '</p>' : '') + '</div>';
+  const loadingHTML = (text) => '<div class="pv-state loading" role="status"><span class="pv-spin" aria-hidden="true"></span><span>' + esc(text) + '</span></div>';
+
+  // Armazenamento do navegador: pode não existir (janela privada, dados bloqueados). A tela funciona sem ele.
+  const store = {
+    get(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+    del(k) { try { window.localStorage.removeItem(k); } catch (e) { /* sem armazenamento */ } }
+  };
 
   // ================================================================ blocos comuns
   function ciBar(s) {
@@ -33,13 +57,13 @@
     return '<div class="stat-grid pv-grid">' +
       '<div class="stat-card tone-' + tone + '"><div class="label">Evidência</div><div class="value v-verdict">' + esc(s.verdict.label) + '</div><div class="sub">N ' + fmtInt(s.n) + ' · efetivo ' + fmtInt(s.nEff) + '</div></div>' +
       '<div class="stat-card"><div class="label">Taxa de acerto</div><div class="value">' + fmtPct(s.winRate, 1) + '</div>' + ciBar(s) + '<div class="sub">IC 95% ' + fmtPct(s.ci[0], 1) + '–' + fmtPct(s.ci[1], 1) + ' (' + (s.method === 'wilson' ? 'Wilson' : 'Bayes') + ') · base ' + fmtPct(s.base, 1) + '</div></div>' +
-      '<div class="stat-card"><div class="label">Contra o acaso</div><div class="value">' + (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp</div><div class="sub">p ' + fmtP(s.pTwo) + ' · ajustado ' + fmtP(isFinite(s.q) ? s.q : s.pTwo) + (famTxt ? ' (' + famTxt + ')' : '') + '</div></div>' +
+      '<div class="stat-card"><div class="label">Contra o acaso</div><div class="value">' + (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp</div><div class="sub">p ' + fmtP(s.pTwo) + ' · ajustado ' + fmtP(isFinite(s.q) ? s.q : s.pTwo) + (famTxt ? ' (' + esc(famTxt) + ')' : '') + '</div></div>' +
       '<div class="stat-card"><div class="label">Calibração</div><div class="value">' + (c ? fmtSPct(c.bss, 1) : '—') + '</div><div class="sub">' + (c ? 'ganho sobre a taxa-base · ECE ' + fmtN(c.ece * 100, 1) + ' p.p. · ' + fmtInt(c.n) + ' previsões' : 'previsões fora da amostra insuficientes') + '</div></div>' +
       '</div>';
   }
   function riskAndRegime(s, regNow) {
-    const regs = Object.keys(s.byRegime).filter((r) => r !== 'UNKNOWN').sort((a, b) => s.byRegime[b].n - s.byRegime[a].n);
-    const rl = regs.length ? regs.map((r) => { const x = s.byRegime[r]; return '<div class="regime-list-row' + (r === regNow ? ' current' : '') + '">' + E.REGIMES[r].label + ' <span class="n">' + (r === regNow ? '← atual · ' : '') + fmtPct(x.w / x.n, 1) + ' (N=' + x.n + ')</span></div>'; }).join('') : '<div class="regime-list-row">Sem gatilhos com desfecho.</div>';
+    const regs = Object.keys(s.byRegime).filter((r) => r !== 'UNKNOWN' && E.REGIMES[r]).sort((a, b) => s.byRegime[b].n - s.byRegime[a].n);
+    const rl = regs.length ? regs.map((r) => { const x = s.byRegime[r]; return '<div class="regime-list-row' + (r === regNow ? ' current' : '') + '">' + esc(E.REGIMES[r].label) + ' <span class="n">' + (r === regNow ? '← atual · ' : '') + fmtPct(x.w / x.n, 1) + ' (N=' + x.n + ')</span></div>'; }).join('') : '<div class="regime-list-row">Sem gatilhos com desfecho.</div>';
     return '<div class="detail-row">' +
       '<div class="detail-card card"><div class="section-label">Risco por gatilho</div><div class="detail-metrics">' +
       '<div class="m"><div class="l">CVaR 5%</div><div class="v neg">' + fmtSPct(s.cvar, 2) + '</div></div>' +
@@ -49,9 +73,11 @@
       '</div><p class="pv-note">Números do comportamento passado. Não são limite de perda nem indicam tamanho de posição.</p></div>' +
       '<div class="detail-card card"><div class="section-label">Taxa de acerto por regime no gatilho</div><div class="regime-list">' + rl + '</div></div></div>';
   }
+  // d: série do motor (índices em from/to) ou, no Query, o resumo do servidor (fromTime/toTime em ISO)
   function wfCard(s, d) {
     if (!s.wf || !s.wf.available) return '<div class="card wf-card"><div class="wf-head"><span class="title">Walk-forward (5 janelas, com expurgo)</span></div><p class="pv-note">' + esc((s.wf && s.wf.reason) || 'Indisponível.') + '</p></div>';
-    const rows = s.wf.walks.map((w, k) => '<tr><td>' + (k + 2) + ' · ' + fmtDay(d.t[w.from]) + ' → ' + fmtDay(d.t[w.to]) + '</td><td>' + w.trainN + '</td><td>' + fmtPct(w.trainWR, 1) + '</td><td>' + w.testN + '</td><td class="' + (w.testWR >= w.trainWR ? 'wf-pos' : 'wf-neg') + '">' + fmtPct(w.testWR, 1) + '</td><td>' + (w.dropPP >= 0 ? '−' : '+') + fmtN(Math.abs(w.dropPP), 1) + ' pp</td><td class="' + (w.overfit ? 'wf-cross' : 'wf-check') + '">' + (w.overfit ? '✗' : '✓') + '</td></tr>').join('');
+    const day = (w, which) => (w[which + 'Time'] ? isoDayOf(w[which + 'Time']) : fmtDay(d.t[w[which]]));
+    const rows = s.wf.walks.map((w, k) => '<tr><td>' + (k + 2) + ' · ' + day(w, 'from') + ' → ' + day(w, 'to') + '</td><td>' + w.trainN + '</td><td>' + fmtPct(w.trainWR, 1) + '</td><td>' + w.testN + '</td><td class="' + (w.testWR >= w.trainWR ? 'wf-pos' : 'wf-neg') + '">' + fmtPct(w.testWR, 1) + '</td><td>' + (w.dropPP >= 0 ? '−' : '+') + fmtN(Math.abs(w.dropPP), 1) + ' pp</td><td class="' + (w.overfit ? 'wf-cross' : 'wf-check') + '">' + (w.overfit ? '✗' : '✓') + '</td></tr>').join('');
     return '<div class="card wf-card"><div class="wf-head"><span class="title">Walk-forward (5 janelas, com expurgo)</span><span class="wf-badge ' + (s.wf.consistent ? 'ok' : 'warn') + '">' + (s.wf.consistent ? '✓ nenhuma janela caiu mais de 15 pp' : '⚠ sensível a subperíodos') + '</span></div>' +
       '<div class="table-scroll"><table class="wf-table"><thead><tr><th>Janela de teste</th><th>Treino N</th><th>Treino</th><th>Teste N</th><th>Teste</th><th>Queda</th><th>Estável</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
       '<div class="wf-summary">Brier fora da amostra ' + fmtN(s.wf.brier, 3) + ' contra ' + fmtN(s.wf.brierRef, 3) + ' da taxa-base conhecida na época (ganho ' + fmtSPct(s.wf.bss, 1) + '), em ' + s.wf.nPred + ' previsões.</div></div>';
@@ -60,7 +86,7 @@
     const w = [];
     if (s.nEff < 10) w.push('Evidência insuficiente: N efetivo ' + s.nEff + ', abaixo do mínimo de 10 para qualquer conclusão.');
     else if (s.nEff < 25) w.push('Amostra pequena (N efetivo ' + s.nEff + '): o intervalo usa o método bayesiano e é largo.');
-    if (s.pTwo < 0.05 && !(s.q < 0.05)) w.push('O p bruto (' + fmtP(s.pTwo) + ') ficou abaixo de 0,05, mas não resiste ao ajuste para ' + famN + ' ' + pl(famN, 'teste', 'testes') + ' (' + fmtP(s.q) + '). Tratar como acaso.');
+    if (s.pTwo < 0.05 && !(s.q < 0.05)) w.push('O p bruto (' + fmtP(s.pTwo) + ') ficou abaixo de 0,05, mas não resiste ao ajuste para ' + famN + ' ' + pl(famN, 'teste', 'testes') + ' (' + fmtP(s.q) + '). O resultado é compatível com o acaso.');
     if (s.wf && s.wf.available && !s.wf.consistent) w.push('Ao menos uma janela do walk-forward caiu mais de 15 pp em relação ao treino: o resultado depende do subperíodo.');
     if (s.rho > 0.2) w.push('Autocorrelação entre gatilhos (ρ ' + fmtN(s.rho, 2) + '): a amostra vale menos do que o N bruto sugere.');
     if (s.timeouts > s.n * 0.4) w.push(Math.round((s.timeouts / Math.max(1, s.n)) * 100) + '% dos gatilhos terminaram por prazo, sem tocar alvo nem stop: o horizonte de ' + cfg.hold + ' candles pode ser curto para esta regra.');
@@ -68,214 +94,400 @@
     return w.length ? '<div class="warnings">' + w.map((x) => '<div class="warning-item"><span class="mark">⚠</span> ' + esc(x) + '</div>').join('') + '</div>' : '';
   }
 
-  // ================================================================ Pine Script
-  const TPL = {
-    rsi: '//@version=5\nindicator("RSI 30", overlay=false)\nr = ta.rsi(close, 14)\nsinal = ta.crossover(r, 30)\nalertcondition(sinal, title="RSI cruza 30 para cima")',
-    ma: '//@version=5\nstrategy("EMA 9/21", overlay=true)\nrapida = ta.ema(close, 9)\nlenta = ta.ema(close, 21)\nif ta.crossover(rapida, lenta)\n    strategy.entry("L", strategy.long)',
-    macd: '//@version=5\nindicator("MACD", overlay=false)\n[macdLine, signalLine, hist] = ta.macd(close, 12, 26, 9)\nalertcondition(ta.crossover(macdLine, signalLine), title="MACD cruza o sinal")',
-    bb: '//@version=5\nindicator("Bollinger inferior", overlay=true)\n[basis, upper, lower] = ta.bb(close, 20, 2.0)\ntoque = close < lower and close[1] >= lower[1]\nplotshape(toque, style=shape.triangleup, location=location.belowbar)',
-    brk: '//@version=5\nindicator("Rompimento 55", overlay=true)\ntopo = ta.highest(high, 55)\nrompe = close > topo[1]\nalertcondition(rompe, title="Rompimento de 55 candles")'
-  };
-  function stripParens(s) {
-    let prev;
-    do { prev = s; s = s.replace(/\(((?:ta\.\w+|__\w+)\([^()]*\)(?:\[\d+\])?)\)/g, '$1').replace(/\(([\w.]+(?:\[\d+\])?)\)/g, '$1'); } while (s !== prev);
-    return s;
+  // Valores do resumo do servidor (JSON) trazem null onde o motor tem NaN; as telas formatam NaN como "—".
+  function reviveWf(wf) {
+    if (!wf || !wf.available) return wf;
+    return Object.assign({}, wf, { brier: nz(wf.brier), brierRef: nz(wf.brierRef), bss: nz(wf.bss), walks: wf.walks.map((w) => Object.assign({}, w, { trainWR: nz(w.trainWR), testWR: nz(w.testWR), dropPP: nz(w.dropPP) })) });
   }
-  function splitArgs(s, open) { // s[open] === '(' → [args, índice do ')']
-    const out = []; let depth = 0, cur = '';
-    for (let i = open + 1; i < s.length; i++) {
-      const ch = s[i];
-      if (ch === '(' || ch === '[') depth++;
-      if (ch === ')' || ch === ']') { if (depth === 0) { out.push(cur.trim()); return [out, i]; } depth--; }
-      if (ch === ',' && depth === 0) { out.push(cur.trim()); cur = ''; continue; }
-      cur += ch;
-    }
-    return [out, s.length];
-  }
-  const norm = (x) => String(x).replace(/\s+/g, ' ').replace(/\s*([(),\[\]<>=+\-*\/?:!])\s*/g, '$1').trim();
-  function parsePine(code) {
-    const lines = String(code || '').replace(/\r/g, '').split('\n').map((l) => l.replace(/\/\/.*$/, '').replace(/\s+$/, ''));
-    const vars = {}, notes = [];
-    const src = lines.join('\n');
-    if (!/\S/.test(src)) return { ok: false, msg: 'Cole um script Pine para o Argos ler.' };
-    lines.forEach((l) => {
-      let m = l.match(/^\s*\[\s*([\w\s,]+?)\s*\]\s*=\s*ta\.(macd|bb)\s*\(\s*close\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)/);
-      if (m) {
-        const names = m[1].split(',').map((x) => x.trim());
-        if (m[2] === 'macd') { const a = m[3] + ',' + m[4] + ',' + (m[5] || '9'); if (names[0]) vars[names[0]] = '__macd_line(' + a + ')'; if (names[1]) vars[names[1]] = '__macd_signal(' + a + ')'; if (names[2]) vars[names[2]] = '__macd_hist(' + a + ')'; }
-        else { const a = m[3] + ',' + m[4]; if (names[0]) vars[names[0]] = '__bb_basis(' + a + ')'; if (names[1]) vars[names[1]] = '__bb_upper(' + a + ')'; if (names[2]) vars[names[2]] = '__bb_lower(' + a + ')'; }
-        return;
-      }
-      m = l.match(/^\s*(?:var\s+)?(?:(?:float|int|bool|series\s+float|simple\s+int)\s+)?([A-Za-z_]\w*)\s*:?=\s*(.+)$/);
-      if (m && !/^(if|else|for|while|strategy|plot|plotshape|plotchar|alertcondition|indicator|study|bgcolor|barcolor)$/.test(m[1])) vars[m[1]] = norm(m[2]);
+  function reviveSetup(s) {
+    return Object.assign({}, s, {
+      winRate: nz(s.winRate), ci: [nz(s.ci && s.ci[0]), nz(s.ci && s.ci[1])], base: nz(s.base), alphaPP: nz(s.alphaPP), pTwo: nz(s.pTwo), q: nz(s.q), rho: nz(s.rho),
+      cvar: nz(s.cvar), worst: nz(s.worst), maeMedian: nz(s.maeMedian), meanNet: nz(s.meanNet), wf: reviveWf(s.wf)
     });
-    const resolve = (expr, depth) => {
-      if (depth > 5) return expr;
-      return expr.replace(/(?<![\w.])([A-Za-z_]\w*)\b(?!\s*\()/g, (w) => (Object.prototype.hasOwnProperty.call(vars, w) && !/^(close|open|high|low|volume|and|or|not|true|false|ta|math)$/.test(w) ? '(' + resolve(vars[w], depth + 1) + ')' : w));
-    };
-    const flat = stripParens(resolve(lines.map(norm).join('\n'), 0));
-    const shortHint = /ta\.crossunder\(/.test(flat) || /strategy\.short/.test(flat);
-    const num = (x) => (/^-?\d+(\.\d+)?$/.test(x) ? parseFloat(x) : NaN);
-    const maOf = (x) => { const m = x.match(/^ta\.(sma|ema)\(close,(\d+)\)$/); return m ? { kind: m[1], len: +m[2] } : null; };
-    const rsiOf = (x) => { const m = x.match(/^ta\.rsi\(close,(\d+)\)$/); return m ? +m[1] : NaN; };
-    const cands = [];
-    // 1) ta.crossover(A, B)
-    let k = -1;
-    while ((k = flat.indexOf('ta.crossover(', k + 1)) >= 0) {
-      const [args] = splitArgs(flat, k + 'ta.crossover'.length);
-      if (args.length !== 2) continue;
-      const A = stripParens(args[0]), B = stripParens(args[1]);
-      const rl = rsiOf(A), lv = num(B), mA = maOf(A), mB = maOf(B);
-      if (isFinite(rl) && isFinite(lv)) cands.push({ type: 'rsi_cross_up', len: rl, level: lv });
-      else if (mA && mB && mA.kind === mB.kind) cands.push({ type: 'ma_cross_up', kind: mA.kind, fast: mA.len, slow: mB.len });
-      else if (A === 'close' && mB) cands.push({ type: 'price_cross_ma_up', kind: mB.kind, len: mB.len });
-      else if (/^__macd_line\(/.test(A) && /^__macd_signal\(/.test(B)) { const p = A.match(/\(([\d.]+),([\d.]+),([\d.]+)\)/); cands.push({ type: 'macd_cross_up', fast: +p[1], slow: +p[2], signal: +p[3] }); }
-      else if (A === 'close' && /^ta\.highest\(high,(\d+)\)\[1\]$/.test(B)) cands.push({ type: 'breakout', len: +B.match(/\d+/)[0] });
-      else if (mA && mB) notes.push('Médias de tipos diferentes (' + mA.kind.toUpperCase() + ' × ' + mB.kind.toUpperCase() + ') ainda não são lidas nesta versão.');
-    }
-    // 2) comparações diretas
-    let m;
-    const reRsiX = /ta\.rsi\(close,(\d+)\)\[1\]<=?([\d.]+) ?and ?\(?ta\.rsi\(close,\1\)>=?\2/;
-    if ((m = flat.match(reRsiX))) cands.push({ type: 'rsi_cross_up', len: +m[1], level: +m[2] });
-    const reMacdX = /__macd_line\(([\d.]+),([\d.]+),([\d.]+)\)\[1\]<=?__macd_signal\(\1,\2,\3\)\[1\] ?and ?\(?__macd_line\(\1,\2,\3\)>__macd_signal\(\1,\2,\3\)/;
-    if ((m = flat.match(reMacdX))) cands.push({ type: 'macd_cross_up', fast: +m[1], slow: +m[2], signal: +m[3] });
-    const reMaX = /ta\.(sma|ema)\(close,(\d+)\)\[1\]<=?ta\.\1\(close,(\d+)\)\[1\] ?and ?\(?ta\.\1\(close,\2\)>ta\.\1\(close,\3\)/;
-    if ((m = flat.match(reMaX))) cands.push({ type: 'ma_cross_up', kind: m[1], fast: +m[2], slow: +m[3] });
-    if ((m = flat.match(/close<__bb_lower\(([\d.]+),([\d.]+)\)/))) cands.push({ type: 'bb_lower', len: +m[1], mult: +m[2] });
-    if ((m = flat.match(/close>ta\.highest\(high,(\d+)\)\[1\]/))) cands.push({ type: 'breakout', len: +m[1] });
-    if (!cands.length && (m = flat.match(/ta\.rsi\(close,(\d+)\)<=?([\d.]+)/))) cands.push({ type: 'rsi_below', len: +m[1], level: +m[2] });
-    if (!cands.length) {
-      return { ok: false, short: shortHint, notes: Array.from(new Set(notes)), msg: shortHint ? 'O script descreve um gatilho de venda (short). Nesta versão o Argos avalia apenas compras teóricas (long); gatilhos de venda entram na V2.' : 'Não encontrei uma regra de entrada que o Argos saiba ler. Esta versão lê: RSI cruzando um nível, MACD cruzando o sinal, cruzamento de médias do mesmo tipo (SMA/EMA), fechamento cruzando uma média, fechamento abaixo da Bollinger inferior e rompimento da máxima de N candles.' };
-    }
-    const uniq = []; cands.forEach((c) => { if (!uniq.some((u) => JSON.stringify(u) === JSON.stringify(c))) uniq.push(c); });
-    const spec = uniq[0];
-    const bad = Object.keys(spec).some((x) => x !== 'type' && x !== 'kind' && !(isFinite(spec[x]) && spec[x] > 0 && spec[x] <= 400));
-    if (bad) return { ok: false, msg: 'Parâmetros fora do intervalo aceito (1 a 400).', notes };
-    if (uniq.length > 1) notes.push('O script tem mais de uma regra de entrada; o Argos testou a primeira. Teste as outras separadamente — cada uma entra na conta da sessão.');
-    if (shortHint) notes.push('Há também condições de venda no script; elas foram ignoradas (a avaliação é long).');
-    return { ok: true, spec, name: E.SPEC_TYPES[spec.type].nome(spec), notes: Array.from(new Set(notes)) };
   }
-  const SPEC_LABEL = { rsi_cross_up: 'RSI cruza nível para cima', rsi_below: 'RSI entra abaixo de nível', macd_cross_up: 'MACD cruza o sinal para cima', ma_cross_up: 'Cruzamento de médias', price_cross_ma_up: 'Fechamento cruza a média para cima', bb_lower: 'Fechamento abaixo da Bollinger inferior', breakout: 'Rompimento de máxima' };
-  function paramRows(spec) {
-    const P = { len: 'Período', level: 'Nível', fast: 'Rápida / linha', slow: 'Lenta', signal: 'Sinal', kind: 'Tipo de média', mult: 'Desvios' };
-    return Object.keys(spec).filter((k) => k !== 'type').map((k) => '<div class="ext-row"><span>' + P[k] + '</span><span class="val">' + esc(k === 'kind' ? spec[k].toUpperCase() : fmtN(spec[k], spec[k] % 1 ? 1 : 0)) + '</span></div>').join('');
+  const reviveCalib = (c) => Object.assign({}, c, { brier: nz(c.brier), brierRef: nz(c.brierRef), bss: nz(c.bss), ece: nz(c.ece) });
+
+  // ================================================================ Registro da sessão (variações testadas)
+  // Cada variação testada (regra, ativo, tempo gráfico e regra de saída) entra na conta do ajuste de p. O registro fica no
+  // localStorage; sem armazenamento ele vale até fechar a aba. Repetir o mesmo teste não conta duas vezes.
+  const REG_KEY = 'argos.sandbox.registro.v1', SAVED_KEY = 'argos.sandbox.salvos.v1', REG_MAX = 500;
+  const specOk = (spec) => {
+    if (!spec || typeof spec !== 'object' || !Object.prototype.hasOwnProperty.call(E.SPEC_TYPES, spec.type)) return false;
+    return E.SPEC_TYPES[spec.type].need.every((k) => (k === 'kind' ? spec.kind === 'sma' || spec.kind === 'ema' : typeof spec[k] === 'number' && isFinite(spec[k]) && spec[k] > 0 && spec[k] <= 400));
+  };
+  const specKey = (spec, sym, tf, cfg) => JSON.stringify([Object.keys(spec).sort().map((k) => [k, spec[k]]), sym, tf, cfg.mode, cfg.tgt, cfg.stp, cfg.hold]);
+  const cfgOk = (c) => c && (c.mode === 'atr' || c.mode === 'pct') && [c.tgt, c.stp].every((v) => typeof v === 'number' && v >= 0.2 && v <= 20) && Number.isInteger(c.hold) && c.hold >= 2 && c.hold <= 60;
+  const Reg = {
+    tests: [], persisted: true,
+    load() {
+      this.tests = [];
+      const raw = store.get(REG_KEY); if (!raw) return;
+      let arr; try { arr = JSON.parse(raw); } catch (e) { return; }
+      if (!Array.isArray(arr)) return;
+      arr.slice(0, REG_MAX).forEach((t) => {
+        if (!t || !specOk(t.spec) || !ASSETS.includes(t.sym) || !TFS.includes(t.tf) || !cfgOk(t.cfg) || !(t.pTwo >= 0 && t.pTwo <= 1) || !Number.isInteger(t.n) || !Number.isInteger(t.nEff)) return;
+        this.tests.push({
+          key: specKey(t.spec, t.sym, t.tf, t.cfg), k: this.tests.length + 1, name: E.SPEC_TYPES[t.spec.type].nome(t.spec), spec: t.spec, sym: t.sym, tf: t.tf, cfg: { mode: t.cfg.mode, tgt: t.cfg.tgt, stp: t.cfg.stp, hold: t.cfg.hold },
+          n: t.n, nEff: t.nEff, winRate: nz(t.winRate), base: nz(t.base), alphaPP: nz(t.alphaPP), pTwo: t.pTwo, wf: { available: !!(t.wf && t.wf.available), consistent: !(t.wf && t.wf.available) || !!t.wf.consistent }
+        });
+      });
+      this.adjust();
+    },
+    save() {
+      const out = this.tests.map((t) => ({ spec: t.spec, sym: t.sym, tf: t.tf, cfg: t.cfg, n: t.n, nEff: t.nEff, winRate: isFinite(t.winRate) ? t.winRate : null, base: isFinite(t.base) ? t.base : null, alphaPP: isFinite(t.alphaPP) ? t.alphaPP : null, pTwo: t.pTwo, wf: t.wf }));
+      this.persisted = store.set(REG_KEY, JSON.stringify(out));
+    },
+    // Benjamini-Hochberg sobre todas as variações da sessão (mesma função do banco de setups)
+    adjust() {
+      const list = this.tests.map((t) => ({ pTwo: t.pTwo, nEff: t.nEff, winRate: t.winRate, base: t.base, wf: t.wf }));
+      E.applyFamily(list);
+      this.tests.forEach((t, i) => { t.q = list[i].q; t.family = list[i].family; t.verdict = list[i].verdict; });
+    },
+    // devolve a entrada do registro (nova ou atualizada) ou null se o registro está cheio
+    record(spec, name, sym, tf, cfg, s) {
+      const key = specKey(spec, sym, tf, cfg);
+      const stats = { n: s.n, nEff: s.nEff, winRate: s.winRate, base: s.base, alphaPP: s.alphaPP, pTwo: s.pTwo, wf: { available: !!(s.wf && s.wf.available), consistent: !(s.wf && s.wf.available) || !!s.wf.consistent } };
+      let t = this.tests.find((x) => x.key === key);
+      if (t) Object.assign(t, stats);
+      else {
+        if (this.tests.length >= REG_MAX) return null;
+        t = Object.assign({ key, k: this.tests.length + 1, name, spec: Object.assign({}, spec), sym, tf, cfg: { mode: cfg.mode, tgt: cfg.tgt, stp: cfg.stp, hold: cfg.hold } }, stats);
+        this.tests.push(t);
+      }
+      this.adjust(); this.save();
+      return t;
+    },
+    clear() { this.tests = []; store.del(REG_KEY); }
+  };
+  const Saved = {
+    list: [],
+    load() {
+      this.list = [];
+      const raw = store.get(SAVED_KEY); if (!raw) return;
+      let arr; try { arr = JSON.parse(raw); } catch (e) { return; }
+      if (Array.isArray(arr)) arr.slice(0, 50).forEach((x) => { if (x && specOk(x.spec)) this.list.push({ spec: x.spec, name: E.SPEC_TYPES[x.spec.type].nome(x.spec) }); });
+    },
+    save() { store.set(SAVED_KEY, JSON.stringify(this.list.map((x) => ({ spec: x.spec })))); },
+    add(spec, name) {
+      const k = JSON.stringify(Object.keys(spec).sort().map((x) => [x, spec[x]]));
+      const i = this.list.findIndex((x) => JSON.stringify(Object.keys(x.spec).sort().map((y) => [y, x.spec[y]])) === k);
+      if (i >= 0) return i;
+      this.list.push({ spec: Object.assign({}, spec), name }); this.save();
+      return this.list.length - 1;
+    }
+  };
+
+  // ================================================================ Séries para os testes
+  // Candles: o snapshot versionado sempre existe; o ao vivo (Binance) é tentado antes de rodar e, se falhar, o teste usa o snapshot e diz isso.
+  const snapCache = {};
+  function snapshotEntry(sym, tf) {
+    const k = sym + '_' + tf;
+    if (!snapCache[k]) snapCache[k] = { d: E.decodeSnapshot(window.ARGOS_SNAPSHOT.series[k]), source: 'snapshot' };
+    return snapCache[k];
   }
+  async function ensureSeries(sym, tf) {
+    const en0 = U.entry(sym, tf);
+    const fresh = en0.source === 'live' && en0.updatedAt && Date.now() - en0.updatedAt < 5 * 60 * 1000;
+    if (!fresh && !IN_CLAUDE && typeof U.refreshLive === 'function') { try { await U.refreshLive(sym, tf); } catch (e) { /* refreshLive guarda o erro no próprio registro da série */ } }
+    const en = U.entry(sym, tf);
+    return { d: en.d, source: en.source, fallback: en.source === 'live' ? '' : IN_CLAUDE ? '' : (en.liveError ? 'a Binance não respondeu' : 'sem resposta da Binance') };
+  }
+  const seriesLine = (sym, tf, d, source) => PAIR(sym) + ' ' + TF_LABEL[tf] + ' · ' + fmtInt(d.n) + ' candles até ' + fmtDay(d.t[d.n - 1]) + ' · ' + (source === 'live' ? 'Binance Spot ao vivo' : 'snapshot versionado');
 
   // ================================================================ Sandbox
-  const SB = { parsed: null, tests: [], saved: [] };
-  function sbCfg() { return { mode: $('sbMode').value === 'pct' ? 'pct' : 'atr', tgt: num('sbTgt', 2, 0.2, 20), stp: num('sbStp', 1, 0.2, 20), hold: Math.round(num('sbHold', 12, 2, 60)) }; }
-  function sbRR() { const c = sbCfg(); $('sbRR').textContent = 'Alvo : stop = ' + fmtN(c.tgt / c.stp, 1) + ' : 1 · ' + U.cfgText(c); }
-  function sbParse() {
-    const r = parsePine($('sbCode').value); SB.parsed = r.ok ? r : null;
-    const el = $('sbParsed'); el.hidden = false;
-    if (!r.ok) { el.className = 'sb-parsed err'; el.innerHTML = '<div class="pr-h">✗ ' + esc(r.msg) + '</div>' + (r.notes || []).map((x) => '<p>' + esc(x) + '</p>').join(''); $('sbRun').disabled = true; return; }
-    el.className = 'sb-parsed ok';
-    el.innerHTML = '<div class="pr-h">✓ Regra lida: <strong>' + esc(r.name) + '</strong></div><div class="pr-grid"><div class="ext-row"><span>Tipo</span><span class="val">' + esc(SPEC_LABEL[r.spec.type]) + '</span></div>' + paramRows(r.spec) + '<div class="ext-row"><span>Direção</span><span class="val">compra teórica (long)</span></div></div>' + r.notes.map((x) => '<p class="pr-note">' + esc(x) + '</p>').join('');
-    $('sbRun').disabled = false;
+  const SB = { spec: null, name: '', read: null, last: null, running: false, timer: null, resetTimer: null, resetArmed: false };
+  const sbCfgRead = () => ({ mode: $('sbMode').value === 'pct' ? 'pct' : 'atr', tgt: num('sbTgt', 2, 0.2, 20), stp: num('sbStp', 1, 0.2, 20), hold: Math.round(num('sbHold', 12, 2, 60)) });
+  function sbRR() { const c = sbCfgRead(); $('sbRR').textContent = 'Alvo : stop = ' + fmtN(c.tgt / c.stp, 1) + ' : 1 · ' + U.cfgText(c); }
+  function sbDataLine() {
+    const el = $('sbData'); if (!el) return;
+    const sym = pressed('sbAsset') || 'BTCUSDT', tf = pressed('sbTf') || '4h', en = U.entry(sym, tf);
+    el.textContent = 'Candles: ' + seriesLine(sym, tf, en.d, en.source) + '. O ao vivo é carregado ao executar; sem resposta da Binance, o teste usa o snapshot.';
   }
+  function sbCount() {
+    const el = $('sbCount'), n = $('sbCode').value.length, max = PR ? PR.MAX_SCRIPT_CHARS : 20000;
+    el.textContent = fmtInt(n) + ' / ' + fmtInt(max) + ' caracteres'; el.className = 'sb-count' + (n > max ? ' over' : '');
+  }
+  function sbReadPanel(r, empty) {
+    if (r.ok) {
+      return { cls: 'ok', html: '<div class="pr-h"><span aria-hidden="true">✓</span> Regra lida: <strong>' + esc(SB.name) + '</strong></div>' +
+        '<div class="pr-sub">O que o Argos entendeu do script</div>' + listHTML(r.understood) +
+        (r.ignored.length ? '<div class="pr-sub">O que foi ignorado, sem efeito na regra de entrada</div>' + listHTML(r.ignored, 'pr-list dim') : '') +
+        '<p class="pr-note">A regra testada é a descrita acima. Se ela diferir do script, o resultado não vale para o script.</p>' };
+    }
+    const sup = r.supported && r.supported.length ? r.supported : (PR ? PR.SUPPORTED_PATTERNS : []);
+    if (empty) return { cls: 'neutral', html: '<div class="pr-h">Sem script ainda</div><p>A galeria acima carrega um exemplo com um clique. Um script colado é lido antes de qualquer teste.</p><div class="pr-sub">O que o Argos lê hoje</div>' + listHTML(sup) };
+    return { cls: 'err', html: '<div class="pr-h"><span aria-hidden="true">✗</span> O Argos não leu este script</div><p>' + esc(r.reason) + '</p>' +
+      (r.unsupported && r.unsupported.length ? '<div class="pr-sub">Construções não cobertas</div>' + listHTML(r.unsupported) : '') +
+      '<div class="pr-sub">O que o Argos lê hoje</div>' + listHTML(sup) +
+      '<p class="pr-note">O Argos não aproxima a regra. Uma versão parecida seria outro teste e daria um resultado que não vale para o seu script.</p>' };
+  }
+  function sbRead() {
+    clearTimeout(SB.timer);
+    const code = $('sbCode').value;
+    let r;
+    if (!PR) r = { ok: false, reason: 'O leitor de Pine não foi carregado nesta página.', unsupported: [], supported: [] };
+    else { try { r = PR.readPine(code); } catch (e) { r = { ok: false, reason: 'O leitor não conseguiu interpretar este texto.', unsupported: [], supported: PR.SUPPORTED_PATTERNS }; } }
+    SB.read = r; SB.spec = r.ok ? r.spec : null; SB.name = r.ok ? E.SPEC_TYPES[r.spec.type].nome(r.spec) : '';
+    const p = sbReadPanel(r, !/\S/.test(code)), el = $('sbParsed');
+    el.hidden = false; el.className = 'sb-parsed ' + p.cls; el.innerHTML = p.html;
+    $('sbRun').disabled = !r.ok || SB.running;
+    sbCount();
+  }
+  function sbSchedule() { SB.spec = null; $('sbRun').disabled = true; sbCount(); clearTimeout(SB.timer); SB.timer = setTimeout(sbRead, 350); }
+
   async function sbRun() {
-    if (!SB.parsed) return;
-    const sym = pressed('sbAsset'), tf = pressed('sbTf'), cfg = sbCfg(), spec = SB.parsed.spec, name = SB.parsed.name;
-    $('sbRun').disabled = true; $('sbRun').textContent = 'Testando…';
-    const en = U.entry(sym, tf);
-    const res = await later(() => E.analyzeSpec(en.d, cfg, spec, { sym, tf }));
-    $('sbRun').disabled = false; $('sbRun').textContent = 'Executar teste';
-    const s = res.setup;
-    SB.tests.push({ k: SB.tests.length + 1, name, spec, sym, tf, cfg, s, calib: res.calib, d: res.d, reg: res.tech.regime.regime, ms: res.ms });
-    const fam = E.applyFamily(SB.tests.map((t) => ({ pTwo: t.s.pTwo, nEff: t.s.nEff, winRate: t.s.winRate, base: t.s.base, wf: t.s.wf })));
-    SB.tests.forEach((t, i) => { t.s.q = fam[i].q; t.s.family = fam.length; t.s.verdict = fam[i].verdict; });
-    sbRender(SB.tests[SB.tests.length - 1]); sbLog();
-    $('sbResults').hidden = false;
-    $('sbResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!SB.spec || SB.running) return;
+    const sym = pressed('sbAsset'), tf = pressed('sbTf'), cfg = sbCfgRead(), spec = SB.spec, name = SB.name, out = $('sbOut');
+    SB.running = true; $('sbRun').disabled = true; $('sbRun').textContent = 'Testando…';
+    $('sbResults').hidden = false; out.setAttribute('aria-busy', 'true'); out.innerHTML = loadingHTML('Carregando os candles de ' + PAIR(sym) + ' ' + TF_LABEL[tf] + '…');
+    try {
+      const ser = await ensureSeries(sym, tf);
+      out.innerHTML = loadingHTML('Rodando o motor sobre ' + fmtInt(ser.d.n) + ' candles…');
+      const res = await later(() => E.analyzeSpec(ser.d, cfg, spec, { sym, tf }));
+      const s = res.setup;
+      if (!s.n) {
+        out.innerHTML = '<p class="pv-context"><strong>' + esc(name) + '</strong> · ' + esc(seriesLine(sym, tf, ser.d, ser.source)) + '</p>' +
+          stateHTML('empty', 'Nenhum gatilho com desfecho nesta série', 'A regra não disparou depois do aquecimento de 200 candles, ou os disparos não têm a janela futura completa de ' + cfg.hold + ' candles. Sem gatilhos não há estatística, e este teste não entra na conta da sessão.');
+        sbLog(); return;
+      }
+      const t = Reg.record(spec, name, sym, tf, cfg, s);
+      if (!t) { out.innerHTML = stateHTML('err', 'Registro da sessão cheio', 'O registro chegou a ' + REG_MAX + ' variações. Zerar o registro libera novos testes.'); return; }
+      s.q = t.q; s.family = t.family; s.verdict = t.verdict;
+      SB.last = { t, s, spec, name, sym, tf, cfg, d: res.d, calib: res.calib, reg: res.tech.regime.regime, ms: res.ms, source: ser.source, fallback: ser.fallback, code: $('sbCode').value };
+      sbRender(); sbLog(); sbDataLine();
+      if (typeof out.scrollIntoView === 'function') out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      out.innerHTML = stateHTML('err', 'O motor não conseguiu rodar esta regra', 'Nenhum número foi calculado. ' + (e && e.message ? String(e.message).slice(0, 160) : ''));
+    } finally {
+      SB.running = false; out.setAttribute('aria-busy', 'false'); $('sbRun').textContent = 'Executar teste'; $('sbRun').disabled = !SB.spec;
+    }
   }
-  function sbRender(t) {
-    const s = t.s, famN = SB.tests.length;
+  const adjustHTML = (s, fam) => '<p class="pv-note adj-note"><strong>Ajuste por variações testadas.</strong> ' + (fam === 1
+    ? 'Esta é a primeira variação da sessão, então o p ajustado é igual ao bruto (' + fmtP(s.pTwo) + '). A cada novo teste, o ajuste passa a contar as variações já feitas.'
+    : 'A sessão tem ' + fam + ' variações. O p bruto deste teste é ' + fmtP(s.pTwo) + ' e, ajustado para ' + fam + ' variações (Benjamini-Hochberg), é ' + fmtP(s.q) + '. O veredito usa o p ajustado.') + '</p>';
+  function sbRender() {
+    const x = SB.last; if (!x) return;
+    const { s, t } = x, fam = Reg.tests.length;
     $('sbOut').innerHTML =
-      '<p class="pv-context"><strong>' + esc(t.name) + '</strong> · ' + PAIR(t.sym) + ' ' + TF_LABEL[t.tf] + ' · ' + esc(U.cfgText(t.cfg)) + ' · ' + fmtInt(t.d.n - 200) + ' candles avaliados (' + fmtDay(t.d.t[200]) + ' a ' + fmtDay(t.d.t[t.d.n - 1]) + ') · teste ' + t.k + ' da sessão · motor em ' + fmtN(t.ms, 0) + ' ms</p>' +
-      statCards(s, t.calib, famN + ' ' + pl(famN, 'teste', 'testes') + ' na sessão') + riskAndRegime(s, t.reg) + wfCard(s, t.d) + warningsFor(s, famN, t.d, t.cfg) +
+      '<p class="pv-context"><strong>' + esc(x.name) + '</strong> · ' + esc(PAIR(x.sym) + ' ' + TF_LABEL[x.tf]) + ' · ' + esc(U.cfgText(x.cfg)) + ' · ' + fmtInt(x.d.n - 200) + ' candles avaliados (' + fmtDay(x.d.t[200]) + ' a ' + fmtDay(x.d.t[x.d.n - 1]) + ') · ' + (x.source === 'live' ? 'Binance Spot ao vivo' : 'snapshot versionado') + ' · variação ' + t.k + ' da sessão · motor em ' + fmtN(x.ms, 0) + ' ms</p>' +
+      (x.fallback ? '<div class="warnings"><div class="warning-item"><span class="mark">⚠</span> Candles ao vivo indisponíveis (' + esc(x.fallback) + '). O teste usou o snapshot versionado, até ' + fmtDay(x.d.t[x.d.n - 1]) + '.</div></div>' : '') +
+      statCards(s, x.calib, fam + ' ' + pl(fam, 'variação', 'variações') + ' na sessão') + adjustHTML(s, fam) + riskAndRegime(s, x.reg) + wfCard(s, x.d) + warningsFor(s, fam, x.d, x.cfg) +
       '<div class="action-row">' + (FEATURES.query ? '<button type="button" class="btn" id="sbSave">Salvar para o Query</button>' : '') + '<button type="button" class="btn btn-ghost-blue" id="sbCopyPine">Copiar Pine com a evidência</button><span class="toast" id="sbToast" role="status"></span></div>';
-    if ($('sbSave')) $('sbSave').onclick = () => { if (!SB.saved.find((x) => x.name === t.name)) { SB.saved.push({ name: t.name, spec: t.spec }); qFillSetups(); } $('sbToast').textContent = 'Disponível no Query como setup próprio.'; };
+    if ($('sbSave')) {
+      $('sbSave').onclick = () => {
+        const i = Saved.add(x.spec, x.name); qFillSetups(); $('qSetup').value = 'CUSTOM:' + i;
+        $('sbToast').innerHTML = 'Disponível no Query como setup próprio. <a href="#query" id="sbGoQuery">Abrir o Query</a>';
+        $('sbGoQuery').onclick = (e) => { e.preventDefault(); if (window.switchDashTab) window.switchDashTab('query'); };
+      };
+    }
     $('sbCopyPine').onclick = () => {
-      const head = '// Argos Sentinel · evidência (' + new Date().toLocaleDateString('pt-BR') + '): ' + PAIR(t.sym) + ' ' + TF_LABEL[t.tf] + ' · ' + U.cfgText(t.cfg) + '\n// N=' + s.n + ' (ef. ' + s.nEff + ') · acerto ' + fmtPct(s.winRate, 1) + ' · base ' + fmtPct(s.base, 1) + ' · p=' + fmtP(s.pTwo) + ' (ajust. ' + fmtP(s.q) + ') → ' + s.verdict.label + '\n// Pesquisa estatística histórica. Não é recomendação.\n';
-      U.copyText(head + $('sbCode').value, $('sbToast'), 'Código copiado com o cabeçalho de evidência.');
+      const head = '// Argos Sentinel · evidência (' + new Date().toLocaleDateString('pt-BR') + '): ' + PAIR(x.sym) + ' ' + TF_LABEL[x.tf] + ' · ' + U.cfgText(x.cfg) + '\n// N=' + s.n + ' (ef. ' + s.nEff + ') · acerto ' + fmtPct(s.winRate, 1) + ' · base ' + fmtPct(s.base, 1) + ' · p=' + fmtP(s.pTwo) + ' (ajust. ' + fmtP(s.q) + ' para ' + fam + ' variações) → ' + s.verdict.label + '\n// Pesquisa estatística histórica. Não é recomendação.\n';
+      U.copyText(head + x.code, $('sbToast'), 'Código copiado com o cabeçalho de evidência.');
     };
   }
   function sbLog() {
-    const rows = SB.tests.slice().reverse().map((t) => '<div class="saved-item"><div class="saved-item-main"><span class="saved-item-name">' + t.k + '. ' + esc(t.name) + '</span><span class="saved-item-meta">' + PAIR(t.sym) + ' ' + TF_LABEL[t.tf] + ' · ' + esc(U.cfgText(t.cfg)) + ' · N ' + t.s.n + ' · acerto ' + fmtPct(t.s.winRate, 1) + ' vs base ' + fmtPct(t.s.base, 1) + ' · p ' + fmtP(t.s.pTwo) + ' → ajustado ' + fmtP(t.s.q) + '</span></div><span class="verdict ' + (TONE[t.s.verdict.key] || 'muted') + '">' + esc(t.s.verdict.label) + '</span></div>');
-    $('sbLog').innerHTML = '<div class="saved-list">' + rows.join('') + '</div>';
+    const box = $('sbLog'), n = Reg.tests.length;
+    if (!n) { box.innerHTML = '<div class="saved-empty">Nenhum teste nesta sessão ainda.</div>'; return; }
+    const rows = Reg.tests.slice().reverse().map((t) => '<div class="saved-item"><div class="saved-item-main"><span class="saved-item-name">' + t.k + '. ' + esc(t.name) + '</span><span class="saved-item-meta">' + esc(PAIR(t.sym) + ' ' + TF_LABEL[t.tf]) + ' · ' + esc(U.cfgText(t.cfg)) + ' · N ' + t.n + ' · acerto ' + fmtPct(t.winRate, 1) + ' vs base ' + fmtPct(t.base, 1) + ' · p ' + fmtP(t.pTwo) + ' → ajustado ' + fmtP(t.q) + '</span></div><span class="verdict ' + (TONE[t.verdict.key] || 'muted') + '">' + esc(t.verdict.label) + '</span></div>');
+    box.innerHTML = '<div class="reg-head"><span>' + n + ' ' + pl(n, 'variação testada', 'variações testadas') + (Reg.persisted ? ' · registro salvo neste navegador' : ' · sem armazenamento no navegador: o registro vale até fechar a aba') + '</span><button type="button" class="btn btn-sm" id="sbReset">Zerar registro</button></div><div class="saved-list">' + rows.join('') + '</div>';
+    $('sbReset').onclick = sbReset;
+  }
+  // Zerar pede uma segunda confirmação no próprio botão (sem janela do navegador)
+  function sbReset() {
+    const b = $('sbReset'); if (!b) return;
+    if (!SB.resetArmed) {
+      SB.resetArmed = true; b.textContent = 'Confirmar: apagar ' + Reg.tests.length + (Reg.tests.length === 1 ? ' variação' : ' variações'); b.classList.add('btn-warn');
+      clearTimeout(SB.resetTimer); SB.resetTimer = setTimeout(() => { SB.resetArmed = false; sbLog(); }, 5000);
+      return;
+    }
+    clearTimeout(SB.resetTimer); SB.resetArmed = false; Reg.clear(); SB.last = null; sbLog();
+    $('sbOut').innerHTML = ''; $('sbResults').hidden = true;
   }
   function sbInit() {
     if (!$('sbCode')) return;
-    $('sbCode').value = TPL.rsi;
-    document.querySelectorAll('.sb-templates button').forEach((b) => b.addEventListener('click', () => { $('sbCode').value = TPL[b.getAttribute('data-tpl')]; sbParse(); }));
-    $('sbParse').addEventListener('click', sbParse);
+    Reg.load(); Saved.load();
+    const gal = $('sbGallery');
+    if (gal && PR) {
+      PR.PINE_EXAMPLES.forEach((ex) => {
+        const b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-ex', ex.id); b.title = ex.note; b.textContent = ex.title;
+        b.addEventListener('click', () => { $('sbCode').value = ex.code; sbRead(); });
+        gal.insertBefore(b, $('sbCount'));
+      });
+    }
+    $('sbCode').value = PR && PR.PINE_EXAMPLES.length ? PR.PINE_EXAMPLES[0].code : '';
+    $('sbParse').addEventListener('click', sbRead);
     $('sbRun').addEventListener('click', sbRun);
-    $('sbCode').addEventListener('input', () => { SB.parsed = null; $('sbRun').disabled = true; });
-    bindSeg('sbAsset'); bindSeg('sbTf');
+    $('sbCode').addEventListener('input', sbSchedule);
+    bindSeg('sbAsset', sbDataLine); bindSeg('sbTf', sbDataLine);
     ['sbMode', 'sbTgt', 'sbStp', 'sbHold'].forEach((id) => $(id).addEventListener('input', sbRR));
-    sbRR(); sbParse();
+    sbRR(); sbDataLine(); sbRead(); sbLog();
   }
 
   // ================================================================ Query
+  // Consulta real: GET /api/analyze no servidor e o mesmo cálculo no navegador (mesmo motor e mesmo resumo). O selo compara o
+  // resultHash dos dois quando usaram os mesmos candles (hash da série igual). Setup do Sandbox roda só no navegador.
+  const Q = { running: false, last: null, cache: [] };
   function qFillSetups() {
     const sel = $('qSetup'); if (!sel) return; const cur = sel.value;
-    sel.innerHTML = '<optgroup label="Banco de estratégias">' + E.SETUPS.map((s) => '<option value="' + s.id + '">' + esc(s.nome) + '</option>').join('') + '</optgroup>' +
-      (SB.saved.length ? '<optgroup label="Setups próprios (Sandbox)">' + SB.saved.map((s, i) => '<option value="CUSTOM:' + i + '">' + esc(s.name) + '</option>').join('') + '</optgroup>' : '');
+    sel.innerHTML = '<optgroup label="Banco de estratégias">' + E.SETUPS.map((s) => '<option value="' + esc(s.id) + '">' + esc(s.nome) + '</option>').join('') + '</optgroup>' +
+      (Saved.list.length ? '<optgroup label="Setups próprios (Sandbox)">' + Saved.list.map((s, i) => '<option value="CUSTOM:' + i + '">' + esc(s.name) + '</option>').join('') + '</optgroup>' : '');
     if (cur && Array.from(sel.options).some((o) => o.value === cur)) sel.value = cur;
   }
-  function qCfg() { return { mode: $('qMode').value === 'pct' ? 'pct' : 'atr', tgt: num('qTgt', 2, 0.2, 20), stp: num('qStp', 1, 0.2, 20), hold: Math.round(num('qHold', 12, 2, 60)) }; }
-  function r4(x) { return isFinite(x) ? +x.toFixed(4) : null; }
-  async function qRun() {
-    const id = $('qSetup').value, sym = $('qAsset').value, tf = $('qTf').value, cfg = qCfg(), win = $('qWin').value ? +$('qWin').value : null, wfOn = $('qWf').checked;
-    $('qRun').disabled = true; $('qRun').textContent = 'CONSULTANDO…';
-    const t0 = performance.now();
-    let s, d, calib, tech, famN, custom = null;
-    await later(() => {
-      if (id.indexOf('CUSTOM:') === 0) {
-        custom = SB.saved[+id.split(':')[1]];
-        let dd = U.entry(sym, tf).d; if (win) dd = E.sliceSeries(dd, Math.round((win * 86400) / dd.dt) + 200);
-        const res = E.analyzeSpec(dd, cfg, custom.spec, { sym, tf });
-        s = res.setup; s.q = s.pTwo; s.family = 1; d = res.d; calib = res.calib; tech = res.tech; famN = 1;
-      } else {
-        const A = U.analysisFor(sym, tf, cfg, win);
-        s = A.setups.find((x) => x.id === id); d = A.d; tech = A.tech; famN = A.setups.length;
-        const preds = A.preds.filter((p) => p.sid === id); calib = E.calibSummary(preds, d.t);
-      }
-    });
-    const ms = performance.now() - t0;
-    $('qRun').disabled = false; $('qRun').textContent = 'CONSULTAR';
-    const reg = tech.regime, R = E.REGIMES[reg.regime];
-    const qId = qid();
-    const json = {
-      query_id: qId, engine: E.VERSION, generated_at: new Date().toISOString(),
-      request: { setup: custom ? { custom: custom.spec } : id, symbol: sym, interval: tf, exit: { unit: cfg.mode, target: cfg.tgt, stop: cfg.stp, horizon_candles: cfg.hold }, window_days: win, walk_forward: wfOn },
-      data: { source: 'binance_spot', first_evaluated: new Date(d.t[200] * 1000).toISOString().slice(0, 10), last_closed: new Date(d.t[d.n - 1] * 1000).toISOString(), candles: d.n },
-      result: {
-        n: s.n, n_effective: s.nEff, wins: s.wins, win_rate: r4(s.winRate), ci95: [r4(s.ci[0]), r4(s.ci[1])], ci_method: s.method, base_rate: r4(s.base), diff_pp: +s.alphaPP.toFixed(2),
-        p_raw_two_sided: r4(s.pTwo), p_adjusted_bh: r4(s.q), family_size: famN, verdict: s.verdict.key, verdict_label: s.verdict.label,
-        risk: { cvar5: r4(s.cvar), worst: r4(s.worst), mae_median: r4(s.maeMedian), mean_after_cost: r4(s.meanNet), timeouts: s.timeouts },
-        by_regime: Object.fromEntries(Object.entries(s.byRegime).filter(([k]) => k !== 'UNKNOWN').map(([k, v]) => [k, { n: v.n, win_rate: r4(v.w / v.n) }])),
-        calibration: calib.n >= 30 ? { predictions: calib.n, brier: r4(calib.brier), brier_reference: r4(calib.brierRef), bss: r4(calib.bss), ece: r4(calib.ece) } : null
-      },
-      regime_now: { code: reg.regime, confidence: r4(reg.confidence) },
-      notice: 'Pesquisa estatística histórica. Não é recomendação de compra ou venda.'
-    };
-    if (wfOn) json.result.walk_forward = s.wf.available ? { consistent: s.wf.consistent, brier: r4(s.wf.brier), brier_reference: r4(s.wf.brierRef), windows: s.wf.walks.map((w) => ({ test_from: new Date(d.t[w.from] * 1000).toISOString().slice(0, 10), test_to: new Date(d.t[w.to] * 1000).toISOString().slice(0, 10), train_n: w.trainN, train_wr: r4(w.trainWR), test_n: w.testN, test_wr: r4(w.testWR) })) } : { available: false, reason: s.wf.reason };
-    const jtxt = JSON.stringify(json, null, 2);
-    $('qEmpty').hidden = true; $('qOut').hidden = false;
-    $('qOut').innerHTML =
-      '<div class="regime-badge-row"><span class="lbl">Regime atual:</span><span class="regime-chip ' + REG_CLS[reg.regime] + '">' + esc(R.label) + '</span><span class="lbl">' + esc(PAIR(sym) + ' ' + TF_LABEL[tf] + ' · ' + (custom ? custom.name : s.nome)) + '</span></div>' +
-      statCards(s, calib, custom ? 'teste único' : famN + ' setups do banco') +
-      (wfOn ? wfCard(s, d) : '') + warningsFor(s, famN, d, cfg) +
-      '<div class="card json-card"><div class="json-h"><span>Resposta · application/json</span><button type="button" class="btn btn-sm" id="qCopy">Copiar JSON</button></div><pre class="json" id="qJson"></pre></div>' +
-      '<div class="meta-row"><span>Query ID: ' + qId + '</span><span>' + fmtN(ms, 0) + ' ms · ' + E.VERSION + '</span></div>' +
-      '<p class="pv-note">Formato de resposta da API prevista para a V2. Nesta demonstração, o cálculo roda no próprio navegador.</p>';
-    $('qJson').textContent = jtxt;
-    $('qCopy').onclick = () => U.copyText(jtxt, null, '').then((ok) => { $('qCopy').textContent = ok ? 'Copiado' : 'Não copiou'; setTimeout(() => ($('qCopy').textContent = 'Copiar JSON'), 1600); });
+  const qCfgRead = () => ({ mode: $('qMode').value === 'pct' ? 'pct' : 'atr', tgt: num('qTgt', 2, 0.2, 20), stp: num('qStp', 1, 0.2, 20), hold: Math.round(num('qHold', 12, 2, 60)) });
+  const numStr = (v) => String(+v);
+  function qRequest(sym, tf, cfg, win, live, brief) {
+    const p = ['symbol=' + sym, 'tf=' + tf, 'mode=' + cfg.mode, 'tgt=' + numStr(cfg.tgt), 'stp=' + numStr(cfg.stp), 'hold=' + cfg.hold];
+    if (win) p.push('windowDays=' + win);
+    p.push('live=' + (live ? 1 : 0));
+    if (brief) p.push('brief=1');
+    const path = '/api/analyze?' + p.join('&');
+    const origin = /^https?:$/.test(location.protocol) ? location.origin : 'http://localhost:3000';
+    return { path, url: origin + path, curl: 'curl -s "' + origin + path + '"' };
   }
-  function qRR() { const c = qCfg(); $('qRR').textContent = fmtN(c.tgt / c.stp, 1) + ' : 1'; }
+  async function fetchServer(req) {
+    const t0 = performance.now(), ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const r = await fetch(req.path, { signal: ctl.signal, headers: { accept: 'application/json' }, cache: 'no-store' });
+      const text = await r.text(), ms = performance.now() - t0;
+      let body = null; try { body = JSON.parse(text); } catch (e) { /* não é JSON */ }
+      if (!r.ok) return { ok: false, status: r.status, ms, error: (body && body.error && body.error.message) ? 'HTTP ' + r.status + ': ' + String(body.error.message).slice(0, 200) : 'HTTP ' + r.status };
+      if (!body || typeof body !== 'object' || typeof body.resultHash !== 'string') return { ok: false, status: r.status, ms, error: 'a resposta não é o JSON esperado (HTTP ' + r.status + ')' };
+      return { ok: true, status: r.status, ms, body, text };
+    } catch (e) {
+      return { ok: false, status: 0, ms: performance.now() - t0, error: e && e.name === 'AbortError' ? 'o servidor não respondeu em 25 s' : 'sem conexão com o servidor' };
+    } finally { clearTimeout(to); }
+  }
+  // Candles do navegador para o Query: snapshot versionado ou ao vivo (com queda para o snapshot)
+  async function qSeries(sym, tf, live) {
+    if (!live) return { d: snapshotEntry(sym, tf).d, source: 'snapshot', fallback: '' };
+    const s = await ensureSeries(sym, tf);
+    return s;
+  }
+  function qWindow(d, win) { return win ? E.sliceSeries(d, Math.round((win * 86400) / d.dt) + 200) : d; }
+  async function qLocalBank(sym, tf, cfg, win, live) {
+    const ser = await qSeries(sym, tf, live), d = qWindow(ser.d, win);
+    const key = [sym, tf, ser.source, cfg.mode, cfg.tgt, cfg.stp, cfg.hold, win || 'all', d.n, d.t[d.n - 1]].join('|');
+    let hit = Q.cache.find((c) => c.key === key);
+    if (!hit) {
+      hit = await later(() => {
+        const A = E.analyze(d, Object.assign({}, cfg), { sym, tf, source: ser.source, win: win || null });
+        return { key, A, sum: SUM.summarize(A, { symbol: sym, timeframe: tf, source: ser.source, windowDays: win || null }) };
+      });
+      Q.cache.push(hit); while (Q.cache.length > 4) Q.cache.shift();
+    }
+    return { sum: hit.sum, d, source: ser.source, fallback: ser.fallback };
+  }
+  // Setup do Sandbox: motor no navegador, com o p ajustado pelas variações da sessão; resumo no mesmo formato da API
+  async function qLocalCustom(custom, sym, tf, cfg, win, live) {
+    const ser = await qSeries(sym, tf, live), d = qWindow(ser.d, win);
+    return later(() => {
+      const res = E.analyzeSpec(d, Object.assign({}, cfg), custom.spec, { sym, tf });
+      const s = res.setup;
+      if (s.n) { const t = Reg.record(custom.spec, custom.name, sym, tf, cfg, s); if (t) { s.q = t.q; s.family = t.family; s.verdict = t.verdict; } else { s.q = s.pTwo; s.family = 1; } } else { s.q = s.pTwo; s.family = 1; }
+      const A = { d, cfg: res.cfg, warm: res.warm, rstats: E.regimeStats(res.reg), base: res.base, setups: [s], calib: res.calib, tech: res.tech };
+      return { sum: SUM.summarize(A, { symbol: sym, timeframe: tf, source: ser.source, windowDays: win || null }), d, source: ser.source, fallback: ser.fallback, empty: !s.n };
+    });
+  }
+  // Selo: compara o resultHash do servidor com o do navegador, só quando os dois usaram os mesmos candles
+  function qSeal(server, local, custom, skipped) {
+    if (custom) return { kind: 'off', title: 'Setup próprio: roda só no navegador', text: 'Um setup vindo do Sandbox não existe no servidor. O cálculo usou o mesmo motor (' + local.sum.engine + '), no navegador. O resultHash abaixo é o deste cálculo local.' };
+    if (skipped) return { kind: 'off', title: 'Sem comparação com o servidor', text: 'Esta página roda sem acesso ao servidor. O resultado foi calculado no navegador.' };
+    if (!server.ok) return { kind: 'off', title: 'Servidor indisponível: calculado só no navegador', text: 'Motivo: ' + server.error + '. O resultado abaixo foi calculado no navegador com o mesmo motor (' + local.sum.engine + '). Não há comparação de hash.' };
+    const sb = server.body, lb = local.sum;
+    if (sb.engine !== lb.engine) return { kind: 'warn', title: 'Versões do motor diferentes', text: 'Servidor: ' + sb.engine + '. Navegador: ' + lb.engine + '. Com versões diferentes os resultHash não são comparáveis.' };
+    if (sb.data.hash !== lb.data.hash) {
+      return { kind: 'warn', title: 'Candles diferentes: o resultHash não é comparável', text: 'O servidor leu ' + fmtInt(sb.data.candles) + ' candles até ' + isoDayOf(sb.data.to) + ' (' + sb.data.source + ', hash da série ' + shortHash(sb.data.hash) + '). O navegador leu ' + fmtInt(lb.data.candles) + ' candles até ' + isoDayOf(lb.data.to) + ' (' + lb.data.source + ', hash ' + shortHash(lb.data.hash) + '). Isso não indica erro de cálculo.' + (sb.data.source === 'database' ? ' O servidor leu da base de candles.' : ' Com a opção "Snapshot versionado" e o servidor sem base de candles, os dois lados leem o mesmo arquivo.') };
+    }
+    if (sb.resultHash === lb.resultHash) return { kind: 'ok', title: 'Mesmo resultado no servidor e no navegador', text: 'Os dois usaram os mesmos ' + fmtInt(sb.data.candles) + ' candles (hash da série ' + shortHash(sb.data.hash) + ') e chegaram ao mesmo resultHash.' };
+    const diffs = [];
+    (sb.setups || []).forEach((s, i) => { const l = lb.setups[i]; ['n', 'nEff', 'wins', 'winRate', 'pTwo', 'q'].forEach((k) => { if (!l || s[k] !== l[k]) diffs.push(s.id + '.' + k); }); });
+    return { kind: 'bad', title: 'Resultados diferentes sobre os mesmos candles', text: 'Os candles são os mesmos (hash da série ' + shortHash(sb.data.hash) + '), mas os resultHash diferem.' + (diffs.length ? ' Campos diferentes: ' + diffs.slice(0, 6).join(', ') + '.' : ' Os campos dos setups coincidem; a diferença está em outra parte do resumo.') };
+  }
+  const sealHTML = (z) => '<div class="q-seal ' + z.kind + '" role="status"><span class="q-seal-ico" aria-hidden="true">' + ({ ok: '✓', bad: '✗', warn: '!', off: 'i' }[z.kind]) + '</span><div><strong>' + esc(z.title) + '</strong><p>' + esc(z.text) + '</p></div></div>';
+
+  async function qRun() {
+    if (Q.running) return;
+    const id = $('qSetup').value, sym = $('qAsset').value, tf = $('qTf').value, cfg = qCfgRead(), win = $('qWin').value ? +$('qWin').value : null, brief = $('qBrief').checked, live = $('qData').value === 'live';
+    if (!ASSETS.includes(sym) || !TFS.includes(tf)) return;
+    let custom = null;
+    if (id.indexOf('CUSTOM:') === 0) { custom = Saved.list[+id.split(':')[1]]; if (!custom) return; }
+    else if (!E.SETUPS.some((s) => s.id === id)) return;
+    Q.running = true; $('qRun').disabled = true; $('qRun').textContent = 'CONSULTANDO…';
+    $('qEmpty').hidden = true; $('qOut').hidden = false; $('qOut').setAttribute('aria-busy', 'true');
+    $('qOut').innerHTML = loadingHTML(custom ? 'Calculando no navegador…' : 'Consultando o servidor e calculando no navegador…');
+    const req = qRequest(sym, tf, cfg, win, live, brief);
+    try {
+      if (!SUM) throw new Error('o módulo de resumo não foi carregado nesta página');
+      const skipped = !custom && (IN_CLAUDE || !/^https?:$/.test(location.protocol));
+      const serverP = custom || skipped ? Promise.resolve(null) : fetchServer(req);
+      const local = custom ? await qLocalCustom(custom, sym, tf, cfg, win, live) : await qLocalBank(sym, tf, cfg, win, live);
+      const server = await serverP;
+      if (local.empty) { $('qOut').innerHTML = stateHTML('empty', 'Nenhum gatilho com desfecho nesta série', 'O setup próprio não disparou depois do aquecimento de 200 candles, ou os disparos não têm a janela futura completa de ' + cfg.hold + ' candles.'); return; }
+      qRender({ id, custom, sym, tf, cfg, win, live, brief, req, local, server, skipped });
+    } catch (e) {
+      $('qOut').innerHTML = stateHTML('err', 'A consulta não pôde ser feita', 'Nenhum número foi calculado. ' + (e && e.message ? String(e.message).slice(0, 160) : ''));
+    } finally {
+      Q.running = false; $('qOut').setAttribute('aria-busy', 'false'); $('qRun').disabled = false; $('qRun').textContent = 'CONSULTAR';
+    }
+  }
+  // Recorte da resposta do servidor para o setup escolhido (a resposta completa traz os 8 setups, a calibração e a leitura técnica)
+  function qSlice(body, setupRaw) {
+    return {
+      engine: body.engine, input: body.input, data: body.data, regime: { current: body.regime.current }, base: body.base, setup: setupRaw,
+      calibration: { n: body.calibration.n, brier: body.calibration.brier, brierRef: body.calibration.brierRef, bss: body.calibration.bss, ece: body.calibration.ece, status: body.calibration.status },
+      resultHash: body.resultHash
+    };
+  }
+  function qRender(c) {
+    const { custom, server, local, req } = c;
+    const serverOk = !!(server && server.ok), full = serverOk && !!server.body.setups;
+    const shown = full ? server.body : local.sum;
+    const sRaw = shown.setups.find((x) => x.id === (custom ? 'CUSTOM' : c.id));
+    if (!sRaw) { $('qOut').innerHTML = stateHTML('err', 'Setup não encontrado na resposta', 'A resposta não traz o setup pedido.'); return; }
+    const s = reviveSetup(sRaw), calib = reviveCalib(shown.calibration);
+    const regNow = shown.regime.current, seal = qSeal(server, local, !!custom, c.skipped);
+    const dLike = { n: shown.data.candles, dt: TF_SEC[c.tf], t: [Date.parse(shown.data.from) / 1000] };
+    const famN = custom ? Math.max(1, s.family || 1) : shown.setups.length;
+    const famTxt = custom ? famN + ' ' + pl(famN, 'variação', 'variações') + ' na sessão' : famN + ' setups do banco';
+    // JSON mostrado: a resposta curta inteira, o recorte da resposta completa ou, sem servidor, o resumo local no mesmo formato
+    let view, origin = serverOk ? 'servidor' : 'navegador';
+    if (serverOk && c.brief) view = server.body;
+    else if (full) view = Object.assign(qSlice(server.body, sRaw), { ms: server.body.ms, cacheHit: server.body.cacheHit, disclaimer: server.body.disclaimer });
+    else view = Object.assign(qSlice(local.sum, sRaw), { calculado_no: 'navegador' });
+    const jtxt = JSON.stringify(view, null, 2), fulltxt = JSON.stringify(serverOk ? server.body : local.sum, null, 2);
+    const meta = serverOk
+      ? '<span>Latência: ' + fmtN(server.ms, 0) + ' ms' + (isFinite(server.body.ms) ? ' (motor no servidor: ' + fmtN(server.body.ms, 0) + ' ms' + (server.body.cacheHit ? ', em cache' : '') + ')' : '') + '</span>'
+      : server ? '<span>Latência: ' + fmtN(server.ms, 0) + ' ms até a falha</span>' : '<span>Latência: sem chamada ao servidor</span>';
+    const fallbackNote = local.fallback ? '<div class="warnings"><div class="warning-item"><span class="mark">⚠</span> Candles ao vivo indisponíveis no navegador (' + esc(local.fallback) + '). O navegador usou o snapshot versionado.</div></div>' : '';
+    $('qOut').innerHTML =
+      '<div class="regime-badge-row"><span class="lbl">Regime atual:</span><span class="regime-chip ' + (REG_CLS[regNow.regime] || 'lv') + '">' + esc(regNow.label || (E.REGIMES[regNow.regime] || {}).label || regNow.regime) + '</span><span class="lbl">' + esc(PAIR(c.sym) + ' ' + TF_LABEL[c.tf] + ' · ' + (custom ? custom.name : s.nome)) + '</span></div>' +
+      sealHTML(seal) + fallbackNote +
+      (serverOk && c.brief ? '<p class="pv-note">A resposta curta (brief=1) traz só a identificação do resultado. As estatísticas abaixo vêm do cálculo no navegador, com o mesmo motor.</p>' : '') +
+      statCards(s, calib, famTxt) + (s.wf ? wfCard(s, dLike) : '') + warningsFor(s, famN, dLike, c.cfg) +
+      (custom
+        ? '<div class="card q-req"><div class="json-h"><span>Requisição</span></div><p class="pv-note q-note">Setup próprio do Sandbox: não há requisição ao servidor. O cálculo rodou no navegador, com o motor ' + esc(local.sum.engine) + ' e os candles descritos abaixo.</p></div>'
+        : '<div class="card q-req"><div class="json-h"><span>Requisição · GET /api/analyze</span><span class="q-btns"><button type="button" class="btn btn-sm" id="qCopyUrl">Copiar URL</button><button type="button" class="btn btn-sm" id="qCopyCurl">Copiar curl</button></span></div><pre class="json q-line" id="qUrl" tabindex="0"></pre><pre class="json q-line" id="qCurl" tabindex="0"></pre></div>') +
+      '<div class="card json-card"><div class="json-h"><span>Resposta · application/json · ' + (serverOk ? 'HTTP ' + server.status + ' · servidor' : 'calculada no navegador') + '</span><span class="q-btns"><button type="button" class="btn btn-sm" id="qCopy">Copiar JSON</button><button type="button" class="btn btn-sm" id="qCopyFull">Copiar resposta completa</button></span></div><pre class="json" id="qJson" tabindex="0" aria-label="Resposta JSON"></pre></div>' +
+      '<div class="meta-row q-meta">' + meta + '<span>' + esc(shown.engine) + ' · candles: ' + esc(shown.data.source) + ' · ' + fmtInt(shown.data.candles) + '</span></div>' +
+      '<div class="q-hashes"><div><span class="lbl">resultHash (' + origin + ')</span><code class="q-hash">' + esc(shown.resultHash) + '</code></div>' +
+        (serverOk ? '<div><span class="lbl">resultHash (navegador)</span><code class="q-hash">' + esc(local.sum.resultHash) + '</code></div>' : '') +
+        '<div><span class="lbl">hash da série (' + origin + ')</span><code class="q-hash">' + esc(shown.data.hash) + '</code></div></div>' +
+      '<p class="pv-note">O resultHash é o SHA-256 do resumo canônico da análise: os mesmos candles, a mesma regra de saída e a mesma versão do motor dão o mesmo hash em qualquer ambiente. O navegador monta o resumo com o mesmo código do servidor.</p>';
+    $('qJson').textContent = jtxt;
+    if (!custom) {
+      $('qUrl').textContent = 'GET ' + req.url; $('qCurl').textContent = req.curl;
+      $('qCopyUrl').onclick = () => copyBtn('qCopyUrl', req.url, 'Copiar URL');
+      $('qCopyCurl').onclick = () => copyBtn('qCopyCurl', req.curl, 'Copiar curl');
+    }
+    $('qCopy').onclick = () => copyBtn('qCopy', jtxt, 'Copiar JSON');
+    $('qCopyFull').onclick = () => copyBtn('qCopyFull', fulltxt, 'Copiar resposta completa');
+    Q.last = { jtxt, fulltxt, seal };
+  }
+  function copyBtn(id, text, label) { const b = $(id); U.copyText(text, null, '').then((ok) => { b.textContent = ok ? 'Copiado' : 'Não copiou'; setTimeout(() => (b.textContent = label), 1600); }); }
+  function qRR() { const c = qCfgRead(); $('qRR').textContent = fmtN(c.tgt / c.stp, 1) + ' : 1'; }
   function qInit() {
     if (!$('qSetup')) return;
+    if (!$('sbCode')) { Saved.load(); }
     qFillSetups(); $('qSetup').value = 'RSI_OVERSOLD';
     $('qRun').addEventListener('click', qRun);
     ['qTgt', 'qStp', 'qMode'].forEach((id) => $(id).addEventListener('input', qRR)); qRR();
@@ -381,17 +593,17 @@
   }
 
   // ================================================================ Telas em construção (FEATURES)
-  // Fechada, a tela perde o protótipo (os campos nem existem: sbInit e qInit não montam nada) e passa a mostrar um aviso.
+  // Fechada, a tela perde o conteúdo interativo (os campos nem existem: sbInit e qInit não montam nada) e passa a mostrar um aviso.
   // Quem leva à tela por fora dela (data-feature="sandbox" | "query" em outras telas) é escondido.
   const SOON = {
     sandbox: {
       title: 'Setup Sandbox',
-      will: 'O Sandbox vai ler uma regra escrita em Pine Script e testá-la contra entradas aleatórias, com os dados reais da Binance e a mesma regra de saída do banco de estratégias. O p de cada teste será ajustado pelo número de variações testadas na sessão.',
+      will: 'O Sandbox lê uma regra escrita em Pine Script e a testa contra entradas aleatórias, com os dados reais da Binance e a mesma regra de saída do banco de estratégias. O p de cada teste é ajustado pelo número de variações testadas na sessão.',
       meanwhile: 'Enquanto isso, os 8 setups do banco de estratégias são testados na tela Ao vivo, com taxa de acerto, intervalo de confiança, taxa-base e p ajustado.'
     },
     query: {
       title: 'Query',
-      will: 'O Query vai permitir consultar o motor diretamente: um setup, um ativo, uma regra de saída e uma janela, com a resposta no formato da API.',
+      will: 'O Query consulta o motor diretamente: um setup, um ativo, uma regra de saída e uma janela, com a resposta no formato da API.',
       meanwhile: 'Enquanto isso, a análise de cada setup, com os mesmos números do motor, está na tela Ao vivo.'
     }
   };
@@ -402,7 +614,7 @@
     const wrap = document.querySelector('#dash-' + key + ' .wrap');
     if (wrap) {
       wrap.innerHTML = '<div class="page-header"><h1>' + esc(c.title) + '<span class="soon">em construção</span></h1><p>Esta função ainda não está disponível nesta versão.</p></div>' +
-        '<div class="card config-card"><div class="section-label">O que a função fará</div><p class="pv-context">' + esc(c.will) + '</p><p class="pv-note">Ainda não está disponível. ' + esc(c.meanwhile) + '</p>' +
+        '<div class="card config-card"><div class="section-label">O que a função faz</div><p class="pv-context">' + esc(c.will) + '</p><p class="pv-note">Ainda não está disponível. ' + esc(c.meanwhile) + '</p>' +
         '<div class="run-row"><span></span><button type="button" class="btn btn-primary" data-go="live">Ir para Ao vivo</button></div></div><div class="bottom-pad"></div>';
       wrap.querySelector('[data-go]').addEventListener('click', () => { if (window.switchDashTab) window.switchDashTab('live'); });
     }
@@ -414,9 +626,9 @@
   const shown = {};
   function onTab(screen) {
     if (screen === 'calibration') { if (!shown.cal) { shown.cal = true; } later(cRender); }
+    if (screen === 'query') qFillSetups();
   }
-  window.ArgosPlatform = { onTab, parsePine, cRender };
+  window.ArgosPlatform = { onTab, cRender, readPine: PR ? PR.readPine : null };
   function boot() { applyFeatures(); sbInit(); qInit(); cInit(); siteInit(); tipInit(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
-

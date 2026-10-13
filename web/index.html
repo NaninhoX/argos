@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Argos Sentinel</title>
+<title>Argos Sentinel · Teste estatístico de setups contra o acaso</title>
+<meta name="description" content="Argos Sentinel, da Stratum Research, testa setups de análise técnica contra entradas aleatórias, com intervalo de confiança, p ajustado e calibração. Pesquisa estatística, sem recomendação de investimento.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -17,7 +18,7 @@
     --gold-bright: #D4B15C;
     --ink: #E8E3D8;
     --ink-dim: #9BA4B2;
-    --ink-faint: #5E6B7C;
+    --ink-faint: #7D8898; /* contraste mínimo de 4,5:1 sobre --bg, --bg-panel e --bg-elevated */
     --red: #C4544A;
     --green: #5FA37E;
 
@@ -662,7 +663,7 @@
   }
 .dashboard-page .page-header .step-flow {
     display: flex; align-items: center; gap: 8px; margin-top: 14px;
-    font-size: 11px; color: var(--ink-ghost);
+    font-size: 11px; color: var(--ink-faint);
   }
 .dashboard-page .step-flow .s { color: var(--ink-faint); }
 .dashboard-page .step-flow .arrow { color: var(--ink-ghost); }
@@ -780,7 +781,7 @@
     font-size: 17px; font-weight: 600; color: var(--stat-accent, var(--ink));
     margin-bottom: 5px;
   }
-.dashboard-page .stat-card .sub { font-size: 10.5px; color: var(--ink-ghost); }
+.dashboard-page .stat-card .sub { font-size: 10.5px; color: var(--ink-faint); }
 .dashboard-page .ci-bar {
     position: relative; height: 4px; background: var(--navy-line);
     border-radius: 2px; margin: 8px 0 6px;
@@ -813,7 +814,7 @@
     font-size: 12px; padding: 7px 10px; border-radius: 4px; color: var(--ink-faint);
   }
 .dashboard-page .regime-list-row.current { background: var(--gold-dim); color: var(--gold-bright); }
-.dashboard-page .regime-list-row .n { color: var(--ink-ghost); }
+.dashboard-page .regime-list-row .n { color: var(--ink-faint); }
 .dashboard-page .regime-list-row.current .n { color: var(--gold-bright); opacity: 0.7; }
 .dashboard-page .wf-card { margin-top: 10px; padding: 16px; }
 .dashboard-page .wf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
@@ -822,7 +823,7 @@
 .dashboard-page .wf-badge.ok { background: var(--green-dim); color: #9CCFAF; }
 .dashboard-page table.wf-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
 .dashboard-page table.wf-table th {
-    text-align: right; padding: 6px 8px; color: var(--ink-ghost);
+    text-align: right; padding: 6px 8px; color: var(--ink-faint);
     border-bottom: 1px solid var(--navy-line-soft); font-weight: 500;
   }
 .dashboard-page table.wf-table th:first-child { text-align: left; }
@@ -851,7 +852,7 @@
 .dashboard-page .rr-sub .m .l { font-size: 10px; color: var(--ink-faint); margin-bottom: 3px; }
 .dashboard-page .rr-sub .m .v { font-size: 13px; color: var(--ink); }
 .dashboard-page .rr-note {
-    margin-top: 14px; font-size: 10.5px; color: var(--ink-ghost); line-height: 1.6;
+    margin-top: 14px; font-size: 10.5px; color: var(--ink-faint); line-height: 1.6;
     padding-top: 10px; border-top: 1px solid var(--navy-line-soft);
   }
 .dashboard-page .warnings { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -865,7 +866,7 @@
 .dashboard-page .action-row { display: flex; gap: 10px; margin-top: 16px; }
 .dashboard-page .saved-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--navy-line-soft); }
 .dashboard-page .saved-empty {
-    padding: 28px; text-align: center; color: var(--ink-ghost); font-size: 12px;
+    padding: 28px; text-align: center; color: var(--ink-faint); font-size: 12px;
     background: var(--bg-panel); border: 1px dashed var(--navy-line); border-radius: 6px;
   }
 .dashboard-page .saved-list { display: flex; flex-direction: column; gap: 8px; }
@@ -933,11 +934,11 @@
 .dashboard-page .rr-mini .v { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--gold-bright); }
 .dashboard-page .empty-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 340px; text-align: center; gap: 14px; color: var(--ink-ghost);
+    min-height: 340px; text-align: center; gap: 14px; color: var(--ink-faint);
   }
 .dashboard-page .empty-icon {
     width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--navy-line);
-    display: flex; align-items: center; justify-content: center; color: var(--ink-ghost);
+    display: flex; align-items: center; justify-content: center; color: var(--ink-faint);
   }
 .dashboard-page .empty-state p { font-size: 12px; margin: 0; }
 .dashboard-page .regime-badge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -952,7 +953,7 @@
 .dashboard-page .returns-grid .m .l { font-size: 10px; color: var(--ink-faint); margin-bottom: 4px; }
 .dashboard-page .returns-grid .m .v { font-size: 14px; color: var(--ink); }
 .dashboard-page .warnings { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.dashboard-page .meta-row { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--ink-ghost); padding-top: 12px; border-top: 1px solid var(--navy-line-soft); }
+.dashboard-page .meta-row { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--ink-faint); padding-top: 12px; border-top: 1px solid var(--navy-line-soft); }
 .dashboard-page .disclaimer-inner { max-width: 1040px; margin: 0 auto; padding: 20px 24px; display: flex; gap: 12px; align-items: flex-start; }
 .dashboard-page .section-label { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 28px 0 14px; }
 .dashboard-page .regime-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -985,7 +986,7 @@
     background: var(--amber-dim); border: 1px solid rgba(201,162,39,0.25);
     font-size: 11px; color: var(--gold-bright); line-height: 1.6;
   }
-.dashboard-page .regime-computed { margin-top: 14px; font-size: 9.5px; color: var(--ink-ghost); }
+.dashboard-page .regime-computed { margin-top: 14px; font-size: 9.5px; color: var(--ink-faint); }
 .dashboard-page .interp-card {
     background: var(--bg-panel); border: 1px solid var(--navy-line);
     border-radius: 5px; padding: 16px 18px; margin-bottom: 10px;
@@ -1032,7 +1033,7 @@
 .dashboard-page .ref-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; }
 .dashboard-page .hist-card { padding: 18px; margin-bottom: 20px; overflow-x: auto; }
 .dashboard-page table.hist-table { width: 100%; border-collapse: collapse; font-size: 11.5px; min-width: 520px; }
-.dashboard-page table.hist-table th { text-align: right; padding: 6px 10px; color: var(--ink-ghost); border-bottom: 1px solid var(--navy-line-soft); font-weight: 500; }
+.dashboard-page table.hist-table th { text-align: right; padding: 6px 10px; color: var(--ink-faint); border-bottom: 1px solid var(--navy-line-soft); font-weight: 500; }
 .dashboard-page table.hist-table th:first-child { text-align: left; }
 .dashboard-page table.hist-table td { text-align: right; padding: 7px 10px; color: var(--ink-dim); border-bottom: 1px solid rgba(255,255,255,0.03); }
 .dashboard-page table.hist-table td:first-child { text-align: left; color: var(--ink-faint); }
@@ -1170,7 +1171,7 @@
   /* leitura técnica */
   .lv .panel-h { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px 10px; border-bottom: 1px solid var(--navy-line-soft); gap: 8px; }
   .lv .panel-h .t { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); }
-  .lv .panel-h .m { font-size: 10.5px; color: var(--ink-ghost); }
+  .lv .panel-h .m { font-size: 10.5px; color: var(--ink-faint); }
   .lv .regime-box { padding: 14px; border-bottom: 1px solid var(--navy-line-soft); }
   .lv .regime-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); }
   .lv .regime-chip .sq { width: 10px; height: 10px; border-radius: 2px; }
@@ -1182,13 +1183,13 @@
   .lv .kv > div { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.035); font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
   .lv .kv > div:nth-child(odd) { color: var(--ink-faint); }
   .lv .kv > div:nth-child(even) { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .lv .kv small { font-size: 10.5px; color: var(--ink-ghost); }
+  .lv .kv small { font-size: 10.5px; color: var(--ink-faint); }
   .lv .kv-grid { display: grid; grid-template-columns: 1fr 1fr; }
   .lv .kvi { padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.035); min-width: 0; }
   .lv .kvi:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.035); }
   .lv .kvi .l { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 3px; }
   .lv .kvi .v { font-size: 13.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .lv .kvi .d { font-size: 10.5px; color: var(--ink-ghost); margin-top: 2px; line-height: 1.4; }
+  .lv .kvi .d { font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; line-height: 1.4; }
 
   /* pipeline */
   .lv .pipe { list-style: none; margin: 0; padding: 6px 0; }
@@ -1222,10 +1223,10 @@
   .lv table.bank tbody tr.sel { background: var(--gold-dim); }
   .lv table.bank tbody tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
   .lv .sname { color: var(--ink); font-size: 12.5px; }
-  .lv .sgrp { color: var(--ink-ghost); font-size: 10.5px; margin-top: 2px; }
+  .lv .sgrp { color: var(--ink-faint); font-size: 10.5px; margin-top: 2px; }
   .lv .now { font-size: 10.5px; padding: 3px 8px; border-radius: 3px; white-space: nowrap; }
   .lv .now.on { color: #0D1420; background: var(--gold-bright); font-weight: 600; }
-  .lv .now.off { color: var(--ink-ghost); }
+  .lv .now.off { color: var(--ink-faint); }
   .lv .num-dim { color: var(--ink-faint); }
   .lv .civiz { position: relative; width: 170px; height: 18px; }
   .lv .civiz .track { position: absolute; left: 0; right: 0; top: 8px; height: 2px; background: var(--navy-line-soft); border-radius: 1px; }
@@ -1257,7 +1258,7 @@
   .lv .dstat { border: 1px solid var(--navy-line-soft); border-radius: 6px; padding: 11px 12px; background: rgba(13,20,32,0.5); min-width: 0; }
   .lv .dstat .l { font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
   .lv .dstat .v { font-size: 16px; font-weight: 600; color: var(--ink); }
-  .lv .dstat .s { font-size: 10.5px; color: var(--ink-ghost); margin-top: 4px; line-height: 1.45; }
+  .lv .dstat .s { font-size: 10.5px; color: var(--ink-faint); margin-top: 4px; line-height: 1.45; }
   .lv .dcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
   @media (max-width: 900px) { .lv .dcols { grid-template-columns: minmax(0,1fr); } }
   .lv .mini-h { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin: 4px 0 8px; }
@@ -1516,7 +1517,7 @@
   .roll-svg .zero { stroke: #5E6B7C; stroke-width: 1; }
   .rel-svg .ax, .roll-svg .ax { fill: #7D8898; font-size: 10.5px; }
   .rel-svg .ax-t { fill: #8D97A6; font-size: 11px; }
-  .rel-svg .ax-note, .roll-svg .ax-note { fill: #5E6B7C; font-size: 10.5px; }
+  .rel-svg .ax-note, .roll-svg .ax-note { fill: #7D8898; font-size: 10.5px; }
   .rel-svg .diag { stroke: #5E6B7C; stroke-width: 1; }
   .rel-svg .rel-line { fill: none; stroke: #D4B15C; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
   .rel-svg .rel-pt .dot { fill: #D4B15C; stroke: #141E2C; stroke-width: 2; }
@@ -1654,7 +1655,66 @@
   @media (max-width: 640px) { .pv .pv-grid .stat-card .sub { font-size: 10.5px; } .pv .page-header h1 { font-size: 24px; } }
   .lv .verdict, .pv .verdict { font-family: var(--mono); font-weight: 400; letter-spacing: 0; }
 
+  /* ============================================================
+     SANDBOX E QUERY (v1.1 final): leitura do script, estados da tela, selo do servidor
+     ============================================================ */
+  .pv .sb-templates .sb-count { margin-left: auto; }
+  .pv .sb-count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .pv .sb-count.over { color: #f0a39b; }
+  .pv .sb-parsed.neutral { background: rgba(155,164,178,0.06); border: 1px solid var(--navy-line); color: var(--ink-dim); }
+  .pv .sb-parsed .pr-sub { margin: 12px 0 4px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
+  .pv .sb-parsed.err .pr-sub { color: #e8b4ae; }
+  .pv .sb-parsed .pr-list { margin: 0; padding-left: 18px; }
+  .pv .sb-parsed .pr-list li { margin: 3px 0; line-height: 1.55; }
+  .pv .sb-parsed .pr-list.dim { color: var(--ink-faint); }
+  .pv .sb-parsed .pr-note { color: var(--ink-faint); }
+  .pv .sb-parsed.err .pr-note { color: #e8b4ae; }
+  .pv .sb-parsed p { margin: 8px 0 0; }
+  .pv .sb-data { font-size: 11px; line-height: 1.5; color: var(--ink-faint); margin: 12px 0 0; }
+  .pv .pv-state { display: flex; align-items: center; gap: 10px; padding: 22px; border-radius: 6px; border: 1px solid var(--navy-line); background: var(--bg-panel); color: var(--ink-dim); font-size: 12.5px; line-height: 1.6; }
+  .pv .pv-state p { margin: 4px 0 0; }
+  .pv .pv-state.empty, .pv .pv-state.err { display: block; }
+  .pv .pv-state.err { border-color: rgba(218,95,85,0.45); background: var(--red-dim); color: #f0c4be; }
+  .pv .pv-state-h { color: var(--ink); font-size: 13px; }
+  .pv .pv-state.err .pv-state-h { color: #f6d3ce; }
+  .pv .pv-spin { flex: none; width: 14px; height: 14px; border: 2px solid var(--navy-line); border-top-color: var(--gold-bright); border-radius: 50%; animation: pvSpin 0.8s linear infinite; }
+  @keyframes pvSpin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .pv .pv-spin { animation: none; } }
+  .pv .adj-note { margin: 14px 0; padding: 10px 14px; border-left: 2px solid var(--gold); background: var(--gold-dim); color: var(--ink-dim); border-radius: 0 4px 4px 0; }
+  .pv .adj-note strong { color: var(--ink); font-weight: 500; }
+  .pv .reg-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 14px; margin-bottom: 10px; font-size: 11.5px; color: var(--ink-faint); }
+  .pv .btn-warn { border-color: rgba(218,95,85,0.6); color: #f0a39b; }
+  .pv .toast a { color: var(--gold-bright); }
+  .pv .q-seal { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: 6px; border: 1px solid var(--navy-line); font-size: 12px; line-height: 1.55; }
+  .pv .q-seal strong { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 500; color: var(--ink); }
+  .pv .q-seal p { margin: 0; color: var(--ink-dim); }
+  .pv .q-seal-ico { flex: none; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1px solid currentColor; font-size: 12px; font-weight: 700; }
+  .pv .q-seal.ok { border-color: rgba(61,170,110,0.45); background: var(--green-dim); }
+  .pv .q-seal.ok .q-seal-ico { color: #8fd3b4; }
+  .pv .q-seal.bad { border-color: rgba(218,95,85,0.5); background: var(--red-dim); }
+  .pv .q-seal.bad .q-seal-ico { color: #f0a39b; }
+  .pv .q-seal.warn { border-color: rgba(201,162,39,0.45); background: var(--amber-dim); }
+  .pv .q-seal.warn .q-seal-ico { color: #e2c46a; }
+  .pv .q-seal.off { background: rgba(155,164,178,0.06); }
+  .pv .q-seal.off .q-seal-ico { color: var(--ink-dim); }
+  .pv .q-req { padding: 0; margin: 12px 0; overflow: hidden; }
+  .pv .json-h .q-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pv pre.json.q-line { max-height: none; white-space: pre-wrap; word-break: break-all; border-top: 1px solid var(--navy-line-soft); }
+  .pv .q-note { margin: 0; padding: 12px 16px; }
+  .pv .q-hashes { display: grid; gap: 10px; margin: 12px 0; }
+  .pv .q-hashes .lbl { display: block; margin-bottom: 2px; font-size: 10.5px; color: var(--ink-faint); }
+  .pv .q-hash { font-family: var(--mono); font-size: 11.5px; line-height: 1.5; color: var(--ink-dim); word-break: break-all; }
+  .pv pre.json:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+
+  /* Barra fixa Site / Plataforma: nunca cobre o rodapé nem o fim da tela, no celular ou com área segura */
+  html { scroll-padding-bottom: 88px; }
+  .meta-nav button { min-height: 44px; }
+  .page { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  @media (max-width: 640px) { .page { padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)); } }
+
 </style>
+<link rel="stylesheet" href="css/extras.css">
+<link rel="stylesheet" href="css/heatmap.css">
 </head>
 <body>
 
@@ -1885,21 +1945,21 @@ alertcondition(ta.crossover(r, 30))</pre>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand"><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
-      <nav class="tabs">
-        <a data-screen="live" class="active"><span class="live-dot"></span>Ao vivo</a>
-        <a data-screen="sandbox">Sandbox</a>
-        <a data-screen="query">Query</a>
-        <a data-screen="regime">Regime</a>
-        <a data-screen="calibration">Calibração</a>
+      <nav class="tabs" role="tablist" aria-label="Telas da plataforma">
+        <a role="tab" id="tab-live" aria-controls="dash-live" aria-selected="true" tabindex="0" data-screen="live" class="active"><span class="live-dot" aria-hidden="true"></span>Ao vivo</a>
+        <a role="tab" id="tab-sandbox" aria-controls="dash-sandbox" aria-selected="false" tabindex="-1" data-screen="sandbox">Sandbox</a>
+        <a role="tab" id="tab-query" aria-controls="dash-query" aria-selected="false" tabindex="-1" data-screen="query">Query</a>
+        <a role="tab" id="tab-regime" aria-controls="dash-regime" aria-selected="false" tabindex="-1" data-screen="regime">Regime</a>
+        <a role="tab" id="tab-calibration" aria-controls="dash-calibration" aria-selected="false" tabindex="-1" data-screen="calibration">Calibração</a>
       </nav>
     </div>
   </header>
 
-    <div id="dash-live" class="dash-screen visible lv">
+    <div id="dash-live" class="dash-screen visible lv" role="tabpanel" aria-labelledby="tab-live">
     <div class="wrap-wide">
       <div class="live-head">
         <div>
-          <div class="eyebrow-mono"><span class="tag-v3">Prévia V3 · protótipo funcional</span><span>Argos AI × TradingView</span></div>
+          <div class="eyebrow-mono"><span>Argos AI × TradingView</span></div>
           <h1>Análise ao vivo</h1>
           <p class="sub">O motor lê o gráfico, testa cada setup do banco de estratégias contra o histórico real e o Argos AI redige o Relatório Estratégico. Evidência, nunca instrução: a decisão é sempre de quem opera.</p>
         </div>
@@ -2046,31 +2106,27 @@ alertcondition(ta.crossover(r, 30))</pre>
     </div>
   </div>
 
-  <div id="dash-sandbox" class="dash-screen pv">
+  <div id="dash-sandbox" class="dash-screen pv" role="tabpanel" aria-labelledby="tab-sandbox">
     <div class="wrap">
       <div class="page-header">
         <h1>Setup Sandbox</h1>
-        <p>Traga a sua estratégia: cole o Pine Script, o Argos lê a regra e a testa contra o acaso com os dados reais da Binance.</p>
+        <p>O Argos lê o Pine Script de uma regra de entrada, mostra o que entendeu, recusa o que não consegue ler com exatidão e testa a regra contra entradas aleatórias, com os dados reais da Binance.</p>
         <div class="step-flow"><span class="s">1. Script</span><span class="arrow">→</span><span class="s">2. Leitura</span><span class="arrow">→</span><span class="s">3. Teste</span><span class="arrow">→</span><span class="s">4. Registro</span></div>
       </div>
 
       <div class="section-label"><span class="step-n">1</span> Pine Script</div>
       <div class="card sb-editor">
-        <div class="sb-templates" role="group" aria-label="Carregar exemplo">
+        <div class="sb-templates" id="sbGallery" role="group" aria-label="Galeria de exemplos">
           <span>Exemplos</span>
-          <button type="button" data-tpl="rsi">RSI 30</button>
-          <button type="button" data-tpl="ma">Cruzamento EMA 9/21</button>
-          <button type="button" data-tpl="macd">MACD</button>
-          <button type="button" data-tpl="bb">Bollinger inferior</button>
-          <button type="button" data-tpl="brk">Rompimento 55</button>
+          <span class="sb-count" id="sbCount" aria-hidden="true"></span>
         </div>
-        <textarea id="sbCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Código Pine Script" rows="9"></textarea>
+        <textarea id="sbCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Código Pine Script" aria-describedby="sbParsed" rows="11"></textarea>
         <div class="editor-actions">
-          <span class="sb-hint">Lê RSI, MACD, cruzamento de médias (SMA/EMA), preço cruzando média, Bollinger inferior e rompimento de máxima. Avaliação de compra teórica (long).</span>
+          <span class="sb-hint">Pine v4, v5 e v6. Lê RSI, MACD, cruzamento de médias (SMA ou EMA), fechamento cruzando média, Bollinger inferior e rompimento de máxima. A avaliação é de compra teórica (long).</span>
           <button type="button" class="btn btn-primary" id="sbParse">Ler script</button>
         </div>
       </div>
-      <div id="sbParsed" class="sb-parsed" hidden></div>
+      <div id="sbParsed" class="sb-parsed" aria-live="polite" hidden></div>
 
       <div class="section-label"><span class="step-n">2</span> Parâmetros do teste</div>
       <div class="card config-card">
@@ -2086,28 +2142,29 @@ alertcondition(ta.crossover(r, 30))</pre>
           <div class="field"><label for="sbStp">Stop</label><input id="sbStp" type="number" step="0.1" min="0.2" max="20" value="1"></div>
           <div class="field"><label for="sbHold">Horizonte (candles)</label><input id="sbHold" type="number" step="1" min="2" max="60" value="12"></div>
         </div>
+        <p class="sb-data" id="sbData"></p>
         <div class="run-row"><span class="pv-rr" id="sbRR"></span><button type="button" class="btn btn-primary" id="sbRun" disabled>Executar teste</button></div>
       </div>
 
       <div id="sbResults" hidden>
         <div class="section-label"><span class="step-n">3</span> Resultado</div>
-        <div id="sbOut"></div>
+        <div id="sbOut" aria-live="polite"></div>
       </div>
 
       <div class="saved-section">
         <div class="section-label"><span class="step-n">4</span> Registro desta sessão</div>
-        <p class="pv-note">Cada variação testada entra na conta. Testar vinte versões de uma ideia e guardar a melhor é o erro mais comum em backtest; por isso o p de cada teste é ajustado pelo número de testes da sessão (Benjamini-Hochberg), e o veredito acompanha o ajuste.</p>
+        <p class="pv-note">Cada variação testada entra na conta. Testar muitas versões de uma mesma ideia e guardar a melhor é o erro mais comum em backtest: quanto mais testes, maior a chance de um deles parecer vantagem por puro acaso. Por isso o p de cada teste é ajustado pelo número de variações da sessão (método de Benjamini-Hochberg), e o veredito usa o p ajustado. Repetir exatamente o mesmo teste não conta duas vezes. O registro fica salvo neste navegador até ser zerado.</p>
         <div id="sbLog"><div class="saved-empty">Nenhum teste nesta sessão ainda.</div></div>
       </div>
       <div class="bottom-pad"></div>
     </div>
   </div>
 
-  <div id="dash-query" class="dash-screen pv">
+  <div id="dash-query" class="dash-screen pv" role="tabpanel" aria-labelledby="tab-query">
     <div class="wrap">
       <div class="page-header">
         <h1>Query</h1>
-        <p>Consulta direta ao motor, com a resposta no formato da API: um setup, um ativo, uma regra de saída, uma janela.</p>
+        <p>Consulta real ao motor pela API: um setup, um ativo, uma regra de saída e uma janela. A tela mostra a requisição, a resposta em JSON e compara o resultado do servidor com o cálculo feito no navegador.</p>
       </div>
       <div class="layout">
         <aside>
@@ -2127,7 +2184,8 @@ alertcondition(ta.crossover(r, 30))</pre>
               <div class="field"><label for="qStp">Stop</label><input id="qStp" type="number" step="0.1" min="0.2" max="20" value="1"></div>
             </div>
             <div class="field"><label for="qWin">Janela</label><select id="qWin"><option value="">Todo o histórico carregado</option><option value="730">Últimos 2 anos</option><option value="365">Último ano</option><option value="180">Últimos 180 dias</option></select></div>
-            <div class="checkbox-row"><input type="checkbox" id="qWf" checked><label for="qWf">Incluir walk-forward</label></div>
+            <div class="field"><label for="qData">Candles</label><select id="qData"><option value="snapshot">Snapshot versionado (reprodutível)</option><option value="live">Ao vivo (Binance)</option></select></div>
+            <div class="checkbox-row"><input type="checkbox" id="qBrief"><label for="qBrief">Resposta curta (brief=1)</label></div>
             <button type="button" class="btn-consultar" id="qRun">CONSULTAR</button>
           </div>
           <div class="card rr-mini"><div class="l">Alvo : stop</div><div class="v" id="qRR">2 : 1</div></div>
@@ -2135,16 +2193,16 @@ alertcondition(ta.crossover(r, 30))</pre>
         <div>
           <div id="qEmpty" class="empty-state">
             <div class="empty-icon"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
-            <p>Configure os parâmetros e clique em CONSULTAR</p>
+            <p>Nenhuma consulta feita. Os parâmetros ao lado definem a requisição a GET /api/analyze.</p>
           </div>
-          <div id="qOut" hidden></div>
+          <div id="qOut" aria-live="polite" hidden></div>
         </div>
       </div>
       <div class="bottom-pad"></div>
     </div>
   </div>
 
-  <div id="dash-regime" class="dash-screen">
+  <div id="dash-regime" class="dash-screen" role="tabpanel" aria-labelledby="tab-regime">
     <div class="wrap">
   <div class="page-header">
     <h1>Regime de Mercado</h1>
@@ -2159,18 +2217,19 @@ alertcondition(ta.crossover(r, 30))</pre>
 
   <div class="section-label">Lógica de Classificação</div>
   <div class="tree-card">
-    <div class="tree-rule highlight">1. Teste de Chow na média dos log-retornos (janela 120, quebra a 30 candles) p &lt; 0,01 → STRUCTURAL_BREAK</div>
-    <div class="tree-rule">2. ADX &gt; 25 AND preço &gt; MA200 AND RV_pct &lt; 60 → BULL_TREND</div>
-    <div class="tree-rule">3. ADX &gt; 25 AND preço &gt; MA200 AND RV_pct ≥ 60 → HIGH_VOL_RANGING</div>
-    <div class="tree-rule">4. ADX &gt; 25 AND preço &lt; MA200 → BEAR_TREND</div>
-    <div class="tree-rule">5. ADX &lt; 20 AND RV_pct &gt; 60 → HIGH_VOL_RANGING</div>
-    <div class="tree-rule">6. ADX &lt; 20 AND RV_pct ≤ 40 → LOW_VOL_RANGING</div>
-    <div class="tree-rule">7. Demais → HIGH_VOL_RANGING</div>
+    <div class="tree-rule highlight">1. Teste de Chow na média dos log-retornos (janela 120, quebra a 30 candles) com p &lt; 0,01 → Quebra estrutural</div>
+    <div class="tree-rule">2. ADX &gt; 25 E preço &gt; MM200 E percentil de volatilidade &lt; 60 → Tendência de alta</div>
+    <div class="tree-rule">3. ADX &gt; 25 E preço &gt; MM200 E percentil de volatilidade ≥ 60 → Lateral com alta volatilidade</div>
+    <div class="tree-rule">4. ADX &gt; 25 E preço &lt; MM200 → Tendência de baixa</div>
+    <div class="tree-rule">5. ADX &lt; 20 E percentil de volatilidade &gt; 60 → Lateral com alta volatilidade</div>
+    <div class="tree-rule">6. ADX &lt; 20 E percentil de volatilidade ≤ 60 → Lateral com baixa volatilidade</div>
+    <div class="tree-rule">7. Demais casos (ADX entre 20 e 25) → Lateral com alta volatilidade</div>
   </div>
+  <p class="regime-note">Percentil de volatilidade: posição da volatilidade realizada de 30 candles entre as dos últimos 252 candles. MM200 é a média móvel simples de 200 candles.</p>
   <p class="regime-note">Ajuste de método (v1.1): o teste de Chow passou a ser aplicado aos log-retornos. Sobre o preço em nível, os resíduos são autocorrelacionados e o teste acusa quebra em quase todos os candles; sobre os retornos, marca quebra em cerca de 1% a 2% deles.</p>
 </div>
   </div>
-    <div id="dash-calibration" class="dash-screen pv">
+    <div id="dash-calibration" class="dash-screen pv" role="tabpanel" aria-labelledby="tab-calibration">
     <div class="wrap">
       <div class="page-header">
         <h1>Calibração de Modelos</h1>
@@ -2234,15 +2293,15 @@ alertcondition(ta.crossover(r, 30))</pre>
   <footer class="disclaimer">
   <div class="disclaimer-inner">
     <span class="mark">⚠</span>
-    <p>RESEARCH TOOL ONLY — Esta plataforma é exclusivamente para fins de pesquisa e análise histórica. Não constitui consultoria de investimentos, recomendação de compra ou venda de ativos, ou qualquer tipo de sinal de trading. Performance passada não garante resultados futuros. Você é inteiramente responsável por suas decisões de trading.<br><a href="#" onclick="switchDashTab('calibration'); return false;" class="disclaimer-calib-link">Ver a calibração do motor →</a></p>
+    <p>SOMENTE FERRAMENTA DE PESQUISA. Esta plataforma é exclusivamente para fins de pesquisa e análise histórica. Não constitui consultoria de investimentos, recomendação de compra ou venda de ativos, nem qualquer tipo de sinal de operação. Desempenho passado não garante resultados futuros. Quem usa a plataforma é inteiramente responsável por suas decisões.<br><a href="#" onclick="switchDashTab('calibration'); return false;" class="disclaimer-calib-link">Ver a calibração do motor →</a></p>
   </div>
 </footer>
 </div>
 
 <!-- ============ META NAV: switch Landing <-> Dashboard ============ -->
-<div class="meta-nav">
-  <button id="nav-landing" class="active" onclick="showPage('landing')">Site</button>
-  <button id="nav-dashboard" onclick="showPage('dashboard')">Plataforma</button>
+<div class="meta-nav" role="group" aria-label="Alternar entre o site e a plataforma">
+  <button id="nav-landing" class="active" aria-pressed="true" onclick="showPage('landing')">Site</button>
+  <button id="nav-dashboard" aria-pressed="false" onclick="showPage('dashboard')">Plataforma</button>
 </div>
 
 <script src="js/nav.js"></script>
@@ -2253,7 +2312,11 @@ alertcondition(ta.crossover(r, 30))</pre>
 <script src="data/study.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/regime-view.js"></script>
+<script src="js/pine-reader.js"></script>
+<script src="js/analysis-summary.js"></script>
+<script src="js/url-state.js"></script>
 <script src="js/live.js"></script>
+<script src="js/heatmap.js"></script>
 <script src="js/platform.js"></script>
 <script src="js/boot.js"></script>
 </body>

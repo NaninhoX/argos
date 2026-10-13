@@ -1,0 +1,186 @@
+/* =====================================================================
+   Mapa setup × regime (web/js/heatmap.js)
+   Usa os tokens do tema escuro da página, com valores de reserva.
+   A cor de preenchimento de cada célula vem do JavaScript (escala azul/laranja
+   da função colorFor); aqui ficam só forma, contorno, hachura e layout.
+   ===================================================================== */
+
+.hm-card {
+  --hm-panel: var(--bg-panel, #101927);
+  --hm-line: var(--navy-line, #2A3A4E);
+  --hm-line-soft: var(--navy-line-soft, #1F2B3B);
+  --hm-ink: var(--ink, #E8E3D8);
+  --hm-dim: var(--ink-dim, #9BA4B2);
+  --hm-gold: var(--gold, #B08D3E);
+  --hm-gold-bright: var(--gold-bright, #D4B15C);
+  --hm-gold-dim: var(--gold-dim, rgba(176, 141, 62, 0.13));
+  --hm-mono: var(--mono, 'JetBrains Mono', 'Courier New', monospace);
+  --hm-serif: var(--serif, 'Source Serif 4', Cambria, Georgia, serif);
+
+  margin-top: 14px;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--hm-panel);
+  border: 1px solid var(--hm-line);
+  border-radius: 8px;
+  color: var(--hm-ink);
+  font-family: var(--hm-mono);
+}
+.hm-card[hidden] { display: none !important; }
+
+/* ---------------- cabeçalho ---------------- */
+.hm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--hm-line-soft);
+}
+.hm-head-t { min-width: 0; flex: 1 1 360px; }
+.hm-title { margin: 0 0 4px; font-family: var(--hm-serif); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: var(--hm-ink); }
+.hm-sub { margin: 0; max-width: 80ch; font-size: 12px; line-height: 1.55; color: var(--hm-dim); }
+.hm-meta { max-width: 100%; padding: 5px 9px; border: 1px solid var(--hm-line); border-radius: 6px; font-size: 11px; line-height: 1.4; color: var(--hm-dim); }
+
+/* ---------------- tabela ---------------- */
+.hm-scroll { overflow-x: auto; padding: 10px 10px 4px; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.hm-table {
+  width: 100%;
+  min-width: 720px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.hm-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* primeira coluna fixa na rolagem horizontal (celular) */
+.hm-corner, .hm-rowh {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--hm-panel);
+  text-align: left;
+}
+.hm-corner {
+  width: 200px;
+  padding: 8px 10px 8px 4px;
+  vertical-align: bottom;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hm-dim);
+}
+.hm-rowh { padding: 3px 10px 3px 4px; font-weight: 400; box-shadow: 1px 0 0 var(--hm-line-soft); }
+.hm-sname { display: block; font-size: 12px; line-height: 1.3; color: var(--hm-ink); }
+.hm-sgrp { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.3; color: var(--hm-dim); }
+
+.hm-colh { padding: 8px 6px; vertical-align: bottom; text-align: center; font-weight: 500; }
+.hm-rg { display: block; font-size: 12px; line-height: 1.3; color: var(--hm-ink); }
+.hm-base { display: block; margin-top: 3px; font-size: 10px; line-height: 1.3; color: var(--hm-dim); }
+.hm-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border: 1px solid rgba(176, 141, 62, 0.55);
+  border-radius: 3px;
+  background: var(--hm-gold-dim);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--hm-gold-bright);
+}
+
+/* coluna do regime atual */
+.hm-colh.hm-now { background: var(--hm-gold-dim); border-radius: 6px 6px 0 0; box-shadow: inset 0 2px 0 var(--hm-gold); }
+.hm-td.hm-now { background: var(--hm-gold-dim); }
+tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
+
+/* ---------------- célula ---------------- */
+.hm-td { padding: 3px; vertical-align: middle; }
+.hm-cell {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-height: 68px;
+  margin: 0;
+  padding: 7px 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hm-ink);
+  font: inherit;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  transition: filter 0.12s ease, box-shadow 0.12s ease;
+}
+.hm-cell:hover { filter: brightness(1.18); }
+.hm-cell:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--hm-gold-bright); outline-offset: -2px; }
+
+.hm-v { font-size: 14px; font-weight: 600; }
+.hm-v-soft { font-size: 11px; font-weight: 400; color: var(--hm-dim); }
+.hm-n { font-size: 10.5px; font-weight: 400; }
+.hm-d { font-size: 10px; font-weight: 500; }
+
+/* IC exclui a taxa-base: cor cheia, com friso claro */
+.hm-cell.cheia { border-color: rgba(255, 255, 255, 0.36); }
+/* IC contém a taxa-base: cor esmaecida e contorno tracejado */
+.hm-cell.esmaecida { border: 1px dashed rgba(155, 164, 178, 0.6); background-color: rgba(255, 255, 255, 0.03); }
+/* N efetivo abaixo de 10: sem cor, hachura */
+.hm-cell.insuficiente {
+  border: 1px solid var(--hm-line);
+  background-image: repeating-linear-gradient(135deg, rgba(155, 164, 178, 0.24) 0, rgba(155, 164, 178, 0.24) 2px, transparent 2px, transparent 7px);
+  color: var(--hm-dim);
+}
+/* sem gatilho encerrado no regime */
+.hm-cell.vazia { border: 1px dotted var(--hm-line); color: var(--hm-dim); }
+
+/* ---------------- legenda e nota ---------------- */
+.hm-legend { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 28px; padding: 10px 16px 6px; border-top: 1px solid var(--hm-line-soft); }
+.hm-scale { flex: 0 1 340px; min-width: 240px; }
+.hm-scale-t { display: block; margin-bottom: 6px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-dim); }
+.hm-scale-row { display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: var(--hm-dim); }
+.hm-scale-l, .hm-scale-r { flex: 0 0 auto; white-space: nowrap; }
+.hm-bar { flex: 1 1 auto; min-width: 80px; height: 12px; border: 1px solid var(--hm-line); border-radius: 3px; }
+.hm-scale-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 10px; color: var(--hm-dim); }
+.hm-keys { flex: 1 1 320px; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 11px; line-height: 1.45; color: var(--hm-dim); }
+.hm-key { display: flex; align-items: flex-start; gap: 8px; }
+.hm-sw { flex: 0 0 auto; width: 22px; height: 14px; margin-top: 1px; border: 1px solid transparent; border-radius: 3px; }
+.hm-sw.cheia { border-color: rgba(255, 255, 255, 0.36); }
+.hm-sw.esmaecida { border: 1px dashed rgba(155, 164, 178, 0.6); }
+.hm-sw.insuficiente { border-color: var(--hm-line); background-image: repeating-linear-gradient(135deg, rgba(155, 164, 178, 0.24) 0, rgba(155, 164, 178, 0.24) 2px, transparent 2px, transparent 7px); }
+.hm-sw.vazia { border: 1px dotted var(--hm-line); }
+.hm-note { margin: 0; max-width: 110ch; padding: 8px 16px 14px; font-size: 11px; line-height: 1.6; color: var(--hm-dim); }
+
+/* ---------------- celular: rolagem só dentro do cartão ---------------- */
+@media (max-width: 720px) {
+  .hm-head { padding: 12px 14px 8px; }
+  .hm-scroll { padding: 8px 6px 4px; }
+  .hm-table { min-width: 640px; }
+  .hm-corner { width: 128px; }
+  .hm-rowh { padding-right: 6px; }
+  .hm-sname { font-size: 11.5px; }
+  .hm-cell { min-height: 70px; }
+  .hm-legend { padding: 10px 14px 6px; }
+  .hm-note { padding: 8px 14px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-cell { transition: none; }
+  .hm-scroll { scroll-behavior: auto; }
+}
+
+/* modo de alto contraste: a cor some, ficam contorno e hachura */
+@media (forced-colors: active) {
+  .hm-cell { border: 1px solid ButtonText; }
+  .hm-cell.cheia { border-width: 3px; }
+  .hm-cell.esmaecida { border-style: dashed; }
+  .hm-cell:focus-visible { outline-color: Highlight; }
+}

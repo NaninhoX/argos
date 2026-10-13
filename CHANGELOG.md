@@ -30,12 +30,19 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 - Previsão prospectiva (`lib/prospective.js`): a probabilidade de um gatilho ainda em aberto, pela mesma conta da calibração do motor (equivalência testada gatilho a gatilho).
 - `DATABASE_URL=pglite://memory` para desenvolvimento local sem conta de banco (`resolveDb`).
 
+- Sandbox e Query concluídos e reabertos. Leitor de Pine Script em módulo testado (`lib/pine-reader.js`): lê RSI, MACD, cruzamento de médias, fechamento cruzando média, Bollinger inferior e rompimento de máxima em Pine v4 a v6, e recusa com motivo o que não consegue ler com exatidão (condições combinadas, ordens limit, mais de uma regra). O Query chama `GET /api/analyze` de verdade e compara o `resultHash` do servidor com o do navegador.
+- `GET /api/analyze?brief=1`: só a identificação do resultado.
+- Link compartilhável: ativo, tempo gráfico, regra de saída, setup e regime na URL (`web/js/url-state.js`).
+- "Registros deste navegador": lista dos vereditos registrados, com hash, link da prova e estado do carimbo.
+- Mapa setup × regime (`web/js/heatmap.js`): 8 setups × 5 regimes, cor pela diferença para a taxa-base do regime; descritivo, com N efetivo abaixo de 10 hachurado.
+- Saem os rótulos de protótipo; rótulos de interface em português; contraste do texto secundário corrigido.
+
 ### Segurança e conformidade
 
 - Argos AI: regras do servidor antepostas a toda chamada; verificador de conformidade e disclaimer valem por padrão; em produção o endpoint não abre sem `ARGOS_ACCESS_CODE`; teto de tokens de saída; ferramenta não declarada pelo cliente é recusada; auditoria em log por padrão.
 - Guarda numérica: notação científica, "por cento", dígitos de largura total e de outro alfabeto, percentual por extenso; hash em resultado de ferramenta deixa de ser fonte de número; "confiança de 95%" solto deixa de ser exceção.
 - Conformidade: em regra verbal, a negação só vale dentro da mesma oração ("Não hesite, compre agora" passa a ser acusado); regras novas para instrução em forma branda e para alvo ou stop em preço sem separador de milhar.
-- Sandbox e Query fechados com aviso "em construção" (`FEATURES` em `web/js/platform.js`).
+- Sandbox e Query podem ser fechados com aviso numa linha (`FEATURES` em `web/js/platform.js`), se algo falhar perto da demo.
 
 ### Limites conhecidos
 

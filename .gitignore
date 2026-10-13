@@ -6,5 +6,7 @@ legacy/blocks/
 # gerados por tools/build-web.mjs a partir de engine/ e data/
 web/js/engine.js
 web/js/regime-view.js
+web/js/pine-reader.js
+web/js/analysis-summary.js
 web/data/snapshot.js
 web/data/study.js
