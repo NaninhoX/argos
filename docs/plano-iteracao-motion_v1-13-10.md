@@ -135,3 +135,7 @@ Etapa 0: meio dia. Etapa 1: duas horas. Etapa 2: os dois agentes, em paralelo. E
 - Probabilidades das 12 hipóteses e ratificação dos 10 gatilhos com o LG (`05_Operacao_Compliance\Stratum_Calibracao_Plano_Gatilhos_v1-12-10.pdf`).
 - Decidir como o investidor abre a demo: hoje o endereço da Vercel exige login.
 - Levar ao advogado, junto do parecer CNPI, o botão "Levar para o TradingView… cria um alerta".
+
+## Marca (acrescentado em 13/10)
+
+Michel enviou duas imagens de logo (preta e azul-marinho) como inspiração para a marca geral. O guia está em `..\_layout\marca\Stratum_Marca_Guia_v1-13-10.md`, com `stratum-simbolo.svg` e `stratum-assinatura.svg` (redesenhos simplificados, ainda sem aval). Nesta iteração, depois do aval: símbolo no cabeçalho e no favicon, assinatura na página de verificação, e o herói abrindo com as quatro camadas se assentando. Quatro pontos das imagens esperam decisão de Michel antes de uso público: "Execução teórica", os números decorativos, "Convicção" e o gráfico subindo.
