@@ -16,7 +16,7 @@
     }
   },
   "crons": [
-    { "path": "/api/cron/candles", "schedule": "5 * * * *" },
+    { "path": "/api/cron/candles", "schedule": "5 0 * * *" },
     { "path": "/api/cron/anchor", "schedule": "10 0 * * *" }
   ]
 }

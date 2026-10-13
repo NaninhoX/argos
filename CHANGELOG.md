@@ -39,6 +39,8 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Limites conhecidos
 
+- O cron de candles roda uma vez por dia (00:05 UTC): o plano gratuito da Vercel recusa cron mais frequente que diário. No plano pago volta a `5 * * * *`. Enquanto isso, a base de candles pode estar até um dia atrás; sem banco, a análise usa snapshot mais Binance ao vivo e não é afetada.
+
 - As ferramentas do Argos AI ainda rodam no navegador: quem tem o código de acesso pode fabricar um resultado de ferramenta. Correção planejada: ferramentas no servidor, sobre `/api/analyze`.
 - A guarda numérica não confere o papel do número na frase.
 
