@@ -433,7 +433,7 @@
     return v;
   }
 
-  var lastQuestion = null;
+  var shownQuestion = null;
   function onAnalysis(ev) {
     try {
       var d = ev && ev.detail;
@@ -449,10 +449,12 @@
       var question = metaText(d.A);
       render(card, m, { meta: question });
       // entrada em escada só quando a pergunta muda (ativo, tempo gráfico ou regra de saída); a atualização
-      // automática e o clique numa célula redesenham sem animar
+      // automática e o clique numa célula redesenham sem animar. A pergunta só conta como mostrada quando o
+      // mapa de fato entra na tela: um redesenho antes disso arma a entrada de novo.
       var M = root.ArgosMotion;
-      if (M && M.stagger && question !== lastQuestion) M.stagger(card, 'button.hm-cell', { step: 20, max: 780, kind: 'fade' });
-      lastQuestion = question;
+      if (M && M.stagger && question !== shownQuestion) {
+        M.stagger(card, 'button.hm-cell', { step: 20, max: 780, kind: 'fade', onStart: function () { shownQuestion = question; } });
+      }
     } catch (e) {
       hideCard(root.document); // mapa da série anterior seria dado velho: esconde
       if (root.console && root.console.warn) root.console.warn('ArgosHeatmap:', e);

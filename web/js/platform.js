@@ -36,7 +36,12 @@
   function num(id, def, lo, hi) { const v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : def; }
   const listHTML = (items, cls) => '<ul class="' + (cls || 'pr-list') + '">' + items.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>';
   const stateHTML = (kind, title, text) => '<div class="pv-state ' + kind + '" role="' + (kind === 'err' ? 'alert' : 'status') + '"><div class="pv-state-h">' + esc(title) + '</div>' + (text ? '<p>' + esc(text) + '</p>' : '') + '</div>';
-  const loadingHTML = (text) => '<div class="pv-state loading" role="status"><span class="pv-spin" aria-hidden="true"></span><span>' + esc(text) + '</span></div>';
+  // Carregando: esqueleto com o formato do resultado (linha de contexto, quatro cartões, dois cartões, uma tabela). Os blocos são
+  // aria-hidden; o texto de status segue para o leitor de tela, escondido só da vista (.pv-skel-sr). A pulsação fica em platform-motion.css.
+  const SKEL = '<div class="pv-skel-body" aria-hidden="true"><i class="ctx"></i><div class="g"><i></i><i></i><i></i><i></i></div><div class="r"><i></i><i></i></div><i class="w"></i></div>';
+  const loadingHTML = (text) => '<div class="pv-skel" role="status"><span class="pv-skel-sr">' + esc(text) + '</span>' + SKEL + '</div>';
+  // Troca só a mensagem quando o esqueleto já está na tela (a segunda etapa não recria os blocos nem reinicia a pulsação).
+  function setLoading(out, text) { const s = out.querySelector('.pv-skel-sr'); if (s) s.textContent = text; else out.innerHTML = loadingHTML(text); }
 
   // Armazenamento do navegador: pode não existir (janela privada, dados bloqueados). A tela funciona sem ele.
   const store = {
@@ -242,7 +247,7 @@
     $('sbResults').hidden = false; out.setAttribute('aria-busy', 'true'); out.innerHTML = loadingHTML('Carregando os candles de ' + PAIR(sym) + ' ' + TF_LABEL[tf] + '…');
     try {
       const ser = await ensureSeries(sym, tf);
-      out.innerHTML = loadingHTML('Rodando o motor sobre ' + fmtInt(ser.d.n) + ' candles…');
+      setLoading(out, 'Rodando o motor sobre ' + fmtInt(ser.d.n) + ' candles…');
       const res = await later(() => E.analyzeSpec(ser.d, cfg, spec, { sym, tf }));
       const s = res.setup;
       if (!s.n) {

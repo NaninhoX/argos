@@ -44,6 +44,12 @@ node tools/extract-html.mjs   # regenera legacy/blocks a partir do HTML original
 
 `web/index.html` e `web/js/{nav,live,platform,boot}.js` são fonte editável (saíram do HTML legado por `tools/split-web.mjs`, uma vez). `web/js/engine.js`, `web/data/snapshot.js` e `web/data/study.js` são gerados: não editar. O front ainda calcula no navegador com o mesmo motor; o servidor expõe `/api/analyze` com resultado idêntico.
 
+CSS em `web/css/`, nesta ordem (a ordem é a cascata): `fonts.css`, `base.css`, `landing.css` (tudo sob `#page-landing`), `platform.css`, `extras.css`, `heatmap.css`, `brand.css`, `motion.css`, `landing-motion.css`, `platform-motion.css`. `index.html` não tem `<style>` embutido (`tests/web-static.test.js`). Fontes em `web/fonts/` (SIL OFL), sem chamada a terceiros.
+
+Movimento: `web/js/motion.js` (global `ArgosMotion`, carregado no `<head>`) e `web/css/motion.css`. Regras: três famílias (interface 160 ms, revelação 240–360 ms, crescimento de dado 360–480 ms); só `transform` e `opacity`; estado inicial escondido só sob `html.motion-ok`; número estatístico nunca conta de zero (`data-count` só aceita contagem inteira); sem biblioteca externa e sem acaso. Desliga com `prefers-reduced-motion` e `?motion=off`; `?motion=freeze:<ms>` congela as sequências num instante. `tests/motion.test.js` cobra essas regras em todo arquivo `*motion*`.
+
+Marca: Stratum Research é a casa, Argos Sentinel é o produto. Guia em `../_layout/marca/`; na web, `css/brand.css`, `img/stratum-simbolo.svg` e `favicon.svg`.
+
 ## Verificação que não pode regredir
 
 - `tests/legacy-parity.test.js`: `engine/` é idêntico ao motor do HTML legado (72 combinações + análise completa das 9 séries).

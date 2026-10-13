@@ -10,11 +10,16 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Alterado
 
+- Front (13/10): o CSS saiu do `index.html` para `web/css/base.css`, `landing.css` e `platform.css`, sem mudança de regra (mesmas 946 regras, mesma ordem relativa onde há disputa). Fontes Source Serif 4 e JetBrains Mono hospedadas em `web/fonts/` (SIL OFL 1.1): as páginas não chamam mais o Google Fonts.
+- Front (13/10): "Carregando…" deu lugar a um esqueleto com o formato do conteúdo (tela Ao vivo, Sandbox e Query); a mensagem de status continua disponível para leitor de tela.
 - Motor extraído do HTML da demo para `engine/`, sem alteração de lógica, com teste de paridade contra o original (72 combinações de série e setup, mais a análise completa das 9 séries).
 - Front da demo dividido em arquivos dentro de `web/`; o motor e os dados do navegador passam a ser gerados de `engine/` e `data/` por `npm run build:web`.
 
 ### Adicionado
 
+- Movimento (13/10): fundação em `web/js/motion.js` e `web/css/motion.css` e dez animações. No site: cartão do caso real em sequência com a marca das quatro camadas, entrada das seções ao rolar, matriz dos 72 testes em onda, contadores (só contagens inteiras) e a linha do "como funciona". Na plataforma: troca de tela, painéis que esmaecem enquanto o motor recalcula, barras de intervalo que crescem a partir da taxa-base, mapa setup × regime em escada, esqueleto de carregamento e retorno visual do registro. Nenhum número é calculado ou alterado pela animação; taxa, p, IC e Brier nunca contam de zero. Desliga com `prefers-reduced-motion` e `?motion=off`.
+- Marca Stratum Research no front (13/10): símbolo no cabeçalho, assinatura no rodapé e na página de verificação, ícone da aba.
+- Testes `tests/web-static.test.js` (sem CSS embutido, sem chamada a terceiros, arquivos citados existem) e `tests/motion.test.js` (contador só aceita inteiro e termina no texto original; só `transform` e `opacity`; sem acaso e sem biblioteca externa).
 - Teste de reprodução do estudo de referência v1.1: as 48 células de 4h e 1D da matriz publicada conferem com o motor (N, N efetivo, taxa de acerto, IC, taxa-base e p bruto). As 24 de 1h aguardam a base de candles.
 - `GET|POST /api/analyze`: motor no servidor, com hash dos candles e do resultado.
 - `GET /api/health`.

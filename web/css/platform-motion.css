@@ -3,3 +3,95 @@
 /* ---------- 6 · troca de tela: fade curto de interface, sem deslocamento e sem mexer no foco ---------- */
 html.motion-ok .page.visible,
 html.motion-ok .dashboard-page .dash-screen.visible { animation: m-fade-in var(--m-ui) var(--e-ui); }
+
+/* ---------- 6b · pergunta mudou: os painéis de resultado esmaecem enquanto o motor recalcula ----------
+   .m-pane e .is-stale são postas por live.js (staleOn) só com movimento ligado e saem em staleOff (fim da análise, erro ou teto de 8 s).
+   Só opacidade; nunca bloqueia clique, foco ou leitor de tela. Atualização automática de 60 s não passa por aqui. */
+html.motion-ok .m-pane { transition: opacity var(--m-ui) var(--e-ui); }
+html.motion-ok .m-pane.is-stale { opacity: .45; }
+
+/* ---------- 7 · faixa do IC cresce a partir da taxa-base ----------
+   .ci-grow fica no #lvBank por um ciclo (live.js, growCI). Sem a classe a faixa já está no estado final; a origem da
+   transformação (% da própria faixa) vem inline de renderBank. --ci-i é a escada entre linhas (28 ms); --ci-skip faz um
+   redesenho no meio do crescimento continuar do ponto em que estava. O ponto da taxa observada entra por último. */
+html.motion-ok #lvBank.ci-grow .civiz .rng {
+  animation: m-grow-x var(--m-data) var(--e-data) backwards;
+  animation-delay: calc(var(--ci-i, 0) * 28ms + var(--ci-skip, 0ms));
+}
+html.motion-ok #lvBank.ci-grow .civiz .pt {
+  animation: m-fade-in var(--m-reveal) var(--e-reveal) backwards;
+  animation-delay: calc(var(--m-data) + var(--ci-i, 0) * 28ms + var(--ci-skip, 0ms));
+}
+
+/* ---------- 9 · esqueleto de carregamento ----------
+   Blocos com o formato do que vem, sempre aria-hidden. O texto de status continua existindo (região aria-live do HTML na tela
+   Ao vivo; .pv-skel-sr no Sandbox e no Query). A forma vale com ou sem movimento; só a pulsação depende de html.motion-ok. */
+.sk { opacity: .7; }
+.sk i, .pv-skel-body i { display: block; border-radius: 4px; background: rgba(125, 136, 152, .18); }
+html.motion-ok .sk,
+html.motion-ok .pv-skel-body { animation: m-sheen 1.4s ease-in-out infinite alternate; }
+@media print { .sk, .pv-skel { display: none; } }
+
+/* Sandbox e Query (loadingHTML em platform.js) */
+.pv-skel { position: relative; }
+.pv-skel-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.pv-skel-body .ctx { height: 14px; width: 66%; margin: 4px 0 18px; }
+.pv-skel-body .g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.pv-skel-body .g i { height: 110px; }
+.pv-skel-body .r { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 10px; }
+.pv-skel-body .r i { height: 190px; }
+.pv-skel-body .w { height: 300px; }
+@media (max-width: 860px) { .pv-skel-body .g { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 700px) { .pv-skel-body .r { grid-template-columns: minmax(0, 1fr); } }
+
+/* Ao vivo (antes da primeira análise): cada bloco ocupa a altura do que vai substituí-lo */
+.lv #lvChart:not(:empty) ~ .sk-chart,
+.lv #lvBank:not(:empty) ~ .sk-bank { display: none; }
+.lv .sk-chart { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 6px; padding: 64px 16px 32px; pointer-events: none; }
+.lv .sk-chart i { flex: 1 1 0; min-width: 4px; }
+.lv .sk-chart i:nth-child(7n+1) { height: 34%; }
+.lv .sk-chart i:nth-child(7n+2) { height: 46%; }
+.lv .sk-chart i:nth-child(7n+3) { height: 40%; }
+.lv .sk-chart i:nth-child(7n+4) { height: 58%; }
+.lv .sk-chart i:nth-child(7n+5) { height: 52%; }
+.lv .sk-chart i:nth-child(7n+6) { height: 64%; }
+.lv .sk-chart i:nth-child(7n) { height: 48%; }
+.lv .sk-regime { display: grid; gap: 8px; }
+.lv .sk-regime i:nth-child(1) { height: 12px; width: 38%; }
+.lv .sk-regime i:nth-child(2) { height: 24px; width: 64%; margin-top: 4px; }
+.lv .sk-regime i:nth-child(3) { height: 3px; }
+.lv .sk-regime i:nth-child(4) { height: 34px; }
+.lv .sk-kv { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.lv .sk-kv i { height: 44px; margin: 12px 14px; }
+.lv .pipe li.sk-pipe { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 12px 14px; }
+.lv .sk-pipe i { height: 46px; }
+.lv .sk-bank i { height: 33px; margin: 13px 12px; }
+.lv .sk-bank i:first-child { height: 10px; margin: 13px 12px; }
+.lv .sk-detail .h { height: 22px; width: 36%; }
+.lv .sk-detail .p { height: 12px; width: 72%; margin: 10px 0 0; }
+.lv .sk-detail .g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0 14px; }
+.lv .sk-detail .g i { height: 92px; }
+.lv .sk-detail .c { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+.lv .sk-detail .c i { height: 260px; }
+@media (max-width: 900px) {
+  .lv .sk-detail .g { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .lv .sk-detail .c { grid-template-columns: minmax(0, 1fr); }
+}
+.lv .sk-report i { background: rgba(30, 42, 58, .1); }
+.lv .sk-report i:nth-child(1) { height: 11px; width: 30%; }
+.lv .sk-report i:nth-child(2) { height: 30px; width: 62%; margin: 14px 0 12px; }
+.lv .sk-report i:nth-child(3) { height: 12px; width: 82%; margin-bottom: 26px; }
+.lv .sk-report i:nth-child(n+4) { height: 14px; margin: 0 0 14px; }
+.lv .sk-report i:nth-child(5n) { width: 64%; }
+
+/* ---------- 10 · registro com retorno visual ----------
+   O hash entra digitado por ArgosMotion.typeText (live.js, renderRegBox). O registro novo entra destacado na lista: faixa dourada
+   que se apaga sozinha, uma vez. .is-new só existe na janela de 1,3 s depois do registro; --m-hl-skip (atraso negativo) faz
+   um redesenho da lista nessa janela continuar o destaque em vez de reiniciá-lo. Reabrir a lista não destaca nada. */
+@keyframes m-hl-fade { from { opacity: 1; } to { opacity: 0; } }
+html.motion-ok .lv .lv-reg.is-new { position: relative; }
+html.motion-ok .lv .lv-reg.is-new::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: var(--gold-dim); box-shadow: inset 0 0 0 1px var(--gold);
+  opacity: 0; animation: m-hl-fade 1200ms var(--e-ui) var(--m-hl-skip, 0ms) both;
+}

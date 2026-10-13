@@ -141,3 +141,22 @@ Etapa 0: meio dia. Etapa 1: duas horas. Etapa 2: os dois agentes, em paralelo. E
 Michel enviou duas imagens de logo (preta e azul-marinho) como inspiração para a marca geral. O guia está em `..\_layout\marca\Stratum_Marca_Guia_v1-13-10.md`, com `stratum-simbolo.svg` e `stratum-assinatura.svg` (redesenhos simplificados, ainda sem aval). Nesta iteração, depois do aval: símbolo no cabeçalho e no favicon, assinatura na página de verificação, e o herói abrindo com as quatro camadas se assentando. Quatro pontos das imagens esperam decisão de Michel antes de uso público: "Execução teórica", os números decorativos, "Convicção" e o gráfico subindo.
 
 Aval dado por Michel em 13/10: símbolo e assinatura aprovados; "Execução teórica" vira "Montagem", números decorativos e gráfico subindo saem, lema "Evidência · Disciplina · Transparência". Aplicar a marca nesta iteração (cabeçalho, favicon, página de verificação, abertura do herói, capa do layout oficial em `..\_layout\stratum.css`).
+
+## Resultado da execução (13/10/2026, mesma data)
+
+Feito, em commits locais (nenhum push):
+
+- Etapa 0: CSS em `base.css`, `landing.css`, `platform.css`; fontes em `web/fonts/`. A comparação de estilo computado prevista foi trocada por prova estática (mesmas 946 regras; ordem preservada entre as regras do site e entre as demais, que nunca disputam o mesmo elemento), porque a leitura no navegador variava sozinha entre duas medições.
+- Etapa 1: `motion.js`, `motion.css`, `tests/motion.test.js`.
+- Etapa 2: as dez ideias. Ideias 6 (troca de tela) e 8 (mapa em escada) feitas direto; as demais por dois agentes Sonnet 5.5.
+- Marca: cabeçalho, rodapé, página de verificação, ícone da aba e capa do layout oficial dos documentos.
+- Etapa 3: conferido no navegador em 1280 e 375 px, por quadros (`?motion=freeze:<ms>`), com `?motion=off` e em execução normal; Sandbox, Query, registro de veredito e link compartilhável repetidos; 513 testes e linter limpos.
+
+Não conferido ou em aberto:
+
+- A cadência real das animações (suavidade) só foi vista por quadros parados: o painel de pré-visualização não renderiza em tempo real. Michel precisa olhar rodando.
+- A digitação do hash no registro foi conferida pelo estado final (texto igual ao do servidor), não quadro a quadro.
+- A tela Ao vivo calcula antes de aparecer, então o esqueleto dela quase não é visto hoje.
+- As barras do Sandbox e do Query (`.ci-bar`) não crescem; só as da tela Ao vivo.
+- O rodapé do site ainda diz "risk advisory" (aguarda o advogado).
+- Página bloqueando `motion.js` não foi testada no navegador; a garantia é estática (toda regra que esconde começa por `html.motion-ok`).

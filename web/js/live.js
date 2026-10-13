@@ -10,6 +10,8 @@
   const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
   const $ = (id) => document.getElementById(id);
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Movimento (web/js/motion.js): sem ele, ou desligado (prefers-reduced-motion, ?motion=off), todo gancho abaixo vira no-op.
+  const MOT = () => { const M = window.ArgosMotion; return M && M.enabled ? M : null; };
 
   // ------------------------------------------------------------ formatos
   const nfCache = {};
@@ -331,11 +333,14 @@
     const maxX = Math.min(1, Math.max(0.5, fin(baseNow), ...A.setups.map((s) => fin((reg ? cellOf(s) : s).ci[1]))) * 1.04);
     const X = (v) => Math.max(0, Math.min(100, (v / maxX) * 100));
     const head = '<thead><tr><th scope="col">Setup</th><th scope="col">Agora</th><th scope="col">N (efetivo)</th><th scope="col">Taxa de acerto</th><th scope="col">IC 95% · escala 0–' + fmtN(maxX * 100, 0) + '%</th><th scope="col">' + (reg ? 'Taxa-base no regime' : 'Taxa-base') + '</th><th scope="col">p (ajustado)</th><th scope="col">Veredito</th></tr></thead>';
-    const rows = A.setups.map((s) => {
+    const rows = A.setups.map((s, ri) => {
       const now = s.activeNow ? '<span class="now on">Disparou ' + (s.barsSinceLast === 0 ? 'no último candle' : 'há ' + s.barsSinceLast + ' ' + pl(s.barsSinceLast, 'candle', 'candles')) + '</span>' : '<span class="now off">' + (s.lastTrigger >= 0 ? 'há ' + s.barsSinceLast + ' candles' : 'sem gatilhos') + '</span>';
       const c = cellOf(s), v = c || s, bRate = c ? c.base.rate : s.base;
       const bs = isFinite(bRate) ? '<div class="bs" style="left:' + X(bRate) + '%"></div>' : '';
-      const viz = isFinite(v.ci[0]) ? '<div class="civiz" aria-hidden="true"><div class="track"></div><div class="rng" style="left:' + X(v.ci[0]) + '%;width:' + Math.max(1, X(v.ci[1]) - X(v.ci[0])) + '%"></div>' + bs + '<div class="pt" style="left:' + X(v.winRate) + '%"></div></div>' : '—';
+      // A faixa do IC cresce a partir da taxa-base (origem da transformação em % da própria faixa, de 0 a 100); --ci-i é a escada entre linhas.
+      // Ambos só valem sob .ci-grow (ver platform-motion.css): sem a classe, a faixa está sempre no estado final.
+      const ciW = Math.max(1, X(v.ci[1]) - X(v.ci[0])), ciO = (X(isFinite(bRate) ? bRate : v.winRate) - X(v.ci[0])) / ciW * 100, ciOrg = isFinite(ciO) ? Math.max(0, Math.min(100, ciO)) : 0;
+      const viz = isFinite(v.ci[0]) ? '<div class="civiz" aria-hidden="true" style="--ci-i:' + ri + '"><div class="track"></div><div class="rng" style="left:' + X(v.ci[0]) + '%;width:' + ciW + '%;transform-origin:' + ciOrg + '% 50%"></div>' + bs + '<div class="pt" style="left:' + X(v.winRate) + '%"></div></div>' : '—';
       const empty = !!c && !v.n; // regime sem gatilho encerrado: não há N efetivo nem taxa
       const nCell = v.n + ' <span class="num-dim">(' + (empty ? '—' : v.nEff) + ')</span>';
       const wrCell = empty ? '—' : fmtPct(v.winRate, 1) + ' <span class="num-dim">[' + fmtPct(v.ci[0], 0) + '–' + fmtPct(v.ci[1], 0) + ']</span>';
@@ -344,7 +349,9 @@
       const verdict = c ? '<span class="verdict ' + (c.insufficient ? 'neutral' : 'muted') + '">' + (c.insufficient ? 'Evidência insuficiente' : 'Recorte descritivo') + '</span>' : '<span class="verdict ' + esc(s.verdict.tone) + '">' + esc(s.verdict.label) + '</span>';
       return '<tr data-id="' + esc(s.id) + '" tabindex="0" class="' + (s.id === state.selected ? 'sel' : '') + '" aria-selected="' + (s.id === state.selected) + '"><td class="c-name"><div><div class="sname">' + esc(s.nome) + '</div><div class="sgrp">' + esc(s.grupo) + '</div></div></td><td class="c-now">' + now + '</td><td class="c-n" data-l="N (efetivo)">' + nCell + '</td><td class="c-wr" data-l="Taxa de acerto · IC 95%">' + wrCell + '</td><td class="c-viz">' + viz + '</td><td class="c-base" data-l="' + (c ? 'Taxa-base no regime · N' : 'Taxa-base') + '">' + baseCell + '</td><td class="c-p" data-l="p · ajustado">' + pCell + '</td><td class="c-verdict">' + verdict + '</td></tr>';
     }).join('');
-    $('lvBank').innerHTML = head + '<tbody>' + rows + '</tbody>';
+    const tbl = $('lvBank');
+    if (tbl.classList.contains('ci-grow')) tbl.style.setProperty('--ci-skip', '-' + (Date.now() - mo.growT0) + 'ms'); // redesenho no meio do crescimento (ex.: candles ao vivo chegando): a faixa nova continua do ponto em que a anterior estava
+    tbl.innerHTML = head + '<tbody>' + rows + '</tbody>';
     const d = A.d;
     $('lvBankSub').textContent = 'Cada setup é testado agora contra ' + fmtInt(d.n - A.warm) + ' candles reais de ' + PAIR(state.sym) + ' ' + TF_LABEL[state.tf] + ' (' + fmtDay(d.t[A.warm]) + ' a ' + fmtDay(d.t[d.n - 1]) + '), com a regra de saída "' + cfgText(state.cfg) + '" aplicada também a entradas aleatórias (taxa-base: ' + fmtPct(A.base.rate, 1) + '). Toque numa linha para ver os gatilhos no gráfico.';
   }
@@ -410,11 +417,14 @@
     if (st.phase === 'err') { box.textContent = st.msg; return; }
     const r = st.res, t = Date.parse(r.emittedAt), url = proofUrl(r);
     const abbr = r.hash.slice(0, 12) + '…' + r.hash.slice(-8);
-    box.innerHTML = '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><strong style="color:var(--ink)">Veredito registrado</strong><span>hash <span title="' + esc(r.hash) + '" style="color:var(--ink)">' + esc(abbr) + '</span></span><button type="button" class="btn btn-sm" id="lvRegCopy">Copiar hash</button>' + (url ? '<a class="btn btn-sm" id="lvRegProof" href="' + esc(url) + '" target="_blank" rel="noopener">Abrir prova ↗</a>' : '') + '</div>' +
+    box.innerHTML = '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><strong style="color:var(--ink)">Veredito registrado</strong><span>hash <span id="lvRegHash" title="' + esc(r.hash) + '" style="color:var(--ink)">' + esc(abbr) + '</span></span><button type="button" class="btn btn-sm" id="lvRegCopy">Copiar hash</button>' + (url ? '<a class="btn btn-sm" id="lvRegProof" href="' + esc(url) + '" target="_blank" rel="noopener">Abrir prova ↗</a>' : '') + '</div>' +
       '<p class="note">Registro feito pelo servidor em ' + (isFinite(t) ? esc(fmtDate(t / 1000)) : 'horário não informado') + '. A raiz do dia é ancorada depois de 00:10 UTC.' + (r.inserted === false ? ' Esta mesma pergunta, sobre os mesmos dados, já estava registrada: o registro existente foi devolvido.' : '') + '</p>' +
       '<p class="note">Os números do registro são os calculados pelo servidor, sobre os candles que ele tinha naquele momento, e podem diferir dos exibidos nesta tela. Eles estão na prova.</p>' +
       (typeof r.disclaimer === 'string' && r.disclaimer ? '<p class="note">' + esc(r.disclaimer) + '</p>' : '');
     $('lvRegCopy').onclick = async () => { const ok = await copyText(r.hash, null, ''); const b = $('lvRegCopy'); if (!b) return; b.textContent = ok ? 'Copiado' : 'Não copiou'; setTimeout(() => { const b2 = $('lvRegCopy'); if (b2) b2.textContent = 'Copiar hash'; }, 1800); };
+    // Retorno visual: o hash que o servidor devolveu (nunca um provisório) aparece caractere a caractere, uma única vez, quando a
+    // resposta chega. Reabrir o painel, trocar de linha ou redesenhar mostra o hash pronto. Termina com o texto exato.
+    if (st.fresh) { st.fresh = false; const M = MOT(), hs = $('lvRegHash'); if (M && hs) M.typeText(hs, abbr, 600); }
   }
   async function registerVerdict() {
     if (!CAN_REGISTER || !state.A || !state.selected) return;
@@ -431,7 +441,7 @@
     } catch (e) { put({ phase: 'err', msg: 'Não foi possível registrar o veredito: sem conexão com o servidor (código: sem_conexao).' }); return; }
     const code = j && j.error && typeof j.error === 'object' && j.error.code ? String(j.error.code) : '';
     if ((r.status === 200 || r.status === 201) && j && typeof j.hash === 'string' && /^[0-9a-f]{64}$/i.test(j.hash)) {
-      put({ phase: 'ok', res: j });
+      put({ phase: 'ok', res: j, fresh: regKey() === k }); // fresh: a caixa está na tela agora, então o hash entra digitado (só esta vez)
       try { rememberReg(j, body, A); } catch (e) { /* a lista local é conveniência: nunca atrapalha o registro */ }
       return;
     }
@@ -460,7 +470,8 @@
     falhou: ['bad', 'falhou'],
     indisponivel: ['muted', 'indisponível']
   };
-  const regs = { items: [], stamps: {}, busy: false, last: 0, persist: true, confirm: false, ui: null };
+  const REG_HL_MS = 1300; // destaque do registro novo na lista (a animação em CSS dura 1,2 s); fora dessa janela, a lista não destaca nada
+  const regs = { items: [], stamps: {}, busy: false, last: 0, persist: true, confirm: false, ui: null, fresh: null };
   const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
   function cleanReg(x) { // tudo que vem do localStorage (ou da resposta do servidor) é validado antes de ser usado
@@ -506,10 +517,12 @@
     });
     if (!item) return;
     if (regs.persist) { const cur = regLoad(); if (cur) regs.items = cur; } // junta o que outra aba tenha gravado
+    const isNew = res.inserted !== false && !regs.items.some((x) => x.hash === item.hash); // registro que o servidor acabou de criar e que ainda não estava na lista
     regs.items = regNormalize([item].concat(regs.items));
     regSave();
     if (res.anchorPending && typeof res.anchorPending === 'object') regs.stamps[item.hash] = { s: 'aguardando' }; // vem na própria resposta do registro
     else delete regs.stamps[item.hash];
+    regs.fresh = isNew && MOT() ? { hash: item.hash, t0: Date.now() } : null; // destaque que se apaga sozinho, só neste registro novo
     regRender();
     if (!regs.stamps[item.hash]) regRefresh([item]);
   }
@@ -553,7 +566,9 @@
   function regRow(it) {
     const t = Date.parse(it.at), st = regs.stamps[it.hash] || { s: CAN_REGISTER ? 'consultando' : 'indisponivel' }, sx = STAMP[st.s] || STAMP.indisponivel;
     const pair = it.symbol ? PAIR(it.symbol) + (it.tf ? ' · ' + (TF_LABEL[it.tf] || it.tf) : '') : 'ativo não informado';
-    return '<li class="lv-reg"><div class="lv-reg-top"><span class="lv-reg-pair">' + esc(pair) + '</span><span class="lv-reg-setup">' + esc(it.setupName || it.setupId || 'setup não informado') + '</span>' +
+    const hl = regs.fresh && regs.fresh.hash === it.hash && Date.now() - regs.fresh.t0 < REG_HL_MS ? Date.now() - regs.fresh.t0 : -1; // ms já decorridos do destaque (-1: sem destaque)
+    // redesenhos dentro da janela (o carimbo chega em seguida) recriam o <li>: o atraso negativo faz o destaque continuar de onde estava, sem reiniciar
+    return '<li class="lv-reg' + (hl >= 0 ? ' is-new" style="--m-hl-skip:-' + hl + 'ms' : '') + '"><div class="lv-reg-top"><span class="lv-reg-pair">' + esc(pair) + '</span><span class="lv-reg-setup">' + esc(it.setupName || it.setupId || 'setup não informado') + '</span>' +
       '<span class="verdict ' + esc(it.verdict.tone) + '">' + esc(it.verdict.label || 'sem veredito') + '</span></div>' +
       '<div class="lv-reg-meta"><span class="lv-reg-time">' + esc(fmtDate(t / 1000)) + '</span><span class="lv-reg-hash" title="' + esc(it.hash) + '">' + esc(it.hash.slice(0, 12) + '…' + it.hash.slice(-8)) + '</span>' +
       '<button type="button" class="btn btn-sm" data-act="copy" data-hash="' + esc(it.hash) + '">Copiar hash</button>' +
@@ -562,6 +577,7 @@
   }
   function regRender() {
     const ui = regs.ui; if (!ui) return;
+    if (regs.fresh && Date.now() - regs.fresh.t0 >= REG_HL_MS) regs.fresh = null;
     const n = regs.items.length;
     ui.card.hidden = !CAN_REGISTER && !n; // sem servidor e sem lista, o cartão não tem o que mostrar
     ui.count.textContent = n ? '(' + n + ')' : '';
@@ -1131,15 +1147,63 @@
   function pickDefault(A) { const act = A.setups.find((s) => s.activeNow); return act ? act.id : 'RSI_OVERSOLD'; }
   // Cache das análises (as séries de 4h têm ~20 mil candles): chave = série + regra + janela + último candle
   const acache = new Map();
-  function analysisFor(sym, tf, cfg, winDays) {
+  function seriesFor(sym, tf, winDays) {
     const en = entry(sym, tf); let d = en.d;
     if (winDays) d = E.sliceSeries(d, Math.round((winDays * 86400) / d.dt) + 200);
-    const k = [sym, tf, cfg.mode, cfg.tgt, cfg.stp, cfg.hold, winDays || 'all', d.n, d.t[d.n - 1]].join('|');
+    return { en, d };
+  }
+  const analysisKey = (sym, tf, cfg, winDays, d) => [sym, tf, cfg.mode, cfg.tgt, cfg.stp, cfg.hold, winDays || 'all', d.n, d.t[d.n - 1]].join('|');
+  function analysisFor(sym, tf, cfg, winDays) {
+    const { en, d } = seriesFor(sym, tf, winDays);
+    const k = analysisKey(sym, tf, cfg, winDays, d);
     let A = acache.get(k);
     if (!A) { A = E.analyze(d, cfg, { sym, tf, source: en.source, win: winDays || null }); acache.set(k, A); while (acache.size > 4) acache.delete(acache.keys().next().value); }
     return A;
   }
   function analyzeCurrent() { return analysisFor(state.sym, state.tf, state.cfg, state.win); }
+  function analysisCached() { // só leitura: a pergunta atual já tem análise no cache (resposta imediata, sem o que esmaecer)?
+    try { const { d } = seriesFor(state.sym, state.tf, state.win); return acache.has(analysisKey(state.sym, state.tf, state.cfg, state.win, d)); } catch (e) { return false; }
+  }
+
+  // ------------------------------------------------ movimento da tela Ao vivo (nada aqui muda o que é calculado)
+  // "Pergunta mudou" = ativo, tempo gráfico, regra de saída ou janela diferentes dos da última análise desenhada (qSig).
+  // Atualização automática de 60 s, chegada de candles ao vivo, seleção de linha, detalhe e recorte por regime mantêm a pergunta: não animam.
+  const mo = { sig: null, tok: 0, staleTimer: 0, growTimer: 0, growT0: 0 };
+  const STALE_MAX_MS = 8000; // teto: a classe nunca fica presa, mesmo que a análise não chegue ao fim
+  const CI_GROW_MS = 1300; // escada (até 7 × 28 ms) + faixa (420 ms) + ponto (320 ms) + folga
+  const qSig = () => [state.sym, state.tf, state.cfg.mode, state.cfg.tgt, state.cfg.stp, state.cfg.hold, state.win || 'all'].join('|');
+  const nextPaint = () => new Promise((res) => { let done = false; const go = () => { if (done) return; done = true; setTimeout(res, 0); }; requestAnimationFrame(go); setTimeout(go, 80); }); // o setTimeout cobre aba em segundo plano
+  function stalePanes() { // painéis de resultado: banco de estratégias (cartão), detalhe, relatório e mapa
+    const bank = $('lvBank');
+    return [bank && bank.closest ? bank.closest('.card') : null, $('lvDetail'), $('lvReport'), $('lvHeatmap')].filter(Boolean);
+  }
+  function staleOn() {
+    stalePanes().forEach((el) => el.classList.add('m-pane', 'is-stale'));
+    clearTimeout(mo.staleTimer); mo.staleTimer = setTimeout(staleOff, STALE_MAX_MS);
+  }
+  function staleOff() { // sai em emitAnalysis (fim de toda análise desenhada), nos caminhos de erro e pelo teto de tempo
+    clearTimeout(mo.staleTimer); mo.staleTimer = 0;
+    stalePanes().forEach((el) => el.classList.remove('is-stale'));
+  }
+  /**
+   * Chamada logo depois de a pergunta mudar, antes de run(). Devolve true (síncrono) quando pode rodar já: movimento desligado, mesma
+   * pergunta da última análise, análise em cache ou tela escondida. Senão esmaece os painéis e devolve uma promessa que cede um quadro
+   * para a pintura antes de o motor ocupar a thread; ela resolve false se outra mudança chegou nesse meio-tempo (quem rodar é a nova).
+   */
+  function settle() {
+    const tok = ++mo.tok;
+    if (!MOT() || mo.sig === null || mo.sig === qSig() || !liveVisible() || analysisCached()) return true;
+    staleOn();
+    return nextPaint().then(() => tok === mo.tok);
+  }
+  function growCI() { // as faixas de IC crescem a partir da taxa-base; a classe é temporária e o estado sem ela é o final
+    const tb = $('lvBank'); if (!tb || !MOT() || !liveVisible()) return;
+    tb.style.removeProperty('--ci-skip');
+    mo.growT0 = Date.now();
+    tb.classList.add('ci-grow');
+    clearTimeout(mo.growTimer);
+    mo.growTimer = setTimeout(() => { tb.classList.remove('ci-grow'); tb.style.removeProperty('--ci-skip'); }, CI_GROW_MS);
+  }
   async function run(animate, keepRange, forceSel) {
     let A;
     try { A = analyzeCurrent(); }
@@ -1147,9 +1211,13 @@
     state.A = A;
     if (forceSel && A.setups.find((s) => s.id === forceSel)) state.selected = forceSel;
     else if (!state.selected || !A.setups.find((s) => s.id === state.selected) || !keepRange) state.selected = pickDefault(A);
+    const asked = mo.sig !== null && mo.sig !== qSig(); // a pergunta mudou desde a última análise desenhada (atualização automática: não)
     renderSource(); renderTop(A); renderChart(A, keepRange); renderLegend(null); renderRead(A); renderBank(A); renderDetail(A);
+    if (asked) growCI();
     if (state.tab === 'engine') renderEngineReport(); else selectTab('ai');
     renderShare(); syncUrl();
+    if (mo.sig === null) document.querySelectorAll('#dash-live .sk').forEach((n) => n.remove()); // primeira análise na tela: o esqueleto de carregamento sai (o que ficou de fora do innerHTML)
+    mo.sig = qSig();
     emitAnalysis(); // gancho para outros módulos (ex.: heatmap.js): análise calculada e desenhada
     await renderPipeline(A, animate);
   }
@@ -1157,7 +1225,8 @@
   async function switchTo(sym, tf, sel) {
     state.urlOn = true;
     state.sym = sym; state.tf = tf; setPressed('lvAsset', sym); setPressed('lvTf', tf);
-    await run(false, false, sel);
+    const w = settle(); if (w !== true && !(await w)) return; // outra troca chegou durante a pintura: é ela quem roda
+    try { await run(false, false, sel); } catch (e) { staleOff(); throw e; }
     if (!IN_CLAUDE) refreshLive(sym, tf).then((ch) => { if (ch && state.sym === sym && state.tf === tf) run(false, true); else renderSource(); });
   }
   // Abre a plataforma já no recorte de um caso (site → Ao vivo), com a regra de saída padrão
@@ -1166,6 +1235,10 @@
     if (JSON.stringify(state.cfg) !== JSON.stringify(def)) { state.cfg = def; $('lvMode').value = 'atr'; $('lvTgt').value = 2; $('lvStp').value = 1; $('lvHold').value = 12; readCfg(); }
     await switchTo(sym, tf, setupId);
     const el = document.querySelector('#lvDetail'); if (el) setTimeout(() => el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }), 80);
+  }
+  async function rerun() { // regra de saída ou janela mudou: mesma análise de antes, com o esmaecer enquanto o motor recalcula
+    const w = settle(); if (w !== true && !(await w)) return;
+    try { await run(false, true); } catch (e) { staleOff(); throw e; }
   }
   function readCfg() {
     const mode = $('lvMode').value, tgt = parseFloat(String($('lvTgt').value).replace(',', '.')), stp = parseFloat(String($('lvStp').value).replace(',', '.')), hold = parseInt($('lvHold').value, 10);
@@ -1237,7 +1310,7 @@
     });
     win.addEventListener('click', (e) => {
       const b = e.target && e.target.closest ? e.target.closest('[data-act="win-clear"]') : null; if (!b) return;
-      state.win = null; state.urlOn = true; run(false, true);
+      state.win = null; state.urlOn = true; rerun();
     });
     shareUi = { btn, win };
   }
@@ -1254,6 +1327,7 @@
   // e rola até o banco de setups. Valor desconhecido é ignorado.
   function emitAnalysis() {
     try { document.dispatchEvent(new CustomEvent('argos:analysis', { detail: { A: state.A, E } })); } catch (e) { /* sem CustomEvent */ }
+    staleOff(); // análise desenhada (inclusive o mapa, que se redesenha no evento): os painéis voltam à opacidade normal
   }
   function revealBank() {
     if (!liveVisible() && typeof window.openLive === 'function') { try { window.openLive(); } catch (e) { /* navegação indisponível */ } } // openLive é do nav.js
@@ -1303,8 +1377,13 @@
     $('lvMa').addEventListener('change', (e) => { state.show.ma = e.target.checked; applyVisibility(); renderLegend(null); });
     $('lvBb').addEventListener('change', (e) => { state.show.bb = e.target.checked; applyVisibility(); });
     $('lvVol').addEventListener('change', (e) => { state.show.vol = e.target.checked; applyVisibility(); });
-    ['lvMode', 'lvTgt', 'lvStp', 'lvHold'].forEach((id) => $(id).addEventListener('change', () => { readCfg(); state.urlOn = true; run(false, true); }));
-    $('lvRun').addEventListener('click', async () => { readCfg(); state.urlOn = true; $('lvRun').disabled = true; if (!IN_CLAUDE) await refreshLive(state.sym, state.tf); await run(true, true); $('lvRun').disabled = false; });
+    ['lvMode', 'lvTgt', 'lvStp', 'lvHold'].forEach((id) => $(id).addEventListener('change', () => { readCfg(); state.urlOn = true; rerun(); }));
+    $('lvRun').addEventListener('click', async () => {
+      readCfg(); state.urlOn = true; $('lvRun').disabled = true;
+      const w = settle(); if (w !== true && !(await w)) { $('lvRun').disabled = false; return; } // outra mudança chegou durante a pintura: é ela quem roda
+      try { if (!IN_CLAUDE) await refreshLive(state.sym, state.tf); await run(true, true); } catch (e) { staleOff(); throw e; }
+      $('lvRun').disabled = false;
+    });
     $('lvZin').addEventListener('click', () => zoom(0.7)); $('lvZout').addEventListener('click', () => zoom(1.45)); $('lvZfit').addEventListener('click', fitDefault);
     $('lvRegSel').addEventListener('change', (e) => { state.regimeSel = e.target.value; if (state.A) renderBank(state.A); touchUrl(); });
     document.addEventListener('argos:select', onExternalSelect);
@@ -1338,7 +1417,10 @@
     requestAnimationFrame(() => { if (!state.shownOnce) { state.shownOnce = true; fitDefault(); renderPipeline(state.A, true); } });
   }
   function init() {
-    if (!E || !SNAP || !LWC || !$('lvChart')) return;
+    if (!E || !SNAP || !LWC || !$('lvChart')) { // sem motor ou gráfico a análise nunca vem: o esqueleto de carregamento não pode ficar para sempre
+      if (document.querySelectorAll) document.querySelectorAll('#dash-live .sk').forEach((n) => n.remove());
+      return;
+    }
     $('lvAiNote').textContent = IN_CLAUDE || SERVER_LLM ? '' : 'Neste arquivo, o relatório é redigido pelo motor determinístico, com os mesmos números. A camada Argos AI (LLM) roda na versão publicada da plataforma.';
     const urlSetup = readUrl(); // pergunta da URL (se houver) antes de ler os campos da regra de saída
     buildChart(); bind(); readCfg(); renderFoot(); buildShare(); buildRegs();

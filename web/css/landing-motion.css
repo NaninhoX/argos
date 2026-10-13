@@ -1,1 +1,108 @@
-/* Argos · movimento do site (herói, seções, matriz, contadores, como funciona). Usa a fundação de motion.css. */
+/* Argos · movimento do site (herói, seções, matriz, contadores, como funciona). Usa a fundação de motion.css.
+
+   Regras da casa (as mesmas de motion.css):
+   - três famílias: interface 160 ms, revelação 240–360 ms, crescimento de dado 360–480 ms;
+   - só transform e opacity em transition e @keyframes;
+   - todo estado inicial escondido começa por html.motion-ok: sem script ou com movimento desligado, tudo aparece;
+   - estado escondido é só opacity (e transform): o conteúdo continua clicável e legível por leitor de tela;
+   - cada bloco com sequência própria (herói, matriz, como funciona) termina com .seq-done e volta às regras normais;
+   - o tempo dos passos vem de --m-delay (transition-delay), então corre no compositor mesmo com a thread ocupada.
+
+   O resto do site entra por [data-reveal] (motion.css) e os contadores por [data-count] (motion.js). */
+
+
+/* =====================================================================
+   1. HERÓI · marca das quatro camadas + cartão do caso real
+   Linha do tempo (ms): camadas 0 / 90 / 180 / 270, ouro 330 · linhas 520 a 1240 (de 120 em 120)
+   · pausa · veredito, nota e rodapé 1900 · fim ~2300.
+   Linhas, veredito, nota e rodapé usam [data-step] (motion.css). Aqui só a marca.
+   ===================================================================== */
+#page-landing .qp-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+#page-landing .hero-mark { display: block; flex: none; width: 40px; height: 40px; overflow: visible; }
+@media (max-width: 480px) {
+  #page-landing .qp-head { flex-wrap: wrap; gap: 8px 12px; }
+  #page-landing .hero-mark { width: 32px; height: 32px; }
+}
+
+/* as camadas se assentam de baixo para cima; a de cima acende por último (ouro sobre cinza, por opacity) */
+html.motion-ok [data-seq="hero"] .hm-l {
+  opacity: 0;
+  transform: translate(0, -14px);
+  transition: opacity var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms), transform var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms);
+}
+html.motion-ok [data-seq="hero"] .hm-gold {
+  opacity: 0;
+  transition: opacity var(--m-reveal) var(--e-reveal) var(--m-delay, 0ms);
+}
+html.motion-ok [data-seq="hero"] .hm-l.is-in,
+html.motion-ok [data-seq="hero"].seq-done .hm-l { opacity: 1; transform: none; }
+html.motion-ok [data-seq="hero"] .hm-gold.is-in,
+html.motion-ok [data-seq="hero"].seq-done .hm-gold { opacity: 1; }
+html.motion-ok [data-seq="hero"].seq-instant .hm-l,
+html.motion-ok [data-seq="hero"].seq-instant .hm-gold { transition: none; }
+/* já visto nesta visita: pronto desde a primeira pintura */
+html.m-seen-hero [data-seq="hero"] .hm-l { opacity: 1; transform: none; transition: none; }
+html.m-seen-hero [data-seq="hero"] .hm-gold { opacity: 1; transition: none; }
+
+
+/* =====================================================================
+   3. MATRIZ DOS 72 TESTES · as células acendem em onda por coluna;
+   depois de uma pausa entram as que resistem ao ajuste (v-edge e v-sens)
+   Linha do tempo (ms, a partir de quando a matriz entra na tela): legenda 0–180 · onda 60 a 558
+   (cada célula leva 420) · pausa de 500 · as duas que resistem 1478 + legenda delas 1518 e 1558 · fim ~2040.
+   O estado escondido só vale até .seq-done; depois a célula volta às regras de landing.css.
+   O seletor leva #page-landing para vencer `#page-landing .mx-cell` (transition do hover).
+   ===================================================================== */
+html.motion-ok #page-landing .matrix-card[data-seq="mx"]:not(.seq-done) .mx-cell {
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity var(--m-data) var(--e-data) var(--m-delay, 0ms), transform var(--m-data) var(--e-data) var(--m-delay, 0ms);
+}
+/* as que resistem entram por último, pousando de um pouco maior (sem passar do tamanho final) */
+html.motion-ok #page-landing .matrix-card[data-seq="mx"]:not(.seq-done) .mx-cell.v-edge,
+html.motion-ok #page-landing .matrix-card[data-seq="mx"]:not(.seq-done) .mx-cell.v-sens { transform: scale(1.12); }
+html.motion-ok #page-landing .matrix-card[data-seq="mx"]:not(.seq-done) .mx-cell.mx-on { opacity: 1; transform: none; }
+/* já visto nesta visita: pronta desde a primeira pintura (mantém a transição normal da célula) */
+html.m-seen-mx.motion-ok #page-landing .matrix-card[data-seq="mx"]:not(.seq-done) .mx-cell {
+  opacity: 1; transform: none; transition: transform .12s, border-color .12s, filter .12s;
+}
+
+
+/* =====================================================================
+   5. COMO FUNCIONA · a linha se desenha entre as etapas e cada número entra na sua vez
+   Linha do tempo (ms, a partir de quando a etapa entra na tela, quatro colunas): número 01 em 0 · linha 01→02
+   80 a 500 · número 02 em 440 · linha 02→03 de 520 a 940 · número 03 em 880 · … número 04 em 1320 (fim ~1640).
+   Em duas colunas ou uma, a linha some e cada número só entra (js/landing-motion.js calcula o atraso).
+   Estado escondido só enquanto .how-steps não terminou (.seq-done) e a etapa não foi acesa (.hw-n / .hw-l).
+   ===================================================================== */
+html.motion-ok #page-landing .how-steps[data-seq="how"] .how-n { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+html.motion-ok #page-landing .how-steps[data-seq="how"] .how-num {
+  transition: opacity var(--m-reveal) var(--e-reveal) var(--hw-nd, 0ms), transform var(--m-reveal) var(--e-reveal) var(--hw-nd, 0ms);
+}
+/* a linha vai da direita do número até 10 px antes do número seguinte (a margem negativa atravessa o preenchimento e o fio de 1 px) */
+html.motion-ok #page-landing .how-steps[data-seq="how"] .how-line {
+  flex: 1 1 0; min-width: 0; height: 1px; margin-right: -39px;
+  background: var(--gold); opacity: .55;
+  transform-origin: 0 50%;
+  transition: transform var(--m-data) var(--e-data) var(--hw-ld, 0ms);
+}
+html.motion-ok #page-landing .how-steps[data-seq="how"]:not(.seq-done) li:not(.hw-n) .how-num { opacity: 0; transform: translate3d(0, 4px, 0); }
+html.motion-ok #page-landing .how-steps[data-seq="how"]:not(.seq-done) li:not(.hw-l) .how-line { transform: scaleX(0); }
+@media (max-width: 900px) {
+  html.motion-ok #page-landing .how-steps[data-seq="how"] .how-line { flex: 0 0 0; margin-right: 0; opacity: 0; }
+}
+
+
+/* ---------- impressão e movimento reduzido: nada fica escondido (o resto está em motion.css) ---------- */
+@media print {
+  html [data-seq] .hm-l, html [data-seq] .hm-gold,
+  html #page-landing .matrix-card[data-seq] .mx-cell,
+  html #page-landing .how-steps[data-seq] .how-num { opacity: 1 !important; transform: none !important; transition: none !important; }
+  html #page-landing .how-steps[data-seq] .how-line { transform: none !important; transition: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html [data-seq] .hm-l, html [data-seq] .hm-gold,
+  html #page-landing .matrix-card[data-seq] .mx-cell,
+  html #page-landing .how-steps[data-seq] .how-num { opacity: 1 !important; transform: none !important; transition: none !important; }
+  html #page-landing .how-steps[data-seq] .how-line { transform: none !important; transition: none !important; }
+}

@@ -84,7 +84,8 @@
 
   html.classList.add(enabled ? 'motion-ok' : 'motion-off');
   if (frozen) html.classList.add('motion-freeze');
-  if (enabled) seen.forEach(function (k) { if (/^[\w-]+$/.test(k)) html.classList.add('m-seen-' + k); });
+  // em freeze as sequências sempre rodam até o instante pedido, mesmo já vistas nesta visita
+  if (enabled && !frozen) seen.forEach(function (k) { if (/^[\w-]+$/.test(k)) html.classList.add('m-seen-' + k); });
 
   /** Verdadeiro só na primeira chamada de cada chave por visita (aba). Com movimento desligado, sempre falso. */
   function once(key) {
@@ -145,6 +146,7 @@
     });
     container.classList.remove('is-in');
     whenSeen(container, function () {
+      if (o.onStart) { try { o.onStart(); } catch (e) { /* aviso é cortesia */ } }
       void container.offsetWidth; // o estado escondido precisa existir antes da entrada
       items.forEach(function (el) { el.classList.add('is-in'); });
       // terminada a entrada, o item volta a ser um elemento comum (transições próprias, hover)

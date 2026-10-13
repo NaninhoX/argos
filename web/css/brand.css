@@ -4,6 +4,14 @@
 /* símbolo das quatro camadas ao lado de ARGOS | SENTINEL */
 .brand .brand-mark { display: block; flex: none; align-self: center; width: 22px; height: 22px; margin-right: 2px; }
 
+/* celular: o símbolo não pode encostar a marca no botão do cabeçalho */
+@media (max-width: 480px) {
+  #page-landing .nav-inner { gap: 12px; }
+  #page-landing .brand { font-size: 13px; gap: 6px; }
+  #page-landing .brand .brand-mark { width: 18px; height: 18px; }
+  #page-landing .nav-cta { padding: 9px 12px; white-space: nowrap; }
+}
+
 /* assinatura: símbolo, STRATUM em serifa e RESEARCH em monoespaçada dourada entre dois fios */
 .stratum-lockup { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
 .stratum-lockup img { display: block; flex: none; width: 34px; height: 34px; }
