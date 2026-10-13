@@ -1,0 +1,10 @@
+node_modules/
+.env*
+!.env.example
+legacy/blocks/
+.vercel/
+# gerados por tools/build-web.mjs a partir de engine/ e data/
+web/js/engine.js
+web/js/regime-view.js
+web/data/snapshot.js
+web/data/study.js

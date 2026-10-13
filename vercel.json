@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node tools/build-web.mjs",
+  "outputDirectory": "web",
+  "functions": {
+    "api/argos-ai.js": {
+      "maxDuration": 200
+    },
+    "api/cron/*.js": {
+      "includeFiles": "data/**",
+      "maxDuration": 60
+    },
+    "api/*.js": {
+      "includeFiles": "data/**",
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    { "path": "/api/cron/candles", "schedule": "5 * * * *" },
+    { "path": "/api/cron/anchor", "schedule": "10 0 * * *" }
+  ]
+}

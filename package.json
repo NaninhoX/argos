@@ -1,0 +1,25 @@
+{
+  "name": "argos",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Argos Sentinel: motor estatístico e serviços da Stratum Research",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "test:fast": "node --test --test-skip-pattern=\"paridade|estudo\"",
+    "lint:compliance": "node tools/compliance-lint.mjs",
+    "dev": "node tools/dev-server.mjs",
+    "build:web": "node tools/build-web.mjs",
+    "migrate": "node tools/migrate.mjs",
+    "extract": "node tools/extract-html.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

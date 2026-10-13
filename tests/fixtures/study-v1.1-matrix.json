@@ -1,0 +1,1951 @@
+{
+ "source": "legacy/Argos_Sentinel_v1.1.html (células .mx-cell)",
+ "study": "v1.1",
+ "cut": "2026-09-26",
+ "cells": [
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 617,
+   "nEff": 542,
+   "winRate": 0.207,
+   "ci": [
+    0.177,
+    0.24100000000000002
+   ],
+   "base": 0.249,
+   "p": 0.016,
+   "pIsUpperBound": false,
+   "q": 0.105,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "617 (efetivo 542)",
+    "wr": "20,7%",
+    "ci": "17,7% – 24,1%",
+    "base": "24,9%",
+    "p": "0,016",
+    "q": "0,105"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 290,
+   "nEff": 290,
+   "winRate": 0.207,
+   "ci": [
+    0.16399999999999998,
+    0.257
+   ],
+   "base": 0.265,
+   "p": 0.025,
+   "pIsUpperBound": false,
+   "q": 0.148,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "290 (efetivo 290)",
+    "wr": "20,7%",
+    "ci": "16,4% – 25,7%",
+    "base": "26,5%",
+    "p": "0,025",
+    "q": "0,148"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 33,
+   "nEff": 29,
+   "winRate": 0.242,
+   "ci": [
+    0.128,
+    0.41
+   ],
+   "base": 0.292,
+   "p": 0.669,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "33 (efetivo 29)",
+    "wr": "24,2%",
+    "ci": "12,8% – 41,0%",
+    "base": "29,2%",
+    "p": "0,669",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 625,
+   "nEff": 508,
+   "winRate": 0.214,
+   "ci": [
+    0.184,
+    0.248
+   ],
+   "base": 0.259,
+   "p": 0.01,
+   "pIsUpperBound": false,
+   "q": 0.082,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "625 (efetivo 508)",
+    "wr": "21,4%",
+    "ci": "18,4% – 24,8%",
+    "base": "25,9%",
+    "p": "0,010",
+    "q": "0,082"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 276,
+   "nEff": 276,
+   "winRate": 0.228,
+   "ci": [
+    0.183,
+    0.281
+   ],
+   "base": 0.266,
+   "p": 0.171,
+   "pIsUpperBound": false,
+   "q": 0.466,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "276 (efetivo 276)",
+    "wr": "22,8%",
+    "ci": "18,3% – 28,1%",
+    "base": "26,6%",
+    "p": "0,171",
+    "q": "0,466"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 32,
+   "nEff": 32,
+   "winRate": 0.125,
+   "ci": [
+    0.05,
+    0.281
+   ],
+   "base": 0.298,
+   "p": 0.049,
+   "pIsUpperBound": false,
+   "q": 0.222,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "32 (efetivo 32)",
+    "wr": "12,5%",
+    "ci": "5,0% – 28,1%",
+    "base": "29,8%",
+    "p": "0,049",
+    "q": "0,222"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "ABAIXO",
+   "n": 608,
+   "nEff": 555,
+   "winRate": 0.179,
+   "ci": [
+    0.151,
+    0.212
+   ],
+   "base": 0.26,
+   "p": 0.001,
+   "pIsUpperBound": false,
+   "q": 0.036,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "608 (efetivo 555)",
+    "wr": "17,9%",
+    "ci": "15,1% – 21,2%",
+    "base": "26,0%",
+    "p": "&lt; 0,001",
+    "q": "0,036"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "RSI_OVERSOLD",
+   "verdict": "SEM_EDGE",
+   "n": 186,
+   "nEff": 186,
+   "winRate": 0.231,
+   "ci": [
+    0.17600000000000002,
+    0.297
+   ],
+   "base": 0.273,
+   "p": 0.222,
+   "pIsUpperBound": false,
+   "q": 0.533,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "186 (efetivo 186)",
+    "wr": "23,1%",
+    "ci": "17,6% – 29,7%",
+    "base": "27,3%",
+    "p": "0,222",
+    "q": "0,533"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "RSI_OVERSOLD",
+   "verdict": "INSUFICIENTE",
+   "n": 18,
+   "nEff": 9,
+   "winRate": 0.278,
+   "ci": [
+    0.126,
+    0.512
+   ],
+   "base": 0.29,
+   "p": 1,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "18 (efetivo 9)",
+    "wr": "27,8%",
+    "ci": "12,6% – 51,2%",
+    "base": "29,0%",
+    "p": "1,000",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 1569,
+   "nEff": 1569,
+   "winRate": 0.275,
+   "ci": [
+    0.254,
+    0.298
+   ],
+   "base": 0.249,
+   "p": 0.011,
+   "pIsUpperBound": false,
+   "q": 0.082,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.569 (efetivo 1.569)",
+    "wr": "27,5%",
+    "ci": "25,4% – 29,8%",
+    "base": "24,9%",
+    "p": "0,011",
+    "q": "0,082"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 735,
+   "nEff": 735,
+   "winRate": 0.278,
+   "ci": [
+    0.24600000000000002,
+    0.311
+   ],
+   "base": 0.265,
+   "p": 0.435,
+   "pIsUpperBound": false,
+   "q": 0.847,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "735 (efetivo 735)",
+    "wr": "27,8%",
+    "ci": "24,6% – 31,1%",
+    "base": "26,5%",
+    "p": "0,435",
+    "q": "0,847"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 113,
+   "nEff": 113,
+   "winRate": 0.31,
+   "ci": [
+    0.23199999999999998,
+    0.4
+   ],
+   "base": 0.292,
+   "p": 0.718,
+   "pIsUpperBound": false,
+   "q": 0.907,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "113 (efetivo 113)",
+    "wr": "31,0%",
+    "ci": "23,2% – 40,0%",
+    "base": "29,2%",
+    "p": "0,718",
+    "q": "0,907"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 1564,
+   "nEff": 1564,
+   "winRate": 0.265,
+   "ci": [
+    0.244,
+    0.28800000000000003
+   ],
+   "base": 0.259,
+   "p": 0.552,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.564 (efetivo 1.564)",
+    "wr": "26,5%",
+    "ci": "24,4% – 28,8%",
+    "base": "25,9%",
+    "p": "0,552",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 748,
+   "nEff": 576,
+   "winRate": 0.297,
+   "ci": [
+    0.265,
+    0.331
+   ],
+   "base": 0.266,
+   "p": 0.077,
+   "pIsUpperBound": false,
+   "q": 0.278,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "748 (efetivo 576)",
+    "wr": "29,7%",
+    "ci": "26,5% – 33,1%",
+    "base": "26,6%",
+    "p": "0,077",
+    "q": "0,278"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 115,
+   "nEff": 107,
+   "winRate": 0.322,
+   "ci": [
+    0.243,
+    0.41200000000000003
+   ],
+   "base": 0.298,
+   "p": 0.648,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "115 (efetivo 107)",
+    "wr": "32,2%",
+    "ci": "24,3% – 41,2%",
+    "base": "29,8%",
+    "p": "0,648",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 1565,
+   "nEff": 1561,
+   "winRate": 0.264,
+   "ci": [
+    0.243,
+    0.28600000000000003
+   ],
+   "base": 0.26,
+   "p": 0.742,
+   "pIsUpperBound": false,
+   "q": 0.922,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.565 (efetivo 1.561)",
+    "wr": "26,4%",
+    "ci": "24,3% – 28,6%",
+    "base": "26,0%",
+    "p": "0,742",
+    "q": "0,922"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 512,
+   "nEff": 492,
+   "winRate": 0.293,
+   "ci": [
+    0.255,
+    0.33399999999999996
+   ],
+   "base": 0.273,
+   "p": 0.329,
+   "pIsUpperBound": false,
+   "q": 0.677,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "512 (efetivo 492)",
+    "wr": "29,3%",
+    "ci": "25,5% – 33,4%",
+    "base": "27,3%",
+    "p": "0,329",
+    "q": "0,677"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "MACD_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 70,
+   "nEff": 70,
+   "winRate": 0.371,
+   "ci": [
+    0.268,
+    0.489
+   ],
+   "base": 0.29,
+   "p": 0.165,
+   "pIsUpperBound": false,
+   "q": 0.466,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "70 (efetivo 70)",
+    "wr": "37,1%",
+    "ci": "26,8% – 48,9%",
+    "base": "29,0%",
+    "p": "0,165",
+    "q": "0,466"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 143,
+   "nEff": 143,
+   "winRate": 0.245,
+   "ci": [
+    0.182,
+    0.321
+   ],
+   "base": 0.249,
+   "p": 1,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "143 (efetivo 143)",
+    "wr": "24,5%",
+    "ci": "18,2% – 32,1%",
+    "base": "24,9%",
+    "p": "1,000",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 59,
+   "nEff": 59,
+   "winRate": 0.28800000000000003,
+   "ci": [
+    0.188,
+    0.414
+   ],
+   "base": 0.265,
+   "p": 0.775,
+   "pIsUpperBound": false,
+   "q": 0.937,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "59 (efetivo 59)",
+    "wr": "28,8%",
+    "ci": "18,8% – 41,4%",
+    "base": "26,5%",
+    "p": "0,775",
+    "q": "0,937"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "GOLDEN_CROSS",
+   "verdict": "INSUFICIENTE",
+   "n": 9,
+   "nEff": 9,
+   "winRate": 0.222,
+   "ci": [
+    0.067,
+    0.556
+   ],
+   "base": 0.292,
+   "p": 0.988,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "9 (efetivo 9)",
+    "wr": "22,2%",
+    "ci": "6,7% – 55,6%",
+    "base": "29,2%",
+    "p": "0,988",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 129,
+   "nEff": 129,
+   "winRate": 0.233,
+   "ci": [
+    0.168,
+    0.313
+   ],
+   "base": 0.259,
+   "p": 0.582,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "129 (efetivo 129)",
+    "wr": "23,3%",
+    "ci": "16,8% – 31,3%",
+    "base": "25,9%",
+    "p": "0,582",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 51,
+   "nEff": 51,
+   "winRate": 0.314,
+   "ci": [
+    0.203,
+    0.45
+   ],
+   "base": 0.266,
+   "p": 0.54,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "51 (efetivo 51)",
+    "wr": "31,4%",
+    "ci": "20,3% – 45,0%",
+    "base": "26,6%",
+    "p": "0,540",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "GOLDEN_CROSS",
+   "verdict": "INSUFICIENTE",
+   "n": 9,
+   "nEff": 9,
+   "winRate": 0.222,
+   "ci": [
+    0.067,
+    0.556
+   ],
+   "base": 0.298,
+   "p": 0.952,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "9 (efetivo 9)",
+    "wr": "22,2%",
+    "ci": "6,7% – 55,6%",
+    "base": "29,8%",
+    "p": "0,952",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 126,
+   "nEff": 98,
+   "winRate": 0.254,
+   "ci": [
+    0.18600000000000003,
+    0.336
+   ],
+   "base": 0.26,
+   "p": 0.984,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "126 (efetivo 98)",
+    "wr": "25,4%",
+    "ci": "18,6% – 33,6%",
+    "base": "26,0%",
+    "p": "0,984",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "GOLDEN_CROSS",
+   "verdict": "SEM_EDGE",
+   "n": 38,
+   "nEff": 38,
+   "winRate": 0.316,
+   "ci": [
+    0.191,
+    0.475
+   ],
+   "base": 0.273,
+   "p": 0.654,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "38 (efetivo 38)",
+    "wr": "31,6%",
+    "ci": "19,1% – 47,5%",
+    "base": "27,3%",
+    "p": "0,654",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "GOLDEN_CROSS",
+   "verdict": "INSUFICIENTE",
+   "n": 6,
+   "nEff": 6,
+   "winRate": 0.33299999999999996,
+   "ci": [
+    0.099,
+    0.71
+   ],
+   "base": 0.29,
+   "p": 1,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "6 (efetivo 6)",
+    "wr": "33,3%",
+    "ci": "9,9% – 71,0%",
+    "base": "29,0%",
+    "p": "1,000",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 1277,
+   "nEff": 1074,
+   "winRate": 0.25,
+   "ci": [
+    0.22699999999999998,
+    0.27399999999999997
+   ],
+   "base": 0.249,
+   "p": 0.946,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.277 (efetivo 1.074)",
+    "wr": "25,0%",
+    "ci": "22,7% – 27,4%",
+    "base": "24,9%",
+    "p": "0,946",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 572,
+   "nEff": 572,
+   "winRate": 0.247,
+   "ci": [
+    0.213,
+    0.28300000000000003
+   ],
+   "base": 0.265,
+   "p": 0.348,
+   "pIsUpperBound": false,
+   "q": 0.696,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "572 (efetivo 572)",
+    "wr": "24,7%",
+    "ci": "21,3% – 28,3%",
+    "base": "26,5%",
+    "p": "0,348",
+    "q": "0,696"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 74,
+   "nEff": 67,
+   "winRate": 0.18899999999999997,
+   "ci": [
+    0.11599999999999999,
+    0.293
+   ],
+   "base": 0.292,
+   "p": 0.061,
+   "pIsUpperBound": false,
+   "q": 0.245,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "74 (efetivo 67)",
+    "wr": "18,9%",
+    "ci": "11,6% – 29,3%",
+    "base": "29,2%",
+    "p": "0,061",
+    "q": "0,245"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 1277,
+   "nEff": 1277,
+   "winRate": 0.253,
+   "ci": [
+    0.23,
+    0.27699999999999997
+   ],
+   "base": 0.259,
+   "p": 0.641,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.277 (efetivo 1.277)",
+    "wr": "25,3%",
+    "ci": "23,0% – 27,7%",
+    "base": "25,9%",
+    "p": "0,641",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 551,
+   "nEff": 551,
+   "winRate": 0.27,
+   "ci": [
+    0.235,
+    0.309
+   ],
+   "base": 0.266,
+   "p": 0.856,
+   "pIsUpperBound": false,
+   "q": 0.983,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "551 (efetivo 551)",
+    "wr": "27,0%",
+    "ci": "23,5% – 30,9%",
+    "base": "26,6%",
+    "p": "0,856",
+    "q": "0,983"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 85,
+   "nEff": 76,
+   "winRate": 0.2,
+   "ci": [
+    0.129,
+    0.297
+   ],
+   "base": 0.298,
+   "p": 0.054,
+   "pIsUpperBound": false,
+   "q": 0.229,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "85 (efetivo 76)",
+    "wr": "20,0%",
+    "ci": "12,9% – 29,7%",
+    "base": "29,8%",
+    "p": "0,054",
+    "q": "0,229"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 1295,
+   "nEff": 1177,
+   "winRate": 0.243,
+   "ci": [
+    0.221,
+    0.267
+   ],
+   "base": 0.26,
+   "p": 0.175,
+   "pIsUpperBound": false,
+   "q": 0.466,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.295 (efetivo 1.177)",
+    "wr": "24,3%",
+    "ci": "22,1% – 26,7%",
+    "base": "26,0%",
+    "p": "0,175",
+    "q": "0,466"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 414,
+   "nEff": 329,
+   "winRate": 0.261,
+   "ci": [
+    0.221,
+    0.305
+   ],
+   "base": 0.273,
+   "p": 0.624,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "414 (efetivo 329)",
+    "wr": "26,1%",
+    "ci": "22,1% – 30,5%",
+    "base": "27,3%",
+    "p": "0,624",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "BB_LOWER",
+   "verdict": "SEM_EDGE",
+   "n": 53,
+   "nEff": 48,
+   "winRate": 0.20800000000000002,
+   "ci": [
+    0.12,
+    0.335
+   ],
+   "base": 0.29,
+   "p": 0.232,
+   "pIsUpperBound": false,
+   "q": 0.539,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "53 (efetivo 48)",
+    "wr": "20,8%",
+    "ci": "12,0% – 33,5%",
+    "base": "29,0%",
+    "p": "0,232",
+    "q": "0,539"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 1317,
+   "nEff": 1010,
+   "winRate": 0.273,
+   "ci": [
+    0.25,
+    0.298
+   ],
+   "base": 0.249,
+   "p": 0.043,
+   "pIsUpperBound": false,
+   "q": 0.219,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.317 (efetivo 1.010)",
+    "wr": "27,3%",
+    "ci": "25,0% – 29,8%",
+    "base": "24,9%",
+    "p": "0,043",
+    "q": "0,219"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 759,
+   "nEff": 594,
+   "winRate": 0.307,
+   "ci": [
+    0.275,
+    0.341
+   ],
+   "base": 0.265,
+   "p": 0.011,
+   "pIsUpperBound": false,
+   "q": 0.082,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "759 (efetivo 594)",
+    "wr": "30,7%",
+    "ci": "27,5% – 34,1%",
+    "base": "26,5%",
+    "p": "0,011",
+    "q": "0,082"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 143,
+   "nEff": 116,
+   "winRate": 0.336,
+   "ci": [
+    0.263,
+    0.41600000000000004
+   ],
+   "base": 0.292,
+   "p": 0.272,
+   "pIsUpperBound": false,
+   "q": 0.612,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "143 (efetivo 116)",
+    "wr": "33,6%",
+    "ci": "26,3% – 41,6%",
+    "base": "29,2%",
+    "p": "0,272",
+    "q": "0,612"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 1320,
+   "nEff": 1159,
+   "winRate": 0.28,
+   "ci": [
+    0.256,
+    0.304
+   ],
+   "base": 0.259,
+   "p": 0.085,
+   "pIsUpperBound": false,
+   "q": 0.29,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.320 (efetivo 1.159)",
+    "wr": "28,0%",
+    "ci": "25,6% – 30,4%",
+    "base": "25,9%",
+    "p": "0,085",
+    "q": "0,290"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "BREAKOUT_20",
+   "verdict": "EDGE",
+   "n": 771,
+   "nEff": 650,
+   "winRate": 0.32299999999999995,
+   "ci": [
+    0.29100000000000004,
+    0.35700000000000004
+   ],
+   "base": 0.266,
+   "p": 0.002,
+   "pIsUpperBound": false,
+   "q": 0.036,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "771 (efetivo 650)",
+    "wr": "32,3%",
+    "ci": "29,1% – 35,7%",
+    "base": "26,6%",
+    "p": "0,002",
+    "q": "0,036"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 134,
+   "nEff": 115,
+   "winRate": 0.366,
+   "ci": [
+    0.289,
+    0.45
+   ],
+   "base": 0.298,
+   "p": 0.093,
+   "pIsUpperBound": false,
+   "q": 0.305,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "134 (efetivo 115)",
+    "wr": "36,6%",
+    "ci": "28,9% – 45,0%",
+    "base": "29,8%",
+    "p": "0,093",
+    "q": "0,305"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 1401,
+   "nEff": 1333,
+   "winRate": 0.28600000000000003,
+   "ci": [
+    0.263,
+    0.31
+   ],
+   "base": 0.26,
+   "p": 0.027,
+   "pIsUpperBound": false,
+   "q": 0.148,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.401 (efetivo 1.333)",
+    "wr": "28,6%",
+    "ci": "26,3% – 31,0%",
+    "base": "26,0%",
+    "p": "0,027",
+    "q": "0,148"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "BREAKOUT_20",
+   "verdict": "SEM_EDGE",
+   "n": 503,
+   "nEff": 438,
+   "winRate": 0.302,
+   "ci": [
+    0.264,
+    0.344
+   ],
+   "base": 0.273,
+   "p": 0.157,
+   "pIsUpperBound": false,
+   "q": 0.466,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "503 (efetivo 438)",
+    "wr": "30,2%",
+    "ci": "26,4% – 34,4%",
+    "base": "27,3%",
+    "p": "0,157",
+    "q": "0,466"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "BREAKOUT_20",
+   "verdict": "EDGE_SENSIVEL",
+   "n": 82,
+   "nEff": 45,
+   "winRate": 0.46299999999999997,
+   "ci": [
+    0.36,
+    0.5710000000000001
+   ],
+   "base": 0.29,
+   "p": 0.001,
+   "pIsUpperBound": false,
+   "q": 0.036,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "82 (efetivo 45)",
+    "wr": "46,3%",
+    "ci": "36,0% – 57,1%",
+    "base": "29,0%",
+    "p": "0,001",
+    "q": "0,036"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 514,
+   "nEff": 396,
+   "winRate": 0.239,
+   "ci": [
+    0.204,
+    0.278
+   ],
+   "base": 0.249,
+   "p": 0.638,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "514 (efetivo 396)",
+    "wr": "23,9%",
+    "ci": "20,4% – 27,8%",
+    "base": "24,9%",
+    "p": "0,638",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 284,
+   "nEff": 266,
+   "winRate": 0.282,
+   "ci": [
+    0.233,
+    0.337
+   ],
+   "base": 0.265,
+   "p": 0.573,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "284 (efetivo 266)",
+    "wr": "28,2%",
+    "ci": "23,3% – 33,7%",
+    "base": "26,5%",
+    "p": "0,573",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 36,
+   "nEff": 29,
+   "winRate": 0.444,
+   "ci": [
+    0.295,
+    0.604
+   ],
+   "base": 0.292,
+   "p": 0.077,
+   "pIsUpperBound": false,
+   "q": 0.278,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "36 (efetivo 29)",
+    "wr": "44,4%",
+    "ci": "29,5% – 60,4%",
+    "base": "29,2%",
+    "p": "0,077",
+    "q": "0,278"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 517,
+   "nEff": 438,
+   "winRate": 0.265,
+   "ci": [
+    0.22899999999999998,
+    0.305
+   ],
+   "base": 0.259,
+   "p": 0.781,
+   "pIsUpperBound": false,
+   "q": 0.937,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "517 (efetivo 438)",
+    "wr": "26,5%",
+    "ci": "22,9% – 30,5%",
+    "base": "25,9%",
+    "p": "0,781",
+    "q": "0,937"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 244,
+   "nEff": 207,
+   "winRate": 0.27899999999999997,
+   "ci": [
+    0.226,
+    0.33799999999999997
+   ],
+   "base": 0.266,
+   "p": 0.698,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "244 (efetivo 207)",
+    "wr": "27,9%",
+    "ci": "22,6% – 33,8%",
+    "base": "26,6%",
+    "p": "0,698",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 29,
+   "nEff": 21,
+   "winRate": 0.379,
+   "ci": [
+    0.22699999999999998,
+    0.561
+   ],
+   "base": 0.298,
+   "p": 0.456,
+   "pIsUpperBound": false,
+   "q": 0.864,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "29 (efetivo 21)",
+    "wr": "37,9%",
+    "ci": "22,7% – 56,1%",
+    "base": "29,8%",
+    "p": "0,456",
+    "q": "0,864"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 470,
+   "nEff": 426,
+   "winRate": 0.27,
+   "ci": [
+    0.23199999999999998,
+    0.312
+   ],
+   "base": 0.26,
+   "p": 0.627,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "470 (efetivo 426)",
+    "wr": "27,0%",
+    "ci": "23,2% – 31,2%",
+    "base": "26,0%",
+    "p": "0,627",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 181,
+   "nEff": 181,
+   "winRate": 0.359,
+   "ci": [
+    0.293,
+    0.431
+   ],
+   "base": 0.273,
+   "p": 0.007,
+   "pIsUpperBound": false,
+   "q": 0.069,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "181 (efetivo 181)",
+    "wr": "35,9%",
+    "ci": "29,3% – 43,1%",
+    "base": "27,3%",
+    "p": "0,007",
+    "q": "0,069"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "EMA_PULLBACK",
+   "verdict": "SEM_EDGE",
+   "n": 28,
+   "nEff": 16,
+   "winRate": 0.35700000000000004,
+   "ci": [
+    0.207,
+    0.5429999999999999
+   ],
+   "base": 0.29,
+   "p": 0.568,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "28 (efetivo 16)",
+    "wr": "35,7%",
+    "ci": "20,7% – 54,3%",
+    "base": "29,0%",
+    "p": "0,568",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 3835,
+   "nEff": 2738,
+   "winRate": 0.253,
+   "ci": [
+    0.239,
+    0.267
+   ],
+   "base": 0.249,
+   "p": 0.591,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "3.835 (efetivo 2.738)",
+    "wr": "25,3%",
+    "ci": "23,9% – 26,7%",
+    "base": "24,9%",
+    "p": "0,591",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 1768,
+   "nEff": 1230,
+   "winRate": 0.275,
+   "ci": [
+    0.255,
+    0.29600000000000004
+   ],
+   "base": 0.265,
+   "p": 0.329,
+   "pIsUpperBound": false,
+   "q": 0.677,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.768 (efetivo 1.230)",
+    "wr": "27,5%",
+    "ci": "25,5% – 29,6%",
+    "base": "26,5%",
+    "p": "0,329",
+    "q": "0,677"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 296,
+   "nEff": 168,
+   "winRate": 0.297,
+   "ci": [
+    0.248,
+    0.35200000000000004
+   ],
+   "base": 0.292,
+   "p": 0.86,
+   "pIsUpperBound": false,
+   "q": 0.983,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "296 (efetivo 168)",
+    "wr": "29,7%",
+    "ci": "24,8% – 35,2%",
+    "base": "29,2%",
+    "p": "0,860",
+    "q": "0,983"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 3912,
+   "nEff": 2821,
+   "winRate": 0.266,
+   "ci": [
+    0.252,
+    0.28
+   ],
+   "base": 0.259,
+   "p": 0.294,
+   "pIsUpperBound": false,
+   "q": 0.641,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "3.912 (efetivo 2.821)",
+    "wr": "26,6%",
+    "ci": "25,2% – 28,0%",
+    "base": "25,9%",
+    "p": "0,294",
+    "q": "0,641"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 1735,
+   "nEff": 1158,
+   "winRate": 0.271,
+   "ci": [
+    0.251,
+    0.292
+   ],
+   "base": 0.266,
+   "p": 0.66,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.735 (efetivo 1.158)",
+    "wr": "27,1%",
+    "ci": "25,1% – 29,2%",
+    "base": "26,6%",
+    "p": "0,660",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 258,
+   "nEff": 187,
+   "winRate": 0.302,
+   "ci": [
+    0.25,
+    0.361
+   ],
+   "base": 0.298,
+   "p": 0.934,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "258 (efetivo 187)",
+    "wr": "30,2%",
+    "ci": "25,0% – 36,1%",
+    "base": "29,8%",
+    "p": "0,934",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 3666,
+   "nEff": 2372,
+   "winRate": 0.258,
+   "ci": [
+    0.244,
+    0.272
+   ],
+   "base": 0.26,
+   "p": 0.807,
+   "pIsUpperBound": false,
+   "q": 0.953,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "3.666 (efetivo 2.372)",
+    "wr": "25,8%",
+    "ci": "24,4% – 27,2%",
+    "base": "26,0%",
+    "p": "0,807",
+    "q": "0,953"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 1153,
+   "nEff": 840,
+   "winRate": 0.278,
+   "ci": [
+    0.253,
+    0.305
+   ],
+   "base": 0.273,
+   "p": 0.679,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "1.153 (efetivo 840)",
+    "wr": "27,8%",
+    "ci": "25,3% – 30,5%",
+    "base": "27,3%",
+    "p": "0,679",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "BULL_ENGULFING",
+   "verdict": "SEM_EDGE",
+   "n": 163,
+   "nEff": 92,
+   "winRate": 0.337,
+   "ci": [
+    0.26899999999999996,
+    0.413
+   ],
+   "base": 0.29,
+   "p": 0.199,
+   "pIsUpperBound": false,
+   "q": 0.512,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "163 (efetivo 92)",
+    "wr": "33,7%",
+    "ci": "26,9% – 41,3%",
+    "base": "29,0%",
+    "p": "0,199",
+    "q": "0,512"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1h",
+   "id": "HAMMER",
+   "verdict": "ABAIXO",
+   "n": 445,
+   "nEff": 363,
+   "winRate": 0.191,
+   "ci": [
+    0.157,
+    0.23
+   ],
+   "base": 0.249,
+   "p": 0.003,
+   "pIsUpperBound": false,
+   "q": 0.038,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "445 (efetivo 363)",
+    "wr": "19,1%",
+    "ci": "15,7% – 23,0%",
+    "base": "24,9%",
+    "p": "0,003",
+    "q": "0,038"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "4h",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 168,
+   "nEff": 120,
+   "winRate": 0.22,
+   "ci": [
+    0.16399999999999998,
+    0.289
+   ],
+   "base": 0.265,
+   "p": 0.215,
+   "pIsUpperBound": false,
+   "q": 0.533,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "168 (efetivo 120)",
+    "wr": "22,0%",
+    "ci": "16,4% – 28,9%",
+    "base": "26,5%",
+    "p": "0,215",
+    "q": "0,533"
+   }
+  },
+  {
+   "sym": "BTCUSDT",
+   "tf": "1d",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 18,
+   "nEff": 18,
+   "winRate": 0.33299999999999996,
+   "ci": [
+    0.163,
+    0.5660000000000001
+   ],
+   "base": 0.292,
+   "p": 0.902,
+   "pIsUpperBound": false,
+   "q": 1,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "18 (efetivo 18)",
+    "wr": "33,3%",
+    "ci": "16,3% – 56,6%",
+    "base": "29,2%",
+    "p": "0,902",
+    "q": "1,000"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1h",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 485,
+   "nEff": 482,
+   "winRate": 0.22699999999999998,
+   "ci": [
+    0.192,
+    0.266
+   ],
+   "base": 0.259,
+   "p": 0.115,
+   "pIsUpperBound": false,
+   "q": 0.359,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "485 (efetivo 482)",
+    "wr": "22,7%",
+    "ci": "19,2% – 26,6%",
+    "base": "25,9%",
+    "p": "0,115",
+    "q": "0,359"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "4h",
+   "id": "HAMMER",
+   "verdict": "ABAIXO",
+   "n": 182,
+   "nEff": 129,
+   "winRate": 0.159,
+   "ci": [
+    0.113,
+    0.21899999999999997
+   ],
+   "base": 0.266,
+   "p": 0.002,
+   "pIsUpperBound": false,
+   "q": 0.036,
+   "qIsUpperBound": false,
+   "window": "Janela 19/09/2017 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "182 (efetivo 129)",
+    "wr": "15,9%",
+    "ci": "11,3% – 21,9%",
+    "base": "26,6%",
+    "p": "0,002",
+    "q": "0,036"
+   }
+  },
+  {
+   "sym": "ETHUSDT",
+   "tf": "1d",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 18,
+   "nEff": 18,
+   "winRate": 0.222,
+   "ci": [
+    0.091,
+    0.456
+   ],
+   "base": 0.298,
+   "p": 0.657,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 05/03/2018 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "18 (efetivo 18)",
+    "wr": "22,2%",
+    "ci": "9,1% – 45,6%",
+    "base": "29,8%",
+    "p": "0,657",
+    "q": "0,901"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1h",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 411,
+   "nEff": 405,
+   "winRate": 0.217,
+   "ci": [
+    0.179,
+    0.259
+   ],
+   "base": 0.26,
+   "p": 0.049,
+   "pIsUpperBound": false,
+   "q": 0.222,
+   "qIsUpperBound": false,
+   "window": "Janela 09/01/2022 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "411 (efetivo 405)",
+    "wr": "21,7%",
+    "ci": "17,9% – 25,9%",
+    "base": "26,0%",
+    "p": "0,049",
+    "q": "0,222"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "4h",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 121,
+   "nEff": 95,
+   "winRate": 0.157,
+   "ci": [
+    0.10300000000000001,
+    0.23199999999999998
+   ],
+   "base": 0.273,
+   "p": 0.007,
+   "pIsUpperBound": false,
+   "q": 0.069,
+   "qIsUpperBound": false,
+   "window": "Janela 13/09/2020 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "121 (efetivo 95)",
+    "wr": "15,7%",
+    "ci": "10,3% – 23,2%",
+    "base": "27,3%",
+    "p": "0,007",
+    "q": "0,069"
+   }
+  },
+  {
+   "sym": "SOLUSDT",
+   "tf": "1d",
+   "id": "HAMMER",
+   "verdict": "SEM_EDGE",
+   "n": 18,
+   "nEff": 18,
+   "winRate": 0.222,
+   "ci": [
+    0.091,
+    0.456
+   ],
+   "base": 0.29,
+   "p": 0.701,
+   "pIsUpperBound": false,
+   "q": 0.901,
+   "qIsUpperBound": false,
+   "window": "Janela 27/02/2021 → 26/09/2026 · alvo 2×ATR, stop 1×ATR, 12 candles",
+   "shown": {
+    "n": "18 (efetivo 18)",
+    "wr": "22,2%",
+    "ci": "9,1% – 45,6%",
+    "base": "29,0%",
+    "p": "0,701",
+    "q": "0,901"
+   }
+  }
+ ]
+}

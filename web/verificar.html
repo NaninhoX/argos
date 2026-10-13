@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verificar prova | Argos Sentinel</title>
+<meta name="description" content="Confere no seu navegador a prova de data de um registro do Argos Sentinel: hash, árvore de Merkle, manifesto do dia e carimbo OpenTimestamps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Tema copiado do :root e do body de web/index.html, com as mesmas fontes. Sem rede, o navegador usa
+     Cambria/Georgia e Courier New e a página continua legível. */
+  :root {
+    --bg: #0D1420;
+    --bg-elevated: #141E2C;
+    --navy: #1E2A3A;
+    --navy-line: #2A3A4E;
+    --gold: #B08D3E;
+    --gold-bright: #D4B15C;
+    --ink: #E8E3D8;
+    --ink-dim: #9BA4B2;
+    --ink-faint: #5E6B7C;
+    --red: #C4544A;
+    --green: #5FA37E;
+    --red-text: #E0857B;
+
+    --serif: 'Source Serif 4', Cambria, Georgia, serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    color-scheme: dark;
+    box-sizing: border-box;
+  }
+  * { box-sizing: inherit; }
+  [hidden] { display: none !important; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-image:
+      radial-gradient(ellipse 900px 600px at 85% -10%, rgba(176,141,62,0.07), transparent 60%),
+      radial-gradient(ellipse 700px 500px at -10% 40%, rgba(30,42,58,0.5), transparent 60%);
+    background-repeat: no-repeat;
+  }
+  ::selection { background: var(--gold); color: var(--bg); }
+  a { color: var(--gold-bright); overflow-wrap: anywhere; }
+  a:hover { color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+  code { font-family: var(--mono); font-size: 0.88em; overflow-wrap: anywhere; }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+
+  .top { background: rgba(13,20,32,0.82); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: 14px;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
+    text-decoration: none; color: var(--ink);
+  }
+  .brand .divider { color: var(--ink-faint); }
+  .brand .sentinel { color: var(--gold); }
+  .back { font-family: var(--mono); font-size: 13px; color: var(--ink-dim); text-decoration: none; padding: 10px 0; }
+  .back:hover { color: var(--ink); }
+
+  h1 { font-size: 32px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; margin: 36px 0 12px; }
+  .lede { font-size: 19px; margin: 0 0 12px; padding-left: 14px; border-left: 3px solid var(--gold); max-width: 64ch; }
+  .intro { color: var(--ink-dim); font-size: 15px; margin: 0 0 8px; max-width: 64ch; }
+
+  .card { background: var(--bg-elevated); border: 1px solid var(--navy-line); border-radius: 6px; padding: 20px; margin: 20px 0; }
+  .card h2 {
+    font: 600 12px/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--gold-bright); margin: 0 0 14px;
+  }
+  .card p { margin: 0 0 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .dim { color: var(--ink-dim); }
+  .small { font-size: 14px; }
+
+  .msg { margin: 20px 0; padding: 12px 14px; border: 1px solid var(--navy-line); border-radius: 4px; background: var(--bg-elevated); color: var(--ink-dim); }
+  .msg:empty { display: none; }
+  .msg.erro { border-color: var(--red); color: var(--red-text); }
+  .msg .btn { margin-top: 10px; }
+
+  .lookup { margin: 24px 0; display: flex; flex-direction: column; gap: 10px; }
+  .lookup label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); }
+  .lookup input {
+    width: 100%; min-height: 44px; padding: 10px 12px;
+    font-family: var(--mono); font-size: 14px; color: var(--ink);
+    background: var(--bg-elevated); border: 1px solid var(--navy-line); border-radius: 4px;
+  }
+  .lookup input::placeholder { color: var(--ink-faint); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 10px 14px; margin: 0;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.3;
+    color: var(--gold-bright); background: transparent;
+    border: 1px solid var(--gold); border-radius: 3px;
+    text-decoration: none; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn:hover { background: var(--gold); color: var(--bg); }
+  .btn.quiet { border-color: var(--navy-line); color: var(--ink-dim); }
+  .btn.quiet:hover { background: var(--navy); color: var(--ink); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+
+  .banner { border: 1px solid var(--navy-line); border-left-width: 4px; border-radius: 4px; padding: 12px 14px; margin-bottom: 16px; }
+  .banner strong { display: block; font-size: 19px; line-height: 1.3; }
+  .banner span { color: var(--ink-dim); font-size: 15px; }
+  .banner.confere { border-color: var(--green); }
+  .banner.confere strong { color: var(--green); }
+  .banner.nao_confere { border-color: var(--red); }
+  .banner.nao_confere strong { color: var(--red-text); }
+  .banner.aguardando { border-color: var(--gold); }
+  .banner.aguardando strong { color: var(--gold-bright); }
+  .banner.indeterminado { border-color: var(--ink-faint); }
+  .alert { color: var(--red-text); font-size: 15px; margin: 0 0 10px; }
+
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: etapa; }
+  .step { border: 1px solid var(--navy-line); border-left-width: 4px; border-radius: 4px; padding: 12px 14px; background: rgba(255,255,255,0.015); }
+  .step.ok { border-left-color: var(--green); }
+  .step.fail { border-left-color: var(--red); }
+  .step.wait { border-left-color: var(--gold); }
+  .step.ext { border-left-color: var(--ink-faint); }
+  .step-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+  .step h3 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.35; }
+  .step h3::before { counter-increment: etapa; content: counter(etapa) ". "; color: var(--ink-dim); }
+  .badge { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; }
+  .step.ok .badge { color: var(--green); }
+  .step.fail .badge { color: var(--red-text); }
+  .step.wait .badge { color: var(--gold-bright); }
+  .step.ext .badge { color: var(--ink-dim); }
+  .step p { margin: 6px 0 0; font-size: 15px; color: var(--ink-dim); overflow-wrap: anywhere; }
+
+  .kv { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: 10px 20px; margin: 0; }
+  .kv dt { font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-dim); padding-top: 4px; overflow-wrap: anywhere; }
+  .kv dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+  .kv dd .dim { display: block; font-size: 14px; }
+  .kv .verdict { font-size: 19px; font-weight: 600; }
+  .mono { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+
+  .label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-dim); margin: 14px 0 6px; }
+  .label:first-child { margin-top: 0; }
+  .hashbox {
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+    background: var(--bg); border: 1px solid var(--navy-line); border-radius: 4px;
+    padding: 10px 12px; overflow-wrap: anywhere;
+  }
+  .hashbox.bad { border-color: var(--red); }
+
+  details { margin-top: 16px; border-top: 1px solid var(--navy-line); padding-top: 4px; }
+  summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-family: var(--mono); font-size: 13px; color: var(--gold-bright); list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: ''; flex: none; margin-right: 10px;
+    border: solid transparent; border-width: 5px 0 5px 8px; border-left-color: var(--gold-bright);
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  pre {
+    margin: 0; padding: 12px; max-height: 320px; overflow-x: hidden; overflow-y: auto;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--bg); border: 1px solid var(--navy-line); border-radius: 4px;
+  }
+
+  footer { margin-top: 40px; padding: 24px 0 40px; border-top: 1px solid rgba(255,255,255,0.06); color: var(--ink-dim); font-size: 14px; }
+  footer p { margin: 0 0 14px; overflow-wrap: anywhere; }
+  noscript p { margin: 20px 0; color: var(--red-text); }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    h1 { font-size: 28px; margin-top: 28px; }
+    .lede { font-size: 18px; }
+    .card { padding: 16px; }
+    .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .kv dt { padding-top: 12px; }
+    .kv dt:first-child { padding-top: 0; }
+    .actions .btn { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="index.html"><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></a>
+    <a class="back" href="index.html">Voltar ao Argos</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Verificar prova</h1>
+  <p class="lede">Este registro existia, com este conteúdo, antes da data do carimbo. Não prova que a análise esteja correta nem diz nada sobre resultados futuros.</p>
+  <p class="intro">Esta página busca o registro no servidor e refaz as contas neste navegador. Ela não usa nenhum resultado de verificação calculado pelo servidor.</p>
+
+  <noscript><p>Esta página precisa de JavaScript para refazer as contas no navegador.</p></noscript>
+
+  <form id="lookup" class="lookup" hidden>
+    <label for="q">Id ou hash do registro</label>
+    <input id="q" name="q" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="uuid ou 64 caracteres hexadecimais">
+    <div><button class="btn" type="submit">Verificar</button></div>
+  </form>
+
+  <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+  <div id="result" hidden></div>
+</main>
+
+<footer class="wrap">
+  <p id="disclaimer" hidden></p>
+  <p><a href="index.html">Voltar ao Argos</a></p>
+</footer>
+
+<script type="module" src="js/verificar.js"></script>
+</body>
+</html>
