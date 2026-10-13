@@ -1414,7 +1414,7 @@
   function onShow() {
     regOpen(); // lista de registros deste navegador: relê e consulta o carimbo (no máximo uma vez por minuto)
     if (!chart || !state.A) return;
-    requestAnimationFrame(() => { if (!state.shownOnce) { state.shownOnce = true; fitDefault(); renderPipeline(state.A, true); } });
+    requestAnimationFrame(() => { if (!state.shownOnce) { state.shownOnce = true; fitDefault(); renderPipeline(state.A, true); growCI(); } });
   }
   function init() {
     if (!E || !SNAP || !LWC || !$('lvChart')) { // sem motor ou gráfico a análise nunca vem: o esqueleto de carregamento não pode ficar para sempre

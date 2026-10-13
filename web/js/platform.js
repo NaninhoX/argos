@@ -41,6 +41,8 @@
   const SKEL = '<div class="pv-skel-body" aria-hidden="true"><i class="ctx"></i><div class="g"><i></i><i></i><i></i><i></i></div><div class="r"><i></i><i></i></div><i class="w"></i></div>';
   const loadingHTML = (text) => '<div class="pv-skel" role="status"><span class="pv-skel-sr">' + esc(text) + '</span>' + SKEL + '</div>';
   // Troca só a mensagem quando o esqueleto já está na tela (a segunda etapa não recria os blocos nem reinicia a pulsação).
+  // argos:result (saída): um resultado novo acabou de ser desenhado em `root` (Sandbox, Query ou Calibração). Gancho para o movimento.
+  function emitResult(screen, root) { try { document.dispatchEvent(new CustomEvent('argos:result', { detail: { screen, root } })); } catch (e) { /* sem CustomEvent */ } }
   function setLoading(out, text) { const s = out.querySelector('.pv-skel-sr'); if (s) s.textContent = text; else out.innerHTML = loadingHTML(text); }
 
   // Armazenamento do navegador: pode não existir (janela privada, dados bloqueados). A tela funciona sem ele.
@@ -260,6 +262,7 @@
       s.q = t.q; s.family = t.family; s.verdict = t.verdict;
       SB.last = { t, s, spec, name, sym, tf, cfg, d: res.d, calib: res.calib, reg: res.tech.regime.regime, ms: res.ms, source: ser.source, fallback: ser.fallback, code: $('sbCode').value };
       sbRender(); sbLog(); sbDataLine();
+      emitResult('sandbox', out);
       if (typeof out.scrollIntoView === 'function') out.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (e) {
       out.innerHTML = stateHTML('err', 'O motor não conseguiu rodar esta regra', 'Nenhum número foi calculado. ' + (e && e.message ? String(e.message).slice(0, 160) : ''));
@@ -478,6 +481,7 @@
         (serverOk ? '<div><span class="lbl">resultHash (navegador)</span><code class="q-hash">' + esc(local.sum.resultHash) + '</code></div>' : '') +
         '<div><span class="lbl">hash da série (' + origin + ')</span><code class="q-hash">' + esc(shown.data.hash) + '</code></div></div>' +
       '<p class="pv-note">O resultHash é o SHA-256 do resumo canônico da análise: os mesmos candles, a mesma regra de saída e a mesma versão do motor dão o mesmo hash em qualquer ambiente. O navegador monta o resumo com o mesmo código do servidor.</p>';
+    emitResult('query', $('qOut'));
     $('qJson').textContent = jtxt;
     if (!custom) {
       $('qUrl').textContent = 'GET ' + req.url; $('qCurl').textContent = req.curl;
@@ -550,6 +554,7 @@
     // histórico semanal
     const hist = c.rolling.slice(-10).reverse().map((r) => { const g = 1 - r.brier / r.ref, k = g > 0.01 ? 'good' : g >= -0.01 ? 'ok' : 'bad'; return '<tr><td>' + fmtDay(r.time) + '</td><td>' + fmtN(r.brier, 4) + '</td><td>' + fmtN(r.ref, 4) + '</td><td>' + fmtN(r.cum, 4) + '</td><td>' + fmtInt(r.n) + '</td><td>' + tag(k, g > 0.01 ? 'acima da referência' : g >= -0.01 ? 'empate' : 'abaixo da referência') + '</td></tr>'; }).join('');
     $('cHist').innerHTML = '<table class="hist-table"><thead><tr><th>Semana até</th><th>Brier 90d</th><th>Referência 90d</th><th>Brier histórico</th><th>Previsões 90d</th><th>Leitura</th></tr></thead><tbody>' + (hist || '<tr><td colspan="6">Sem semanas suficientes.</td></tr>') + '</tbody></table>';
+    emitResult('calibration', $('dash-calibration'));
   }
   function cInit() {
     if (!$('cAsset')) return;

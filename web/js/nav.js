@@ -11,6 +11,8 @@
   function afterTab(screen) {
     if (screen === 'live' && window.ArgosLive) window.ArgosLive.onShow();
     if (window.ArgosPlatform) window.ArgosPlatform.onTab(screen);
+    // argos:screen (saída): a tela `screen` da plataforma acabou de ficar visível. Gancho para o movimento.
+    try { document.dispatchEvent(new CustomEvent('argos:screen', { detail: { screen: screen } })); } catch (e) { /* sem CustomEvent */ }
   }
   // Abas da plataforma: role="tablist" no <nav>, role="tab" em cada link, aria-selected e tabindex acompanham a aba aberta.
   function switchDashTab(screen) {
