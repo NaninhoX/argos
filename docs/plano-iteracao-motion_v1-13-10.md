@@ -139,3 +139,5 @@ Etapa 0: meio dia. Etapa 1: duas horas. Etapa 2: os dois agentes, em paralelo. E
 ## Marca (acrescentado em 13/10)
 
 Michel enviou duas imagens de logo (preta e azul-marinho) como inspiração para a marca geral. O guia está em `..\_layout\marca\Stratum_Marca_Guia_v1-13-10.md`, com `stratum-simbolo.svg` e `stratum-assinatura.svg` (redesenhos simplificados, ainda sem aval). Nesta iteração, depois do aval: símbolo no cabeçalho e no favicon, assinatura na página de verificação, e o herói abrindo com as quatro camadas se assentando. Quatro pontos das imagens esperam decisão de Michel antes de uso público: "Execução teórica", os números decorativos, "Convicção" e o gráfico subindo.
+
+Aval dado por Michel em 13/10: símbolo e assinatura aprovados; "Execução teórica" vira "Montagem", números decorativos e gráfico subindo saem, lema "Evidência · Disciplina · Transparência". Aplicar a marca nesta iteração (cabeçalho, favicon, página de verificação, abertura do herói, capa do layout oficial em `..\_layout\stratum.css`).
