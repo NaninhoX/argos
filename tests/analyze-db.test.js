@@ -38,12 +38,13 @@ test('analyze pelo banco: série ausente no banco cai para snapshot e diz por qu
 test('cron de candles: exige o segredo e relata o que fez', async () => {
   const env = { CRON_SECRET: 's3gredo-de-teste', DATABASE_URL: 'postgres://nao-usado' };
   const ingest = async () => ({ series: [], seeded: 0, fetched: 3, errors: 0 });
-  assert.equal((await handleCronCandles({ env, deps: { db: {}, ingest } })).status, 401);
-  assert.equal((await handleCronCandles({ authorization: 'Bearer errado', env, deps: { db: {}, ingest } })).status, 401);
+  const termometro = async () => ({ series: [], registered: 0, resolved: 0, errors: 0, skipped: 0 }); // o encadeamento tem teste próprio (termometro.test.js)
+  assert.equal((await handleCronCandles({ env, deps: { db: {}, ingest, termometro } })).status, 401);
+  assert.equal((await handleCronCandles({ authorization: 'Bearer errado', env, deps: { db: {}, ingest, termometro } })).status, 401);
   assert.equal((await handleCronCandles({ authorization: 'Bearer s3gredo-de-teste', env: { CRON_SECRET: 's3gredo-de-teste' } })).status, 503);
-  const ok = await handleCronCandles({ authorization: 'Bearer s3gredo-de-teste', env, deps: { db: {}, ingest } });
+  const ok = await handleCronCandles({ authorization: 'Bearer s3gredo-de-teste', env, deps: { db: {}, ingest, termometro } });
   assert.equal(ok.status, 200);
   assert.equal(ok.body.fetched, 3);
-  const partial = await handleCronCandles({ authorization: 'Bearer s3gredo-de-teste', env, deps: { db: {}, ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 1 }) } });
+  const partial = await handleCronCandles({ authorization: 'Bearer s3gredo-de-teste', env, deps: { db: {}, ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 1 }), termometro } });
   assert.equal(partial.status, 207);
 });
