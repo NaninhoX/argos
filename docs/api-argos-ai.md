@@ -29,7 +29,7 @@ Corpo de até 400 mil caracteres. Campos fora dessa lista são ignorados: o clie
 
 ## Resposta `200`
 
-Objeto `chat.completion` no formato da OpenAI, com `model: "argos-ai"` e um único resultado: texto final, `finish_reason: "stop"` (ou `"length"`, texto cortado), `message: { role, content }`. O texto já passou pela verificação e termina com o disclaimer padrão. Pedidos de ferramenta nunca voltam ao cliente.
+Objeto `chat.completion` no formato da OpenAI, com `model: "argos-ai"` e um único resultado: texto final, `finish_reason: "stop"` (ou `"length"`, texto cortado), `message: { role, content }`. O texto já passou pela verificação e termina com o disclaimer padrão. Pedidos de ferramenta nunca voltam ao cliente. Quando alguma ferramenta usou o motor, a resposta traz `argos.data` (`source`, `lastCandle`, `candles`, `seriesHash`) com a identificação da série que o servidor usou, para a tela comparar com a série que mostra (no SSE, vai no segundo bloco). Os números do relatório são sempre os do servidor.
 
 Com `stream: true`, o mesmo conteúdo vem como `text/event-stream`: um `chat.completion.chunk` com o `delta` inteiro, um com o `finish_reason` e `data: [DONE]`. Não há transmissão em tempo real: o texto só sai depois de verificado.
 

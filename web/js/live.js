@@ -1000,11 +1000,12 @@
         throw err;
       }
       const reader = r.body.getReader(), dec = new TextDecoder();
-      const msg = { content: '', reasoning: '', calls: [] }; let buf = '', finish = null;
+      const msg = { content: '', reasoning: '', calls: [] }; let buf = '', finish = null, meta = null;
       const handle = (data) => {
         if (data === '[DONE]') return;
         let j; try { j = JSON.parse(data); } catch (e) { return; }
         if (j.error) { const err = new Error(j.error.message || 'erro do provedor'); err.code = 'upstream_error'; throw err; }
+        if (j.argos && j.argos.data) meta = j.argos.data;
         const ch = j.choices && j.choices[0]; if (!ch) return;
         const dl = ch.delta || {};
         if (dl.reasoning_content) msg.reasoning += dl.reasoning_content;
@@ -1025,7 +1026,7 @@
         while ((k = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, k).trim(); buf = buf.slice(k + 1); if (line.startsWith('data:')) handle(line.slice(5).trim()); }
       }
       if (buf.trim().startsWith('data:')) handle(buf.trim().slice(5).trim());
-      return { msg, finish };
+      return { msg, finish, meta };
     }
     const samp = async function (prompt, opts) {
       const messages = [
@@ -1033,8 +1034,8 @@
         { role: 'user', content: prompt }
       ];
       const context = { symbol: state.sym, timeframe: state.tf, cfg: state.cfg, windowDays: state.win >= 30 ? state.win : null };
-      const { msg, finish } = await call(messages, context, opts.signal, (t) => opts.onText && opts.onText({ text: t }));
-      return { text: msg.content, truncated: finish === 'length', modelTierApplied: 'Argos AI (servidor)' };
+      const { msg, finish, meta } = await call(messages, context, opts.signal, (t) => opts.onText && opts.onText({ text: t }));
+      return { text: msg.content, truncated: finish === 'length', modelTierApplied: 'Argos AI (servidor)', serverData: meta };
     };
     samp.limits = async () => ({ tools: true, serverTools: true });
     return samp;
@@ -1058,6 +1059,12 @@
       else if (useTools) opts.tools = buildTools(A); else opts.cache = false;
       const res = await state.samp(buildPrompt(A, useTools), opts);
       state.ai.text = res.text; state.ai.done = true; state.ai.running = false;
+      // O servidor consulta a própria série: se o último candle ou o tamanho diferem do que a tela mostra, avisa.
+      if (res.serverData) {
+        const sd = res.serverData, lastMs = A.d.t[A.d.n - 1] * 1000, srvMs = Date.parse(sd.lastCandle);
+        if (srvMs !== lastMs || sd.candles !== A.d.n) logAi('Atenção: os números do relatório vêm da série do servidor (até ' + fmtDate(srvMs / 1000) + ', ' + sd.candles + ' candles), que difere da mostrada na tela (até ' + fmtDate(lastMs / 1000) + ', ' + A.d.n + ' candles). A aba Motor segue a série da tela.', '!');
+        else logAi('Dados do servidor idênticos aos da tela (último candle ' + fmtDate(srvMs / 1000) + ').', '✓');
+      }
       logAi(res.truncated ? 'Resposta cortada pelo limite de tamanho: o texto foi mantido como está.' : 'Relatório concluído · modelo: ' + (res.modelTierApplied || 'default'), res.truncated ? '!' : '✓');
     } catch (e) {
       code = (e && e.code) || 'upstream_error';

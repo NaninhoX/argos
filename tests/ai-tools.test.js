@@ -108,3 +108,25 @@ test('ponta a ponta com o motor real: número do motor passa; número inventado 
   assert.equal(bad.status, 502);
   assert.equal(bad.body.code, 'refused');
 });
+
+test('identificação dos dados: o servidor devolve último candle, tamanho e hash da série que usou (a tela compara)', async () => {
+  const { runner } = runnerWith();
+  assert.equal(runner.meta(), null, 'antes de qualquer ferramenta não há dados carregados');
+  await runner.run('obter_leitura_tecnica', '{}');
+  const d = snapshotSeries('BTCUSDT', '4h');
+  const m = runner.meta();
+  assert.equal(m.lastCandle, new Date(d.t[d.n - 1] * 1000).toISOString());
+  assert.equal(m.candles, d.n);
+  assert.equal(m.source, 'snapshot');
+  assert.match(m.seriesHash, /^[0-9a-f]{64}$/);
+
+  const call = { id: 'c1', type: 'function', function: { name: 'obter_leitura_tecnica', arguments: '{}' } };
+  let n = 0;
+  const provider = { model: 'teste', chat: async () => (n++ === 0 ? { toolCalls: [call], content: '', finishReason: 'tool_calls' } : { toolCalls: [], content: 'Texto sem números.', finishReason: 'stop' }) };
+  const loadSeries = async (s, tf) => ({ d: snapshotSeries(s, tf), source: 'snapshot' });
+  const out = await handleArgosAi({ body: { messages: [{ role: 'user', content: 'Redija.' }], context: { symbol: 'BTCUSDT', timeframe: '4h' }, stream: true }, ip: '198.51.100.10', env: {}, deps: { provider, loadSeries, rateStore: new Map() } });
+  assert.equal(out.status, 200);
+  assert.equal(out.body.argos.data.lastCandle, m.lastCandle);
+  const chunks = out.sse.trim().split('\n\n').map((l) => l.replace(/^data: /, ''));
+  assert.equal(JSON.parse(chunks[1]).argos.data.candles, d.n, 'o SSE leva a identificação no último bloco');
+});
