@@ -132,3 +132,17 @@ test('CLI sem DATABASE_URL falha com mensagem clara', () => {
   assert.equal(r.status, 1);
   assert.match(r.stderr, /DATABASE_URL/);
 });
+
+test('migrate.mjs --if-configured: sem DATABASE_URL, ou com banco em memória, sai sem erro e sem tocar em nada', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const script = fileURLToPath(new URL('../tools/migrate.mjs', import.meta.url));
+  for (const url of [undefined, 'pglite://memory']) {
+    const env = { ...process.env }; delete env.DATABASE_URL; if (url) env.DATABASE_URL = url;
+    const r = spawnSync(process.execPath, [script, '--if-configured'], { env, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /migração pulada/);
+  }
+  const bare = spawnSync(process.execPath, [script], { env: (() => { const e = { ...process.env }; delete e.DATABASE_URL; return e; })(), encoding: 'utf8' });
+  assert.equal(bare.status, 1, 'sem a flag, a falta de DATABASE_URL continua sendo erro');
+});

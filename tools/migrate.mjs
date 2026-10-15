@@ -2,6 +2,7 @@
 // Idempotente: migração já registrada não roda de novo. Cada arquivo roda numa transação própria,
 // junto com o registro; se falhar, nada daquele arquivo fica no banco.
 // Uso: DATABASE_URL=postgres://... node tools/migrate.mjs
+// Com --if-configured (usado no build da Vercel): sem DATABASE_URL, ou com banco em memória, sai sem erro e sem fazer nada.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,6 +51,10 @@ export async function migrate(db, { dir = MIGRATIONS_DIR, log = () => {} } = {})
 
 async function main() {
   const connectionString = process.env.DATABASE_URL;
+  if (process.argv.includes('--if-configured') && (!connectionString || connectionString.startsWith('pglite:'))) {
+    console.log('migração pulada: DATABASE_URL ausente ou em memória.');
+    return;
+  }
   if (!connectionString) {
     console.error('DATABASE_URL não definida.');
     process.exit(1);

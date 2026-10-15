@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node tools/build-web.mjs",
+  "buildCommand": "node tools/build-web.mjs && node tools/migrate.mjs --if-configured",
   "outputDirectory": "web",
   "functions": {
     "api/argos-ai.js": {
@@ -16,7 +16,13 @@
     }
   },
   "crons": [
-    { "path": "/api/cron/candles", "schedule": "5 0 * * *" },
-    { "path": "/api/cron/anchor", "schedule": "10 0 * * *" }
+    {
+      "path": "/api/cron/candles",
+      "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/cron/anchor",
+      "schedule": "10 0 * * *"
+    }
   ]
 }
