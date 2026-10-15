@@ -70,13 +70,44 @@
     }
     throw last || new Error('sem resposta');
   }
+  // Candles novos da base da Stratum (depois do corte do snapshot). Reserva quando a Binance não responde (celular, rede
+  // bloqueada) e fonte do Query/Calibração: snapshot + estes candles é a mesma série que o servidor analisa.
+  async function fetchServerTail(sym, tf, since) {
+    if (IN_CLAUDE || !/^https?:$/.test(location.protocol)) return null;
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const r = await fetch('/api/candles?symbol=' + sym + '&tf=' + tf + '&since=' + since, { signal: ctl.signal });
+      clearTimeout(to);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return Array.isArray(j.rows) && j.rows.length ? j.rows : null;
+    } catch (e) { clearTimeout(to); return null; }
+  }
+  const dbCache = {};
+  async function dbSeries(sym, tf) { // snapshot + candles da base; null se a base não responde
+    const k = key(sym, tf), c = dbCache[k];
+    if (c && Date.now() - c.at < 5 * 60 * 1000) return c.v;
+    const snapD = E.decodeSnapshot(SNAP.series[k]);
+    const rows = await fetchServerTail(sym, tf, snapD.t[snapD.n - 1]);
+    if (!rows) return null;
+    const v = { d: E.mergeSeries(snapD, rows, snapD.dt), source: 'database' };
+    dbCache[k] = { at: Date.now(), v };
+    return v;
+  }
+  async function fromBase(sym, tf) { // usa a série da base como série "viva" quando a Binance não respondeu
+    const en = entry(sym, tf), db = await dbSeries(sym, tf);
+    if (!db) return false;
+    const changed = en.via !== 'base' || db.d.t[db.d.n - 1] !== en.d.t[en.d.n - 1];
+    state.series[key(sym, tf)] = { d: db.d, source: 'live', via: 'base', updatedAt: Date.now() };
+    return changed;
+  }
   async function refreshLive(sym, tf) {
     if (IN_CLAUDE) return false; // no Claude a página não acessa a rede: usa o snapshot real embutido
     const en = entry(sym, tf), snapD = E.decodeSnapshot(SNAP.series[key(sym, tf)]);
     try {
       const now = Date.now();
       let rows = E.fromBinance(await fetchKlines(sym, tf, 1000), now);
-      if (!rows.length) return false;
+      if (!rows.length) return await fromBase(sym, tf);
       const dt = snapD.dt, snapEnd = snapD.t[snapD.n - 1];
       if (rows[0][0] > snapEnd + dt) {
         try { rows = E.fromBinance(await fetchKlines(sym, tf, 1000, rows[0][0] * 1000 - 1), now).concat(rows); } catch (e) { /* segue com 1000 */ }
@@ -87,7 +118,10 @@
       const changed = en.source !== 'live' || merged.t[merged.n - 1] !== en.d.t[en.d.n - 1];
       state.series[key(sym, tf)] = { d: merged, source: 'live', updatedAt: now };
       return changed;
-    } catch (e) { en.liveError = String((e && e.message) || e); return false; }
+    } catch (e) {
+      en.liveError = String((e && e.message) || e);
+      try { return await fromBase(sym, tf); } catch (e2) { return false; }
+    }
   }
 
   // ------------------------------------------------------------- gráfico
@@ -250,7 +284,8 @@
   }
   function renderSource() {
     const en = entry(state.sym, state.tf), d = en.d, last = d.t[d.n - 1], el = $('lvSrc');
-    if (en.source === 'live') { el.classList.add('live'); $('lvSrcText').innerHTML = '<b>Ao vivo</b> · Binance Spot · último candle fechado ' + fmtDate(last) + ' · atualiza a cada 60 s'; }
+    if (en.source === 'live' && en.via === 'base') { el.classList.add('live'); $('lvSrcText').innerHTML = '<b>Base de candles</b> · Binance Spot via Stratum · último candle fechado ' + fmtDate(last) + ' · tenta o ao vivo a cada 60 s'; }
+    else if (en.source === 'live') { el.classList.add('live'); $('lvSrcText').innerHTML = '<b>Ao vivo</b> · Binance Spot · último candle fechado ' + fmtDate(last) + ' · atualiza a cada 60 s'; }
     else {
       el.classList.remove('live');
       $('lvSrcText').innerHTML = '<b>Dados reais</b> · Binance Spot · snapshot até ' + fmtDate(last) + (IN_CLAUDE ? ' · o arquivo baixado busca a Binance ao vivo' : en.liveError ? ' · sem conexão com a Binance agora' : ' · conectando à Binance…');
@@ -1435,6 +1470,8 @@
     buildChart(); bind(); readCfg(); renderFoot(); buildShare(); buildRegs();
     run(true, false, urlSetup);
     setTimeout(renderRegimeScreen, 60);
+    // A tela Regime usa as séries diárias: completa com os candles novos (Binance ou base da Stratum) e redesenha se algo mudou.
+    if (!IN_CLAUDE) Promise.all(['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].map((sy) => refreshLive(sy, '1d').catch(() => false))).then((r) => { if (r.some(Boolean)) renderRegimeScreen(); });
     initCapabilities();
     if (!IN_CLAUDE) {
       refreshLive(state.sym, state.tf).then((ch) => { if (ch) run(false, true); else renderSource(); });
@@ -1444,7 +1481,7 @@
   window.ArgosLive = {
     init, onShow, openCase, run: () => run(true, true), state,
     check: { scan: scanTerms, reportMd: () => reportToMarkdown(buildReport(state.A)), switchTo, shareUrl },
-    util: { E, IN_CLAUDE, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, cfgText, analysisFor, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
+    util: { E, IN_CLAUDE, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, dbSeries, refreshLive, cfgText, analysisFor, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
   };
 })();
 

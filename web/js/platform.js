@@ -197,9 +197,9 @@
     const fresh = en0.source === 'live' && en0.updatedAt && Date.now() - en0.updatedAt < 5 * 60 * 1000;
     if (!fresh && !IN_CLAUDE && typeof U.refreshLive === 'function') { try { await U.refreshLive(sym, tf); } catch (e) { /* refreshLive guarda o erro no próprio registro da série */ } }
     const en = U.entry(sym, tf);
-    return { d: en.d, source: en.source, fallback: en.source === 'live' ? '' : IN_CLAUDE ? '' : (en.liveError ? 'a Binance não respondeu' : 'sem resposta da Binance') };
+    return { d: en.d, source: en.via === 'base' ? 'database' : en.source, fallback: en.source === 'live' ? '' : IN_CLAUDE ? '' : (en.liveError ? 'a Binance não respondeu' : 'sem resposta da Binance') };
   }
-  const seriesLine = (sym, tf, d, source) => PAIR(sym) + ' ' + TF_LABEL[tf] + ' · ' + fmtInt(d.n) + ' candles até ' + fmtDay(d.t[d.n - 1]) + ' · ' + (source === 'live' ? 'Binance Spot ao vivo' : 'snapshot versionado');
+  const seriesLine = (sym, tf, d, source) => PAIR(sym) + ' ' + TF_LABEL[tf] + ' · ' + fmtInt(d.n) + ' candles até ' + fmtDay(d.t[d.n - 1]) + ' · ' + (source === 'live' ? 'Binance Spot ao vivo' : source === 'database' ? 'base de candles da Stratum (Binance Spot)' : 'snapshot versionado');
 
   // ================================================================ Sandbox
   const SB = { spec: null, name: '', read: null, last: null, running: false, timer: null, resetTimer: null, resetArmed: false };
@@ -369,8 +369,10 @@
   // Candles do navegador para o Query: snapshot versionado ou ao vivo (com queda para o snapshot)
   async function qSeries(sym, tf, live) {
     if (!live) return { d: snapshotEntry(sym, tf).d, source: 'snapshot', fallback: '' };
-    const s = await ensureSeries(sym, tf);
-    return s;
+    // "Base de candles": snapshot + candles da base, a mesma série que o servidor lê (o resultHash é comparável); sem a base, tenta a Binance
+    const db = await U.dbSeries(sym, tf);
+    if (db) return { d: db.d, source: 'database', fallback: '' };
+    return ensureSeries(sym, tf);
   }
   function qWindow(d, win) { return win ? E.sliceSeries(d, Math.round((win * 86400) / d.dt) + 200) : d; }
   async function qLocalBank(sym, tf, cfg, win, live) {
@@ -520,11 +522,19 @@
     g += '<text x="' + ((X(0) + X(mx)) / 2) + '" y="' + (H - 4) + '" class="ax-t" text-anchor="middle">probabilidade prevista</text><text x="12" y="' + ((Y(0) + Y(mx)) / 2) + '" class="ax-t" text-anchor="middle" transform="rotate(-90 12 ' + ((Y(0) + Y(mx)) / 2) + ')">frequência observada</text>';
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="rel-svg" role="img" aria-label="Diagrama de calibração: probabilidade prevista contra frequência observada">' + g + '</svg>';
   }
+  // Completa a série com os candles novos (Binance ou base da Stratum) e redesenha só se algo mudou.
+  async function cFresh() {
+    try {
+      const sym = C.sym, tf = C.tf, before = U.entry(sym, tf).d.n;
+      await ensureSeries(sym, tf);
+      if (sym === C.sym && tf === C.tf && U.entry(sym, tf).d.n !== before) cRender();
+    } catch (e) { /* segue com a série que já estava na tela */ }
+  }
   function cRender() {
     if (!$('cStats')) return;
     const A = U.analysisFor(C.sym, C.tf, DEF, null), c = A.calib, d = A.d;
     const en = U.entry(C.sym, C.tf);
-    $('cSrc').textContent = PAIR(C.sym) + ' ' + TF_LABEL[C.tf] + ' · ' + fmtInt(d.n) + ' candles (' + fmtDay(d.t[0]) + ' → ' + fmtDay(d.t[d.n - 1]) + ') · Binance Spot' + (en.source === 'live' ? ' ao vivo' : '') + ' · regra padrão ' + U.cfgText(DEF);
+    $('cSrc').textContent = PAIR(C.sym) + ' ' + TF_LABEL[C.tf] + ' · ' + fmtInt(d.n) + ' candles (' + fmtDay(d.t[0]) + ' → ' + fmtDay(d.t[d.n - 1]) + ') · Binance Spot' + (en.via === 'base' ? ' (base Stratum)' : en.source === 'live' ? ' ao vivo' : '') + ' · regra padrão ' + U.cfgText(DEF);
     if (!(c.n >= 30)) { $('cStats').innerHTML = '<div class="card status-card"><div class="l">Previsões</div><div class="v">' + c.n + '</div><div class="pv-note">Menos de 30 previsões fora da amostra: calibração não medida.</div></div>'; return; }
     const last = c.rolling.length ? c.rolling[c.rolling.length - 1] : null;
     const bssK = c.bss > 0.01 ? 'good' : c.bss >= -0.01 ? 'ok' : 'bad', eceK = c.ece < 0.03 ? 'good' : c.ece < 0.06 ? 'ok' : 'bad';
@@ -559,8 +569,8 @@
   }
   function cInit() {
     if (!$('cAsset')) return;
-    bindSeg('cAsset', (v) => { C.sym = v; cRender(); });
-    bindSeg('cTf', (v) => { C.tf = v; cRender(); });
+    bindSeg('cAsset', (v) => { C.sym = v; cRender(); cFresh(); });
+    bindSeg('cTf', (v) => { C.tf = v; cRender(); cFresh(); });
   }
 
   // ================================================================ Site: matriz e gráficos
@@ -636,7 +646,7 @@
   // ================================================================ navegação
   const shown = {};
   function onTab(screen) {
-    if (screen === 'calibration') { if (!shown.cal) { shown.cal = true; } later(cRender); }
+    if (screen === 'calibration') { if (!shown.cal) { shown.cal = true; } later(cRender); cFresh(); }
     if (screen === 'query') qFillSetups();
   }
   window.ArgosPlatform = { onTab, cRender, readPine: PR ? PR.readPine : null };

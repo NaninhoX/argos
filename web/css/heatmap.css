@@ -225,3 +225,14 @@ html.motion-off .hm-tip { transition: none; }
 .hm-tip-g dt { margin: 0; white-space: nowrap; color: var(--hm-dim); }
 .hm-tip-g dd { margin: 0; min-width: 0; text-align: right; color: var(--hm-ink); font-variant-numeric: tabular-nums; }
 .hm-tip-n { margin: 0; font-size: 10.5px; line-height: 1.5; color: #7D8898; }
+
+/* Celular: a coluna fixa dos setups é mais estreita e opaca, e a rolagem começa na borda do cartão (sem faixa onde as células
+   passavam por trás da coluna fixa). */
+@media (max-width: 720px) {
+  .hm-scroll { padding: 10px 0 4px; }
+  .hm-corner { width: 124px; padding: 8px 6px 8px 10px; }
+  .hm-rowh { padding: 3px 8px 3px 10px; background: #101927; box-shadow: 8px 0 8px -6px rgba(0, 0, 0, 0.55); }
+  .hm-corner { background: #101927; }
+  .hm-table { min-width: 600px; }
+  .hm-sname { font-size: 11.5px; }
+}

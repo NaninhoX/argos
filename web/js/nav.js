@@ -44,6 +44,9 @@
       a.setAttribute('aria-selected', on ? 'true' : 'false');
       a.setAttribute('tabindex', on ? '0' : '-1');
     });
+    // A aba aberta fica à vista na barra que rola (celular): sem barra de rolagem, é assim que a pessoa vê onde está.
+    var act = document.querySelector('.dashboard-page nav.tabs a.active');
+    if (act && act.scrollIntoView) { try { act.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) { /* navegador antigo */ } }
     document.querySelectorAll('.dash-screen').forEach(function (s) { s.classList.remove('visible'); });
     document.getElementById('dash-' + screen).classList.add('visible');
     window.scrollTo(0, 0);

@@ -17,6 +17,8 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Adicionado
 
+- Celular, revisão com capturas de aparelho real (15/10): (1) quebra de texto equilibrada em rótulos, títulos e selos (`text-wrap`); (2) barras de rolagem lateral escondidas nos contêineres que rolam (a rolagem por toque continua) e a aba aberta fica à vista na barra de abas; (3) mapa setup × regime com a coluna fixa opaca e mais estreita, sem células passando por trás; (4) datas: o navegador completa o snapshot com os candles novos da Binance e, se ela não responder, com a base da Stratum (`GET /api/candles?symbol=&tf=&since=`, só candles fechados). Calibração e Regime passam a buscar os candles novos ao abrir (antes ficavam em 26/09), e o Query ganha a opção "Base de candles (atual)", que é a padrão e dá o mesmo `resultHash` do servidor.
+
 - `GET /api/analyze?source=snapshot` (15/10): lê só o snapshot versionado, sem a base de candles nem a Binance. O Query do navegador, na opção "Snapshot versionado (reprodutível)", passa a pedir isso, para que servidor e navegador leiam os mesmos candles e o `resultHash` seja comparável. Antes, com a base de candles ligada, o servidor lia 20.062 candles até 15/10 e o navegador 19.951 até 26/09, e o Query avisava "candles diferentes" (o aviso estava certo; o pedido é que estava errado).
 
 - Endereço por tela (15/10): `#ao-vivo`, `#sandbox`, `#query`, `#regime` e `#calibracao` abrem a tela direto, atualizam a URL ao navegar e funcionam com o botão Voltar; sem hash, é o site. Mantém os parâmetros de pergunta (`?symbol=…`) e o `#plataforma` antigo. Teste de largura a 360 px nas cinco telas e no site: nenhuma passa da borda; o painel da regra de saída (Ao vivo) passou a abrir dentro da tela no celular.

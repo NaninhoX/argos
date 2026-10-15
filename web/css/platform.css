@@ -976,3 +976,21 @@
 @media (max-width: 480px) {
   .lv .exit-pop { position: fixed; left: 16px; right: 16px; top: 96px; width: auto; max-height: calc(100vh - 120px); overflow-y: auto; }
 }
+
+/* ---- Celular (revisão com capturas de aparelho real, 15/10): texto, rolagem lateral e coluna fixa ---- */
+/* Texto: rótulos e títulos quebram em linhas equilibradas (não uma palavra sozinha), parágrafos sem linha órfã. */
+.dashboard-page h1, .dashboard-page h2, .dashboard-page h3, .dashboard-page .l, .dashboard-page .tag,
+.dashboard-page .pv-note, .dashboard-page .regime-title, .hm-sname, .hm-sgrp, .hm-rg { text-wrap: balance; }
+.dashboard-page p, .dashboard-page .s, .dashboard-page li { text-wrap: pretty; }
+.dashboard-page .tag, .dashboard-page .tag-v3 { max-width: 100%; }
+/* Rolagem lateral: nos contêineres que rolam na horizontal a barra fica escondida (a rolagem por toque continua). */
+@media (max-width: 860px) {
+  .hm-scroll, .lv .table-scroll, .pv .table-scroll, .lv .report .r-table, .dashboard-page .hist-card,
+  #page-landing .mx-scroll, #page-landing .mx-table-scroll, .dashboard-page nav.tabs { scrollbar-width: none; -ms-overflow-style: none; }
+  .hm-scroll::-webkit-scrollbar, .lv .table-scroll::-webkit-scrollbar, .pv .table-scroll::-webkit-scrollbar, .lv .report .r-table::-webkit-scrollbar,
+  .dashboard-page .hist-card::-webkit-scrollbar, #page-landing .mx-scroll::-webkit-scrollbar, #page-landing .mx-table-scroll::-webkit-scrollbar { display: none; }
+}
+/* o mesmo equilíbrio de quebra no site e nas barras de código que rolam */
+#page-landing h1, #page-landing h2, #page-landing h3, #page-landing .eyebrow { text-wrap: balance; }
+#page-landing p, #page-landing li { text-wrap: pretty; }
+@media (max-width: 860px) { #page-landing .how-code { scrollbar-width: none; } #page-landing .how-code::-webkit-scrollbar { display: none; } }
