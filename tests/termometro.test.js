@@ -143,12 +143,14 @@ test('handlers: exigem CRON_SECRET e banco; o de candles encadeia o Termômetro 
   assert.equal((await handleCronTermometro({ authorization: 'Bearer errado', env })).status, 401);
   assert.equal((await handleCronTermometro({ authorization: undefined, env })).status, 401);
   assert.equal((await handleCronTermometro({ authorization: 'Bearer segredo-de-teste-123', env: { CRON_SECRET: 'segredo-de-teste-123' } })).status, 503);
-  const ok = await handleCronTermometro({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, termometro: async () => ({ series: [], registered: 0, resolved: 0, errors: 0, skipped: 0 }) } });
+  const ok = await handleCronTermometro({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log() {}, termometro: async () => ({ series: [], registered: 0, resolved: 0, errors: 0, skipped: 0 }) } });
   assert.equal(ok.status, 200);
-  const chained = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 0 }), termometro: async () => ({ series: [], registered: 3, resolved: 1, errors: 0, skipped: 0 }) } });
+  const lines = [];
+  const chained = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log: (l) => lines.push(l), ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 0 }), termometro: async () => ({ series: [], registered: 3, resolved: 1, errors: 0, skipped: 0 }) } });
   assert.equal(chained.status, 200);
   assert.equal(chained.body.termometro.registered, 3);
-  const broken = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, ingest: async () => ({ series: [], seeded: 0, fetched: 5, errors: 0 }), termometro: async () => { throw new Error('boom'); } } });
+  assert.equal(JSON.parse(lines[0]).termometro.registered, 3, 'o log traz o resumo');
+  const broken = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log() {}, ingest: async () => ({ series: [], seeded: 0, fetched: 5, errors: 0 }), termometro: async () => { throw new Error('boom'); } } });
   assert.equal(broken.status, 207, 'falha do Termômetro vira 207, não 500');
   assert.equal(broken.body.fetched, 5, 'a ingestão continua no relatório');
   assert.match(broken.body.termometro.error, /boom/);
