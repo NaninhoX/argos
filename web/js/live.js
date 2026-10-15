@@ -965,8 +965,8 @@
     session_expired: 'A sessão expirou: entre de novo no Claude e tente outra vez.', refused: 'O pedido foi recusado. O relatório do motor segue disponível na outra aba.', empty_completion: 'O Argos AI não produziu texto. Tente de novo.',
     prompt_too_large: 'Dados grandes demais para uma chamada.', upstream_error: 'Falha temporária de conexão. O texto parcial foi mantido; tente de novo.', cancelled: 'Interrompido.',
     unauthorized: 'Código de acesso ausente ou incorreto.', insufficient_balance: 'O saldo da conta do provedor de IA acabou. Recarregue o saldo para voltar a gerar relatórios.',
-    not_configured: 'O servidor ainda não tem a chave da API configurada (variável DEEPSEEK_API_KEY).', bad_request: 'O provedor de IA recusou o pedido (formato ou modelo). Veja os logs da função no Vercel.',
-    provider_auth: 'A chave da API configurada no servidor foi recusada pelo provedor. Confira DEEPSEEK_API_KEY no Vercel.'
+    not_configured: 'O servidor ainda não tem a chave ou o modelo do provedor de IA configurados (variáveis OPENAI_API_KEY e ARGOS_LLM_MODEL).', bad_request: 'O provedor de IA recusou o pedido (formato ou modelo). Veja os logs da função no Vercel.',
+    provider_auth: 'A chave da API configurada no servidor foi recusada pelo provedor. Confira a chave do provedor (OPENAI_API_KEY) no Vercel.'
   };
 
   // ------------------------------------ Argos AI via servidor próprio (deploy Vercel)

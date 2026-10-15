@@ -51,7 +51,7 @@ Corpo: `{ "error": "<mensagem em português>", "code": "<código>" }`. Os códig
 | 502 | `refused` | texto reprovado duas vezes; `reason: { unknownNumbers, flaggedTerms }` traz só contagens |
 | 502 | `empty_completion` | o provedor não produziu texto |
 | 502 | `bad_request` | o provedor recusou o formato do pedido ou o modelo |
-| 503 | `not_configured` | `DEEPSEEK_API_KEY` ausente |
+| 503 | `not_configured` | chave ou modelo do provedor ausentes |
 | 503 | `provider_auth`, `insufficient_balance`, `rate_limited` | credencial recusada, conta sem saldo ou limite do provedor |
 | 503 | `upstream_error` | provedor fora do ar, tempo esgotado (90 s por chamada) ou resposta ilegível |
 
@@ -61,9 +61,9 @@ Em qualquer erro, nenhum texto de LLM é devolvido; o relatório do motor não d
 
 | Variável | Uso | Padrão |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | chave do provedor; só no servidor, nunca em resposta, erro ou auditoria | obrigatória |
-| `ARGOS_LLM_BASE_URL` | endereço da API compatível com OpenAI | `https://api.deepseek.com` |
-| `ARGOS_LLM_MODEL` | modelo | `deepseek-chat` (confirmar com Michel) |
+| `ARGOS_LLM_API_KEY`, `OPENAI_API_KEY` ou `DEEPSEEK_API_KEY` | chave do provedor, nesta ordem de precedência; só no servidor, nunca em resposta, erro ou auditoria | obrigatória |
+| `ARGOS_LLM_BASE_URL` | endereço da API compatível com OpenAI | `https://api.openai.com/v1` (DeepSeek: `https://api.deepseek.com`) |
+| `ARGOS_LLM_MODEL` | modelo | obrigatório com a OpenAI (depende da conta); `deepseek-chat` na DeepSeek |
 | `ARGOS_ACCESS_CODE` | se existir, exige `x-argos-code` igual | sem código |
 
 ## Auditoria e limite de taxa

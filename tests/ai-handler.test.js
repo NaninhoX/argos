@@ -6,7 +6,7 @@ import { createProvider } from '../lib/ai/provider.js';
 
 // O fim da chave não é hexadecimal de propósito: os ids e hashes da saída não podem coincidir com ele por acaso.
 const KEY = 'sk-teste-SEGREDO-0123456789-wxyz';
-const ENV = { DEEPSEEK_API_KEY: KEY };
+const ENV = { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' };
 
 // Resultados no formato das ferramentas do cliente legado (toolContext e toolBank).
 const LEITURA = { ativo: 'BTC/USDT', ultimo_candle: { fechamento: 67234.51 }, indicadores: { rsi14: 41.3, adx14: 18.2 } };
@@ -68,7 +68,7 @@ test('handler: caminho feliz devolve o texto verificado no formato chat.completi
 
 test('handler: o cliente não escolhe modelo nem parâmetros do provedor', async () => {
   const fetchImpl = fakeFetch(reply({ content: GOOD }));
-  await run(fetchImpl, { body: { messages: WITH_RESULTS, tools: TOOLS, model: 'outro-modelo', temperature: 2, max_tokens: 99999, user: 'cliente-1' }, env: { ...ENV, ARGOS_LLM_MODEL: 'modelo-da-casa' } });
+  await run(fetchImpl, { body: { messages: WITH_RESULTS, tools: TOOLS, model: 'outro-modelo', temperature: 2, max_tokens: 99999, user: 'cliente-1' }, env: { ...ENV, ARGOS_LLM_BASE_URL: 'https://llm.exemplo.test/v1', ARGOS_LLM_MODEL: 'modelo-da-casa' } });
   assert.deepEqual(Object.keys(fetchImpl.calls[0].body).sort(), ['max_tokens', 'messages', 'model', 'stream', 'tools']);
   assert.equal(fetchImpl.calls[0].body.max_tokens, LIMITS.maxOutputTokens);
   assert.equal(fetchImpl.calls[0].body.model, 'modelo-da-casa');
@@ -237,7 +237,7 @@ test('handler: provedor fora devolve 503 honesto, sem texto', async () => {
     [{ fetchImpl: fakeFetch({ status: 500, text: 'Internal Server Error' }) }, 'upstream_error'],
     [{ fetchImpl: fakeFetch({ status: 503, json: { error: { message: 'Server overloaded' } } }) }, 'upstream_error'],
     [{ fetchImpl: fakeFetch({ text: 'não é JSON' }) }, 'upstream_error'],
-    [{ provider: createProvider({ apiKey: KEY, fetchImpl: hang, timeoutMs: 25 }) }, 'upstream_error'],
+    [{ provider: createProvider({ apiKey: KEY, model: 'modelo-teste', fetchImpl: hang, timeoutMs: 25 }) }, 'upstream_error'],
     [{ provider: { chat: async () => { throw new Error('erro inesperado'); } } }, 'upstream_error'],
     [{ fetchImpl: fakeFetch({ status: 429, json: { error: { message: 'Rate limit' } } }) }, 'rate_limited'],
     [{ fetchImpl: fakeFetch({ status: 402, json: { error: { message: 'Insufficient Balance' } } }) }, 'insufficient_balance'],

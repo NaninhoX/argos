@@ -132,7 +132,7 @@ test('api: o cliente legado conclui o relatório com ferramentas, sem alteraçã
     reply({ content: GOOD })
   );
   const audit = [];
-  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY }, fetchImpl: provider, rateStore: new Map(), audit: (e) => audit.push(e) });
+  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' }, fetchImpl: provider, rateStore: new Map(), audit: (e) => audit.push(e) });
   const log = []; const partial = [];
   const res = await makeLegacySampler(browserFetch(handler))('Redija o relatório.', { tools: legacyTools(log), onText: ({ text }) => partial.push(text) });
 
@@ -154,7 +154,7 @@ test('api: o cliente legado conclui o relatório com ferramentas, sem alteraçã
 });
 
 test('api: resposta em SSE quando o cliente pede fluxo, JSON quando não pede', async () => {
-  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY }, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' }, 'length')), rateStore: new Map() });
+  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' }, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' }, 'length')), rateStore: new Map() });
   const messages = [{ role: 'user', content: 'oi' }];
   const sse = await invoke(handler, { body: { messages, stream: true } });
   assert.equal(sse.statusCode, 200);
@@ -173,7 +173,7 @@ test('api: resposta em SSE quando o cliente pede fluxo, JSON quando não pede', 
 
 test('api: o cliente legado recebe erro com código que ele conhece', async () => {
   const sampler = (handler, code) => makeLegacySampler(browserFetch(handler), () => code || '')('Redija.', { tools: legacyTools([]) });
-  const env = { DEEPSEEK_API_KEY: KEY };
+  const env = { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' };
 
   const invented = createHandler({ env, fetchImpl: fakeFetch(reply({ content: 'A taxa de acerto é de 61,5%.' })), rateStore: new Map() });
   const e1 = await failure(sampler(invented));
@@ -203,7 +203,7 @@ test('api: o cliente legado recebe erro com código que ele conhece', async () =
 
 test('api: o verificador de conformidade da casa vale por padrão', async () => {
   const provider = fakeFetch(reply({ content: 'O cenário é claro: compre agora.' }));
-  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY }, fetchImpl: provider, rateStore: new Map() });
+  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' }, fetchImpl: provider, rateStore: new Map() });
   const res = await invoke(handler, { body: { messages: [{ role: 'user', content: 'oi' }] } });
   assert.equal(res.statusCode, 502);
   const body = JSON.parse(res.body);
@@ -215,7 +215,7 @@ test('api: o verificador de conformidade da casa vale por padrão', async () => 
 
 test('api: só POST; corpo inválido vira 400; IP vem de x-forwarded-for', async () => {
   const store = new Map();
-  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY }, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' })), rateStore: store });
+  const handler = createHandler({ env: { DEEPSEEK_API_KEY: KEY, ARGOS_LLM_MODEL: 'modelo-teste' }, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' })), rateStore: store });
   const get = await invoke(handler, { method: 'GET' });
   assert.equal(get.statusCode, 405);
   assert.equal(get.headers.allow, 'POST');

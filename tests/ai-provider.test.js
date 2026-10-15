@@ -25,7 +25,7 @@ const dump = (e) => [e.message, e.stack, e.detail, JSON.stringify(e), inspect(e,
 
 test('provedor: monta a chamada de chat completions e normaliza a resposta', async () => {
   const fetchImpl = fakeFetch(reply({ content: 'olá', reasoning_content: 'pensando' }));
-  const p = createProvider({ apiKey: KEY, fetchImpl });
+  const p = createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl });
   const tools = [{ type: 'function', function: { name: 'obter_leitura_tecnica', parameters: { type: 'object', properties: {} } } }];
   const out = await p.chat({ messages: MESSAGES, tools });
   assert.deepEqual(out, { content: 'olá', reasoning: 'pensando', toolCalls: [], finishReason: 'stop', usage: { total_tokens: 10 } });
@@ -38,7 +38,7 @@ test('provedor: monta a chamada de chat completions e normaliza a resposta', asy
 
 test('provedor: normaliza chamadas de ferramenta', async () => {
   const fetchImpl = fakeFetch(reply({ content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'detalhar_setup', arguments: '{"setup_id":"RSI_OVERSOLD"}' } }, { function: { name: 'consultar_banco_de_setups', arguments: {} } }, { id: 'sem_nome', function: {} }] }, 'tool_calls'));
-  const out = await createProvider({ apiKey: KEY, fetchImpl }).chat({ messages: MESSAGES });
+  const out = await createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl }).chat({ messages: MESSAGES });
   assert.equal(out.content, '');
   assert.equal(out.finishReason, 'tool_calls');
   assert.deepEqual(out.toolCalls, [
@@ -68,7 +68,7 @@ test('provedor: sem chave não chama a rede', async () => {
 test('provedor: traduz o status HTTP em código de erro', async () => {
   const cases = [[401, 'provider_auth'], [403, 'provider_auth'], [402, 'insufficient_balance'], [429, 'rate_limited'], [400, 'bad_request'], [422, 'bad_request'], [404, 'bad_request'], [500, 'upstream_error'], [503, 'upstream_error']];
   for (const [status, code] of cases) {
-    const e = await failure(createProvider({ apiKey: KEY, fetchImpl: fakeFetch({ status, json: { error: { message: 'falhou' } } }) }).chat({ messages: MESSAGES }));
+    const e = await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: fakeFetch({ status, json: { error: { message: 'falhou' } } }) }).chat({ messages: MESSAGES }));
     assert.ok(e instanceof ProviderError, String(status));
     assert.equal(e.code, code, String(status));
     assert.equal(e.status, status);
@@ -78,18 +78,18 @@ test('provedor: traduz o status HTTP em código de erro', async () => {
 test('provedor: estouro de tempo, rede fora e resposta fora do formato', async () => {
   const hang = (url, init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(new DOMException('abortado', 'AbortError'))));
   const t0 = Date.now();
-  const timeout = await failure(createProvider({ apiKey: KEY, fetchImpl: hang, timeoutMs: 25 }).chat({ messages: MESSAGES }));
+  const timeout = await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: hang, timeoutMs: 25 }).chat({ messages: MESSAGES }));
   assert.equal(timeout.code, 'timeout');
   assert.ok(Date.now() - t0 < 2000);
 
   const deaf = () => new Promise(() => {}); // ignora o sinal de cancelamento
-  assert.equal((await failure(createProvider({ apiKey: KEY, fetchImpl: deaf, timeoutMs: 25 }).chat({ messages: MESSAGES }))).code, 'timeout');
+  assert.equal((await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: deaf, timeoutMs: 25 }).chat({ messages: MESSAGES }))).code, 'timeout');
 
-  const down = await failure(createProvider({ apiKey: KEY, fetchImpl: fakeFetch(new TypeError('fetch failed')) }).chat({ messages: MESSAGES }));
+  const down = await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: fakeFetch(new TypeError('fetch failed')) }).chat({ messages: MESSAGES }));
   assert.equal(down.code, 'network');
 
   for (const bad of [{ text: '<html>erro</html>' }, { json: { choices: [] } }, { json: { choices: [{ index: 0 }] } }]) {
-    assert.equal((await failure(createProvider({ apiKey: KEY, fetchImpl: fakeFetch(bad) }).chat({ messages: MESSAGES }))).code, 'invalid_response');
+    assert.equal((await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: fakeFetch(bad) }).chat({ messages: MESSAGES }))).code, 'invalid_response');
   }
 });
 
@@ -103,14 +103,39 @@ test('provedor: a chave nunca aparece em erro nem no objeto do provedor', async 
     fakeFetch({ text: echo })
   ];
   for (const fetchImpl of scenarios) {
-    const e = await failure(createProvider({ apiKey: KEY, fetchImpl }).chat({ messages: MESSAGES }));
+    const e = await failure(createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl }).chat({ messages: MESSAGES }));
     const text = dump(e);
     assert.equal(text.includes(KEY), false);
     assert.equal(text.includes(KEY.slice(-4)), false);
     assert.equal(text.includes('SEGREDO'), false);
   }
-  const p = createProvider({ apiKey: KEY, fetchImpl: fakeFetch(reply({ content: 'ok' })) });
+  const p = createProvider({ apiKey: KEY, model: DEFAULT_MODEL, fetchImpl: fakeFetch(reply({ content: 'ok' })) });
   assert.equal((JSON.stringify(p) + inspect(p, { depth: 6, showHidden: true })).includes('SEGREDO'), false);
   assert.deepEqual(Object.keys(p), ['model', 'chat']);
   assert.equal(redact('chave ' + KEY + ' e sk-outra-chave-123', KEY), 'chave [chave] e [chave]');
+});
+
+test('provedor OpenAI: max_completion_tokens, sem temperatura, e conta sem crédito vira insufficient_balance', async () => {
+  const fetchImpl = fakeFetch(reply({ content: 'ok' }));
+  await createProvider({ apiKey: KEY, model: 'modelo-x', fetchImpl }).chat({ messages: MESSAGES, temperature: 0.2, maxTokens: 400 });
+  const c = fetchImpl.calls[0];
+  assert.equal(c.url, 'https://api.openai.com/v1/chat/completions');
+  assert.deepEqual(Object.keys(c.body).sort(), ['max_completion_tokens', 'messages', 'model', 'stream']);
+  assert.equal(c.body.max_completion_tokens, 400);
+  const noCredit = await failure(createProvider({ apiKey: KEY, model: 'modelo-x', fetchImpl: fakeFetch({ status: 429, json: { error: { code: 'insufficient_quota', message: 'You exceeded your current quota' } } }) }).chat({ messages: MESSAGES }));
+  assert.equal(noCredit.code, 'insufficient_balance');
+  const slow = await failure(createProvider({ apiKey: KEY, model: 'modelo-x', fetchImpl: fakeFetch({ status: 429, json: { error: { code: 'rate_limit_exceeded', message: 'Rate limit' } } }) }).chat({ messages: MESSAGES }));
+  assert.equal(slow.code, 'rate_limited');
+});
+
+test('provedor: a chave aceita os três nomes e o modelo só é opcional na DeepSeek', async () => {
+  const { llmKey, llmReady, DEEPSEEK_BASE_URL } = await import('../lib/ai/provider.js');
+  assert.equal(llmKey({ ARGOS_LLM_API_KEY: 'a', OPENAI_API_KEY: 'b', DEEPSEEK_API_KEY: 'c' }), 'a');
+  assert.equal(llmKey({ OPENAI_API_KEY: ' b ', DEEPSEEK_API_KEY: 'c' }), 'b');
+  assert.equal(llmKey({ DEEPSEEK_API_KEY: 'c' }), 'c');
+  assert.equal(llmKey({}), '');
+  assert.equal(llmReady({ OPENAI_API_KEY: 'b' }), false, 'OpenAI sem modelo não está pronta');
+  assert.equal(llmReady({ OPENAI_API_KEY: 'b', ARGOS_LLM_MODEL: 'm' }), true);
+  assert.equal(llmReady({ DEEPSEEK_API_KEY: 'c', ARGOS_LLM_BASE_URL: DEEPSEEK_BASE_URL }), true);
+  assert.equal(llmReady({ ARGOS_LLM_MODEL: 'm' }), false, 'sem chave');
 });

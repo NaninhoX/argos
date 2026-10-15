@@ -1,4 +1,4 @@
-// Teste real do Argos AI contra o provedor de LLM. Opcional: só roda se DEEPSEEK_API_KEY existir (ambiente ou .env).
+// Teste real do Argos AI contra o provedor de LLM. Opcional: só roda se houver chave do provedor (ARGOS_LLM_API_KEY, OPENAI_API_KEY ou DEEPSEEK_API_KEY) (ambiente ou .env).
 // Uso: node tools/llm-smoke.mjs
 //
 // Repete o laço do navegador (as ferramentas são executadas aqui) passando pelo handler de verdade: provedor,
@@ -10,13 +10,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleArgosAi } from '../lib/handlers/argos-ai.js';
 import { scanText, withDisclaimer } from '../lib/compliance.js';
-import { DEFAULT_BASE_URL, DEFAULT_MODEL } from '../lib/ai/provider.js';
+import { DEFAULT_BASE_URL, llmReady } from '../lib/ai/provider.js';
 
 const envFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.env');
 if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
 
-if (!process.env.DEEPSEEK_API_KEY) {
-  console.log('llm-smoke: pulado (DEEPSEEK_API_KEY ausente).');
+if (!llmReady(process.env)) {
+  console.log('llm-smoke: pulado (chave ou modelo do provedor ausentes).');
   process.exit(0);
 }
 
@@ -43,7 +43,7 @@ const messages = [
 
 const events = [];
 const started = Date.now();
-console.log('llm-smoke: provedor ' + (process.env.ARGOS_LLM_BASE_URL || DEFAULT_BASE_URL) + ' · modelo ' + (process.env.ARGOS_LLM_MODEL || DEFAULT_MODEL));
+console.log('llm-smoke: provedor ' + (process.env.ARGOS_LLM_BASE_URL || DEFAULT_BASE_URL) + ' · modelo ' + (process.env.ARGOS_LLM_MODEL || '(padrão do provedor)'));
 
 for (let round = 1; round <= 6; round++) {
   const t0 = Date.now();

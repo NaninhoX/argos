@@ -131,7 +131,7 @@ Etapa 0: meio dia. Etapa 1: duas horas. Etapa 2: os dois agentes, em paralelo. E
 
 ## Pendências que não são de front (continuam com Michel)
 
-- Variáveis na Vercel: `DEEPSEEK_API_KEY`, `CRON_SECRET`, `ARGOS_ACCESS_CODE`. Neon (`DATABASE_URL`) ficou para depois.
+- Variáveis na Vercel: `OPENAI_API_KEY` (e `ARGOS_LLM_MODEL`), `CRON_SECRET`, `ARGOS_ACCESS_CODE`. Neon (`DATABASE_URL`) ficou para depois.
 - Probabilidades das 12 hipóteses e ratificação dos 10 gatilhos com o LG (`05_Operacao_Compliance\Stratum_Calibracao_Plano_Gatilhos_v1-12-10.pdf`).
 - Decidir como o investidor abre a demo: hoje o endereço da Vercel exige login.
 - Levar ao advogado, junto do parecer CNPI, o botão "Levar para o TradingView… cria um alerta".

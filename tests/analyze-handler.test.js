@@ -85,7 +85,7 @@ test('série: rede fora cai para o snapshot e avisa; candle ainda aberto nunca e
 });
 
 test('health: informa versão e presença de configuração, sem valores', () => {
-  const r = handleHealth({ env: { DEEPSEEK_API_KEY: 'sk-segredo', DATABASE_URL: 'postgres://u:senha@h/db' }, now: 0 });
+  const r = handleHealth({ env: { DEEPSEEK_API_KEY: 'sk-segredo', ARGOS_LLM_MODEL: 'modelo-teste', DATABASE_URL: 'postgres://u:senha@h/db' }, now: 0 });
   assert.equal(r.status, 200);
   assert.equal(r.body.engine, 'argos-engine 1.1.0');
   assert.equal(r.body.llm, 'configurado');
