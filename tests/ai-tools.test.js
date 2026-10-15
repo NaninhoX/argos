@@ -130,3 +130,24 @@ test('identificação dos dados: o servidor devolve último candle, tamanho e ha
   const chunks = out.sse.trim().split('\n\n').map((l) => l.replace(/^data: /, ''));
   assert.equal(JSON.parse(chunks[1]).argos.data.candles, d.n, 'o SSE leva a identificação no último bloco');
 });
+
+test('trilha de auditoria: motor, regra, janela e cada consulta com o hash do resultado entregue ao modelo', async () => {
+  const { runner } = runnerWith();
+  const a = await runner.run('obter_leitura_tecnica', '{}');
+  const b = await runner.run('detalhar_setup', JSON.stringify({ setup_id: 'RSI_OVERSOLD' }));
+  await runner.run('verificar_vocabulario', JSON.stringify({ texto: 'ok' }));
+  const m = runner.meta();
+  assert.match(m.engine, /^argos-engine \d+\.\d+\.\d+/);
+  assert.deepEqual(m.rule, CTX.cfg);
+  assert.equal(m.symbol, 'BTCUSDT');
+  assert.equal(m.timeframe, '4h');
+  assert.equal(m.windowDays, null);
+  assert.deepEqual(m.consulted.map((c) => c.tool), ['obter_leitura_tecnica', 'detalhar_setup'], 'verificar_vocabulario não é fonte de número');
+  assert.equal(m.consulted[1].setupId, 'RSI_OVERSOLD');
+  const { createHash } = await import('node:crypto');
+  assert.equal(m.consulted[0].resultHash, createHash('sha256').update(a.content).digest('hex'));
+  assert.equal(m.consulted[1].resultHash, createHash('sha256').update(b.content).digest('hex'));
+  // a cópia devolvida não deixa o chamador mexer na trilha
+  m.consulted.push({ tool: 'x' });
+  assert.equal(runner.meta().consulted.length, 2);
+});

@@ -897,11 +897,29 @@
     return '<div class="r-kicker"><span>Stratum Research · Relatório Estratégico</span><span>Argos AI · redigido por LLM</span></div><h2 class="r-title">' + esc(k.replace('_', ' · ').replace('USDT', '/USDT').replace('1d', '1D')) + '</h2><div class="r-meta">Redigido pelo Argos AI a partir de consultas ao motor Argos Sentinel · ' + esc(nowBrt()) + '<br>Todos os números vêm das ferramentas do motor; o texto é verificado contra o vocabulário da Política de Compliance.</div>';
   }
   function aiBody() { const t = state.ai.text || ''; const k = t.search(/^#{1,3}\s/m); return k > 0 ? t.slice(k) : t; }
+  // Procedência dos números do relatório do Argos AI: tudo vem do servidor (não do modelo), para conferir e reproduzir.
+  const PROV_TOOL = { obter_leitura_tecnica: 'Leitura técnica', consultar_banco_de_setups: 'Banco de setups', detalhar_setup: 'Detalhe do setup' };
+  function provHTML(p) {
+    if (!p || !p.seriesHash) return '';
+    const rule = p.rule ? (p.rule.mode === 'atr' ? 'alvo ' + p.rule.tgt + '×ATR · stop ' + p.rule.stp + '×ATR' : 'alvo ' + p.rule.tgt + '% · stop ' + p.rule.stp + '%') + ' · ' + p.rule.hold + ' candles' : '—';
+    const src = p.source === 'database' ? 'base de candles' : p.source === 'live' ? 'Binance ao vivo' : p.source === 'snapshot' ? 'snapshot versionado' : esc(String(p.source || '—'));
+    const rows = [
+      ['Motor', esc(p.engine || '—')],
+      ['Recorte', esc(String(p.symbol || '').replace('USDT', '/USDT') + ' · ' + (p.timeframe || '') + (p.windowDays ? ' · janela de ' + p.windowDays + ' dias' : ''))],
+      ['Regra de saída', esc(rule)],
+      ['Série', esc(p.candles + ' candles até ' + fmtDate(Date.parse(p.lastCandle) / 1000) + ' · fonte: ') + src],
+      ['Hash da série', '<code title="' + esc(p.seriesHash) + '">' + esc(p.seriesHash.slice(0, 16)) + '…</code>']
+    ];
+    const cons = (p.consulted || []).map((c) => '<li><span>' + esc((PROV_TOOL[c.tool] || c.tool) + (c.setupId ? ' · ' + c.setupId : '')) + '</span><code title="' + esc(c.resultHash) + '">' + esc(c.resultHash.slice(0, 12)) + '</code></li>').join('');
+    return '<details class="prov"><summary>Procedência dos números</summary><dl>' + rows.map((r) => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>' +
+      (cons ? '<p class="prov-h">Consultas ao motor (hash do resultado entregue ao modelo)</p><ul>' + cons + '</ul>' : '') +
+      '<p class="prov-n">Estes dados vêm do servidor, não do modelo. Mesma série, mesma regra e mesmo motor reproduzem o mesmo hash. O texto passou por conferência numérica contra estes resultados e pela verificação de vocabulário.</p></details>';
+  }
   function renderAiReport(final) {
     const t = aiBody();
     let body = md2html(t);
     if (final) { const flags = renderScan(t, $('lvScan')); body = highlightFlags(body, flags); }
-    $('lvReport').innerHTML = aiHeader() + (body || '<p style="color:#5C6776">Aguardando a primeira linha do Argos AI…</p>') + (state.ai.running ? '<span class="cursor" aria-hidden="true"></span>' : '') + (final ? '<div class="sign">Argos AI + Argos Sentinel · Stratum Research — responsável: Michel Eleutério de Andrade Ramon · ' + new Date().toLocaleDateString('pt-BR') + '</div>' : '');
+    $('lvReport').innerHTML = aiHeader() + (body || '<p style="color:#5C6776">Aguardando a primeira linha do Argos AI…</p>') + (state.ai.running ? '<span class="cursor" aria-hidden="true"></span>' : '') + (final ? provHTML(state.ai.prov) + '<div class="sign">Argos AI + Argos Sentinel · Stratum Research — responsável: Michel Eleutério de Andrade Ramon · ' + new Date().toLocaleDateString('pt-BR') + '</div>' : '');
   }
   function renderAiStatus() {
     const el = $('lvAiStatus');
@@ -1079,7 +1097,7 @@
   async function runAi() {
     if (!state.samp || state.ai.running) return;
     const A = state.A;
-    state.ai = { text: '', running: true, done: false, ctl: new AbortController(), key: runKey(), log: [], err: '' };
+    state.ai = { text: '', running: true, done: false, ctl: new AbortController(), key: runKey(), log: [], err: '', prov: null };
     selectTab('ai');
     $('lvAskAi').disabled = true; $('lvStopAi').hidden = false; $('lvScan').innerHTML = '';
     logAi('Pensando… o Argos AI está planejando as consultas ao motor.', '…');
@@ -1093,7 +1111,7 @@
       if (useTools && lim.serverTools) logAi('O servidor consulta o motor (leitura técnica, banco de setups e detalhe dos setups) e confere cada número do texto.', 'i');
       else if (useTools) opts.tools = buildTools(A); else opts.cache = false;
       const res = await state.samp(buildPrompt(A, useTools), opts);
-      state.ai.text = res.text; state.ai.done = true; state.ai.running = false;
+      state.ai.text = res.text; state.ai.prov = res.serverData || null; state.ai.done = true; state.ai.running = false;
       // O servidor consulta a própria série: se o último candle ou o tamanho diferem do que a tela mostra, avisa.
       if (res.serverData) {
         const sd = res.serverData, lastMs = A.d.t[A.d.n - 1] * 1000, srvMs = Date.parse(sd.lastCandle);

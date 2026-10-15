@@ -994,3 +994,15 @@
 #page-landing h1, #page-landing h2, #page-landing h3, #page-landing .eyebrow { text-wrap: balance; }
 #page-landing p, #page-landing li { text-wrap: pretty; }
 @media (max-width: 860px) { #page-landing .how-code { scrollbar-width: none; } #page-landing .how-code::-webkit-scrollbar { display: none; } }
+
+/* Procedência dos números do relatório do Argos AI */
+.lv .report .prov { margin-top: 14px; border: 1px solid #D5DBE3; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #1E2A3A; }
+.lv .report .prov summary { cursor: pointer; font-weight: 600; }
+.lv .report .prov dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 8px 0 0; }
+.lv .report .prov dt { color: #5C6776; }
+.lv .report .prov dd { margin: 0; overflow-wrap: anywhere; }
+.lv .report .prov code { font-family: var(--mono); font-size: 11px; }
+.lv .report .prov .prov-h { margin: 10px 0 4px; color: #5C6776; }
+.lv .report .prov ul { list-style: none; margin: 0; padding: 0; }
+.lv .report .prov li { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.lv .report .prov .prov-n { margin: 8px 0 0; color: #5C6776; }
