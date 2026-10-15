@@ -1,6 +1,6 @@
 # `POST /api/argos-ai`
 
-Rodada de conversa do Argos AI. O navegador monta o prompt e executa as ferramentas (o motor roda lá); o servidor guarda a chave do provedor de LLM, limita a taxa e verifica o texto final. O contrato é o do cliente legado (`makeServerSampler` em `legacy/blocks/06-live.js`, com `ARGOS_CONFIG.llm = 'server'`), que funciona sem alteração. Código: `api/argos-ai.js` → `lib/handlers/argos-ai.js` → `lib/ai/provider.js` e `lib/ai/numeric-guard.js`.
+Conversa completa do Argos AI numa chamada. O navegador monta o prompt e diz o recorte (`context`); o **servidor executa as ferramentas** (`lib/ai/tools.js`) sobre o motor e a série que ele mesmo carrega, guarda a chave do provedor de LLM, limita a taxa e verifica o texto final. Mudança do S5 (15/10/2026): antes o navegador executava as ferramentas e enviava os resultados, e quem tinha o código de acesso podia forjar um resultado com números inventados que a guarda numérica aceitaria. Agora o servidor recusa `tools`, mensagens `tool`, `tool_calls` e `tool_call_id` vindos do cliente.
 
 ## Requisição
 
@@ -8,31 +8,34 @@ Cabeçalhos: `content-type: application/json`; `x-argos-code` (código de acesso
 
 ```jsonc
 {
-  "messages": [                       // 1 a 64; a última é `user` ou `tool`
+  "messages": [                       // 1 a 64, só system, user e assistant em texto; a última é `user`
     { "role": "system", "content": "…" },
-    { "role": "user", "content": "…" },
-    { "role": "assistant", "content": "", "tool_calls": [ { "id": "call_1", "type": "function", "function": { "name": "obter_leitura_tecnica", "arguments": "{}" } } ], "reasoning_content": "opcional" },
-    { "role": "tool", "tool_call_id": "call_1", "content": "<JSON do resultado da ferramenta>" }
+    { "role": "user", "content": "…" }
   ],
-  "tools": [ { "type": "function", "function": { "name": "…", "description": "…", "parameters": { } } } ],  // opcional, até 16
+  "context": {                        // o recorte que as ferramentas consultam; mesmas regras do /api/analyze
+    "symbol": "BTCUSDT", "timeframe": "4h",
+    "cfg": { "mode": "atr", "tgt": 2, "stp": 1, "hold": 12 },   // opcional (padrão do motor)
+    "windowDays": 365                                           // opcional (30 a 5000)
+  },
   "stream": true                      // opcional; define só o formato da resposta
 }
 ```
 
-Corpo de até 400 mil caracteres. Campos fora dessa lista são ignorados: o cliente não escolhe modelo nem parâmetros do provedor.
+Corpo de até 400 mil caracteres. Campos fora dessa lista são ignorados: o cliente não escolhe modelo, parâmetros do provedor nem ferramentas.
+
+## Ferramentas (catálogo fechado do servidor)
+
+`obter_leitura_tecnica`, `consultar_banco_de_setups`, `detalhar_setup(setup_id)` e `verificar_vocabulario(texto)`. Nenhuma aceita ativo ou série como argumento: tudo vem do `context`. A série é carregada uma vez por requisição (base de candles quando há banco; senão snapshot mais Binance). Limites: 6 rodadas e 10 chamadas por requisição. Ferramenta fora do catálogo encerra a conversa (`invalid_tool_call`). Cada chamada é auditada (`tool_audit`, quando há banco; sempre no log): ferramenta, argumentos, hash do resultado, modelo e latência, sem texto gerado, IP nem chave.
 
 ## Resposta `200`
 
-Objeto `chat.completion` no formato da OpenAI, com `model: "argos-ai"`. Em `choices[0]`:
-
-- **pedido de ferramentas**: `finish_reason: "tool_calls"` e `message: { role, content: "", tool_calls: [...], reasoning_content? }`. O cliente executa as ferramentas, acrescenta a mensagem do assistente e uma mensagem `tool` por chamada, e envia de novo.
-- **texto final**: `finish_reason: "stop"` (ou `"length"`, texto cortado) e `message: { role, content }`. O texto já passou pela verificação e termina com o disclaimer padrão.
+Objeto `chat.completion` no formato da OpenAI, com `model: "argos-ai"` e um único resultado: texto final, `finish_reason: "stop"` (ou `"length"`, texto cortado), `message: { role, content }`. O texto já passou pela verificação e termina com o disclaimer padrão. Pedidos de ferramenta nunca voltam ao cliente.
 
 Com `stream: true`, o mesmo conteúdo vem como `text/event-stream`: um `chat.completion.chunk` com o `delta` inteiro, um com o `finish_reason` e `data: [DONE]`. Não há transmissão em tempo real: o texto só sai depois de verificado.
 
 ## Verificação do texto final
 
-1. **Guarda numérica** (`checkNumbers`): cada número do texto tem de ser o arredondamento, na precisão exibida, de um número presente nas mensagens `tool` da conversa (número JSON, número dentro de string ou de nome de chave). `%` e `p.p.` aceitam a fonte em fração ou em pontos; o sinal é ignorado. Exceções estruturais, configuráveis: marcador de lista ou título numerado, o 95 de "IC 95%", o limiar "0,05" em comparação e inteiro pequeno sem unidade (até 10). Número por extenso não é verificado. A guarda confere a origem do valor, não o papel dele na frase.
+1. **Guarda numérica** (`checkNumbers`): cada número do texto tem de ser o arredondamento, na precisão exibida, de um número presente nos resultados das ferramentas que o servidor executou (número JSON, número dentro de string ou de nome de chave). `%` e `p.p.` aceitam a fonte em fração ou em pontos; o sinal é ignorado. Exceções estruturais, configuráveis: marcador de lista ou título numerado, o 95 de "IC 95%", o limiar "0,05" em comparação e inteiro pequeno sem unidade (até 10). Número por extenso não é verificado. A guarda confere a origem do valor, não o papel dele na frase.
 2. **Conformidade**: `scanText` de `lib/compliance.js`.
 3. Reprovou: uma nova chamada ao provedor, com o texto recusado e o pedido de correção. Reprovou de novo: erro `refused`. O texto reprovado nunca é devolvido, nem em parte. O texto que acompanha um pedido de ferramentas também não é repassado.
 
@@ -49,8 +52,11 @@ Corpo: `{ "error": "<mensagem em português>", "code": "<código>" }`. Os códig
 | 429 | `rate_limited` | mais de 30 requisições por minuto do mesmo IP; traz `retry-after` |
 | 500 | `internal_error` | o verificador de conformidade falhou; nada é liberado |
 | 502 | `refused` | texto reprovado duas vezes; `reason: { unknownNumbers, flaggedTerms }` traz só contagens |
+| 502 | `tool_limit`, `invalid_tool_call` | o provedor pediu consultas demais ou uma ferramenta fora do catálogo |
 | 502 | `empty_completion` | o provedor não produziu texto |
 | 502 | `bad_request` | o provedor recusou o formato do pedido ou o modelo |
+| 504 | `timeout` | a conversa passou de 100 s antes de nova chamada ao provedor |
+| 503 | `data_unavailable` | o servidor não conseguiu carregar a série; nada foi calculado |
 | 503 | `not_configured` | chave ou modelo do provedor ausentes |
 | 503 | `provider_auth`, `insufficient_balance`, `rate_limited` | credencial recusada, conta sem saldo ou limite do provedor |
 | 503 | `upstream_error` | provedor fora do ar, tempo esgotado (90 s por chamada) ou resposta ilegível |

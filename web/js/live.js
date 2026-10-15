@@ -963,15 +963,16 @@
     not_granted: 'O uso do Argos AI não foi autorizado nesta visualização.', sampling_disabled: 'O Claude não está disponível para esta conta.', not_declared: 'Esta versão da página não declara o Argos AI.',
     capability_disabled: 'O Argos AI não roda nesta visualização.', capability_removed: 'O Argos AI não roda nesta visualização.', rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Tente de novo em alguns minutos.',
     session_expired: 'A sessão expirou: entre de novo no Claude e tente outra vez.', refused: 'O pedido foi recusado. O relatório do motor segue disponível na outra aba.', empty_completion: 'O Argos AI não produziu texto. Tente de novo.',
-    prompt_too_large: 'Dados grandes demais para uma chamada.', upstream_error: 'Falha temporária de conexão. O texto parcial foi mantido; tente de novo.', cancelled: 'Interrompido.',
+    prompt_too_large: 'Dados grandes demais para uma chamada.', data_unavailable: 'O servidor não conseguiu carregar os dados do motor agora. Nenhum texto foi gerado; tente de novo em instantes.', tool_limit: 'O Argos AI pediu consultas demais ao motor. Tente de novo.', invalid_tool_call: 'O provedor de IA pediu uma consulta inválida. Tente de novo.', upstream_error: 'Falha temporária de conexão. O texto parcial foi mantido; tente de novo.', cancelled: 'Interrompido.',
     unauthorized: 'Código de acesso ausente ou incorreto.', insufficient_balance: 'O saldo da conta do provedor de IA acabou. Recarregue o saldo para voltar a gerar relatórios.',
     not_configured: 'O servidor ainda não tem a chave ou o modelo do provedor de IA configurados (variáveis OPENAI_API_KEY e ARGOS_LLM_MODEL).', bad_request: 'O provedor de IA recusou o pedido (formato ou modelo). Veja os logs da função no Vercel.',
     provider_auth: 'A chave da API configurada no servidor foi recusada pelo provedor. Confira a chave do provedor (OPENAI_API_KEY) no Vercel.'
   };
 
   // ------------------------------------ Argos AI via servidor próprio (deploy Vercel)
-  // O navegador executa as ferramentas (o motor roda aqui); o servidor só repassa ao provedor de LLM,
-  // guardando a chave. Protocolo: chat/completions compatível com OpenAI, com streaming (SSE).
+  // O navegador diz o recorte (ativo, tempo gráfico, regra de saída) e o prompt; o SERVIDOR executa as ferramentas sobre o
+  // motor e guarda a chave do provedor de LLM. O cliente não declara ferramenta nem envia resultado de ferramenta
+  // (o servidor recusa): era o caminho para forjar o número que a guarda numérica aceitaria. Resposta em SSE.
   const CFG = window.ARGOS_CONFIG || {};
   const SERVER_LLM = !IN_CLAUDE && CFG.llm === 'server';
   function getCode() { try { return sessionStorage.getItem('argos_code') || state.code || ''; } catch (e) { return state.code || ''; } }
@@ -988,9 +989,9 @@
   }
   function makeServerSampler() {
     const endpoint = CFG.endpoint || '/api/argos-ai';
-    async function call(messages, tools, signal, onDelta) {
+    async function call(messages, context, signal, onDelta) {
       let r;
-      try { r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json', 'x-argos-code': getCode() }, body: JSON.stringify({ messages, tools, stream: true }), signal }); }
+      try { r = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json', 'x-argos-code': getCode() }, body: JSON.stringify({ messages, context, stream: true }), signal }); }
       catch (e) { const err = new Error(signal && signal.aborted ? 'cancelado' : 'sem conexão'); err.code = signal && signal.aborted ? 'cancelled' : 'upstream_error'; throw err; }
       if (!r.ok || !r.body) {
         let j = null; try { j = await r.json(); } catch (e) { j = null; }
@@ -1027,33 +1028,15 @@
       return { msg, finish };
     }
     const samp = async function (prompt, opts) {
-      const tools = opts.tools || [];
-      const oa = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.inputSchema } }));
       const messages = [
         { role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research. Escreva em português do Brasil e siga à risca as regras da mensagem do usuário.' },
         { role: 'user', content: prompt }
       ];
-      for (let round = 0; round < 8; round++) {
-        const { msg, finish } = await call(messages, oa.length ? oa : undefined, opts.signal, (t) => opts.onText && opts.onText({ text: t }));
-        const calls = msg.calls.filter((c) => c && c.function && c.function.name);
-        if (calls.length) {
-          const am = { role: 'assistant', content: msg.content || '', tool_calls: calls };
-          if (msg.reasoning) am.reasoning_content = msg.reasoning;
-          messages.push(am);
-          for (const tc of calls) {
-            const t = tools.find((x) => x.name === tc.function.name);
-            let result;
-            try { const args = tc.function.arguments ? JSON.parse(tc.function.arguments) : {}; result = t ? await t.execute(args) : { erro: 'ferramenta desconhecida: ' + tc.function.name }; }
-            catch (e) { result = { erro: String((e && e.message) || e) }; }
-            messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) });
-          }
-          continue;
-        }
-        return { text: msg.content, truncated: finish === 'length', modelTierApplied: 'Argos AI (servidor)' };
-      }
-      const err = new Error('limite de rodadas de ferramentas'); err.code = 'upstream_error'; throw err;
+      const context = { symbol: state.sym, timeframe: state.tf, cfg: state.cfg, windowDays: state.win >= 30 ? state.win : null };
+      const { msg, finish } = await call(messages, context, opts.signal, (t) => opts.onText && opts.onText({ text: t }));
+      return { text: msg.content, truncated: finish === 'length', modelTierApplied: 'Argos AI (servidor)' };
     };
-    samp.limits = async () => ({ tools: true });
+    samp.limits = async () => ({ tools: true, serverTools: true });
     return samp;
   }
   const HIDE_CODES = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
@@ -1071,7 +1054,8 @@
     if (!useTools) logAi('Esta visualização não executa ferramentas: os dados do motor seguem no próprio pedido.', 'i');
     try {
       const opts = { signal: state.ai.ctl.signal, modelTier: 'default', onText: ({ text }) => { if (!state.ai.text) logAi('escrevendo', '✎'); state.ai.text = text; if (state.tab === 'ai') renderAiReport(false); } };
-      if (useTools) opts.tools = buildTools(A); else opts.cache = false;
+      if (useTools && lim.serverTools) logAi('O servidor consulta o motor (leitura técnica, banco de setups e detalhe dos setups) e confere cada número do texto.', 'i');
+      else if (useTools) opts.tools = buildTools(A); else opts.cache = false;
       const res = await state.samp(buildPrompt(A, useTools), opts);
       state.ai.text = res.text; state.ai.done = true; state.ai.running = false;
       logAi(res.truncated ? 'Resposta cortada pelo limite de tamanho: o texto foi mantido como está.' : 'Relatório concluído · modelo: ' + (res.modelTierApplied || 'default'), res.truncated ? '!' : '✓');

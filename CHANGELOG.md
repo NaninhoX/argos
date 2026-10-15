@@ -46,6 +46,7 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Segurança e conformidade
 
+- Argos AI, S5 (15/10): as ferramentas passam a rodar no servidor (`lib/ai/tools.js`), sobre o motor e a série que ele mesmo carrega; o cliente envia só o texto e o recorte (`context`). O servidor recusa `tools`, mensagens `tool` e `tool_calls` do cliente, o que fecha o caminho de forjar o resultado de uma ferramenta; a guarda numérica passa a conferir contra o que o servidor calculou. Contrato novo em `docs/api-argos-ai.md`; chamadas auditadas em `tool_audit` (só hash). Sem mudança na lógica estatística.
 - Argos AI: regras do servidor antepostas a toda chamada; verificador de conformidade e disclaimer valem por padrão; em produção o endpoint não abre sem `ARGOS_ACCESS_CODE`; teto de tokens de saída; ferramenta não declarada pelo cliente é recusada; auditoria em log por padrão.
 - Guarda numérica: notação científica, "por cento", dígitos de largura total e de outro alfabeto, percentual por extenso; hash em resultado de ferramenta deixa de ser fonte de número; "confiança de 95%" solto deixa de ser exceção.
 - Conformidade: em regra verbal, a negação só vale dentro da mesma oração ("Não hesite, compre agora" passa a ser acusado); regras novas para instrução em forma branda e para alvo ou stop em preço sem separador de milhar.
@@ -55,7 +56,7 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 - O cron de candles roda uma vez por dia (00:05 UTC): o plano gratuito da Vercel recusa cron mais frequente que diário. No plano pago volta a `5 * * * *`. Enquanto isso, a base de candles pode estar até um dia atrás; sem banco, a análise usa snapshot mais Binance ao vivo e não é afetada.
 
-- As ferramentas do Argos AI ainda rodam no navegador: quem tem o código de acesso pode fabricar um resultado de ferramenta. Correção planejada: ferramentas no servidor, sobre `/api/analyze`.
+- O Argos AI ainda não gerou relatório real em produção (a conta do provedor está sem crédito); o ciclo completo foi testado com provedor simulado.
 - A guarda numérica não confere o papel do número na frase.
 
 ## [1.1.0] - 2026-09-27
