@@ -1,4 +1,25 @@
-  function showPage(which) {
+  // Endereço por tela: o hash da URL diz onde a pessoa está (#ao-vivo, #sandbox, #query, #regime, #calibracao; sem hash,
+  // o site). Funciona em hospedagem estática, sem regra de reescrita, e o botão Voltar do navegador percorre as telas.
+  var HASH_SCREEN = { 'ao-vivo': 'live', plataforma: 'live', live: 'live', sandbox: 'sandbox', query: 'query', regime: 'regime', calibracao: 'calibration', calibration: 'calibration' };
+  var SCREEN_HASH = { live: '#ao-vivo', sandbox: '#sandbox', query: '#query', regime: '#regime', calibration: '#calibracao' };
+  function setHash(h) {
+    try {
+      var base = location.pathname + location.search;
+      if (base + h !== base + location.hash) history.pushState(history.state, '', base + h);
+    } catch (e) { /* sem History API (arquivo local restrito): a navegação segue sem endereço */ }
+  }
+  // Lê o hash e abre a tela correspondente, sem reescrever a URL. Hash desconhecido (âncoras do site) não faz nada.
+  function routeFromHash() {
+    var h = (location.hash || '').replace(/^#/, ''), screen = HASH_SCREEN[h];
+    if (screen) { showPage('dashboard', true); switchDashTab(screen, true); }
+    else if (!h) showPage('landing', true);
+  }
+  window.addEventListener('popstate', routeFromHash);
+  function showPage(which, silent) {
+    if (!silent) {
+      if (which === 'landing') setHash('');
+      else { var cur0 = document.querySelector('.dash-screen.visible'); setHash((cur0 && SCREEN_HASH[cur0.id.replace('dash-', '')]) || '#ao-vivo'); }
+    }
     document.getElementById('page-landing').classList.toggle('visible', which === 'landing');
     document.getElementById('page-dashboard').classList.toggle('visible', which === 'dashboard');
     document.getElementById('nav-landing').classList.toggle('active', which === 'landing');
@@ -15,7 +36,8 @@
     try { document.dispatchEvent(new CustomEvent('argos:screen', { detail: { screen: screen } })); } catch (e) { /* sem CustomEvent */ }
   }
   // Abas da plataforma: role="tablist" no <nav>, role="tab" em cada link, aria-selected e tabindex acompanham a aba aberta.
-  function switchDashTab(screen) {
+  function switchDashTab(screen, silent) {
+    if (!silent && SCREEN_HASH[screen]) setHash(SCREEN_HASH[screen]);
     document.querySelectorAll('.dashboard-page nav.tabs a').forEach(function (a) {
       var on = a.getAttribute('data-screen') === screen;
       a.classList.toggle('active', on);
@@ -29,7 +51,7 @@
   }
   var dashTabs = Array.prototype.slice.call(document.querySelectorAll('.dashboard-page nav.tabs a'));
   dashTabs.forEach(function (tab, i) {
-    tab.setAttribute('href', '#' + tab.getAttribute('data-screen'));
+    tab.setAttribute('href', SCREEN_HASH[tab.getAttribute('data-screen')] || '#' + tab.getAttribute('data-screen'));
     tab.addEventListener('click', function (e) { e.preventDefault(); switchDashTab(this.getAttribute('data-screen')); });
     // Teclado: setas, Home e End movem entre as abas e abrem a aba em foco; a barra de espaço também abre.
     tab.addEventListener('keydown', function (e) {
@@ -45,6 +67,6 @@
       dashTabs[to].focus();
     });
   });
-  function openLive() { showPage('dashboard'); switchDashTab('live'); }
-  function openTab(screen) { showPage('dashboard'); switchDashTab(screen); }
+  function openLive() { showPage('dashboard', true); switchDashTab('live'); }
+  function openTab(screen) { showPage('dashboard', true); switchDashTab(screen); }
   function openCase(sym, tf, id) { openLive(); if (window.ArgosLive && window.ArgosLive.openCase) window.ArgosLive.openCase(sym, tf, id); }

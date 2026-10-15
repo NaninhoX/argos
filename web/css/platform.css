@@ -971,3 +971,8 @@
   .meta-nav button { min-height: 44px; }
   .page { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
   @media (max-width: 640px) { .page { padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)); } }
+
+/* Celular: o painel da regra de saída não pode passar da borda da tela (no teste a 360 px ele ia até 383 px). */
+@media (max-width: 480px) {
+  .lv .exit-pop { position: fixed; left: 16px; right: 16px; top: 96px; width: auto; max-height: calc(100vh - 120px); overflow-y: auto; }
+}

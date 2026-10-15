@@ -17,6 +17,8 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Adicionado
 
+- Endereço por tela (15/10): `#ao-vivo`, `#sandbox`, `#query`, `#regime` e `#calibracao` abrem a tela direto, atualizam a URL ao navegar e funcionam com o botão Voltar; sem hash, é o site. Mantém os parâmetros de pergunta (`?symbol=…`) e o `#plataforma` antigo. Teste de largura a 360 px nas cinco telas e no site: nenhuma passa da borda; o painel da regra de saída (Ao vivo) passou a abrir dentro da tela no celular.
+
 - Termômetro (15/10): `lib/jobs/termometro.js` registra por dia a probabilidade do motor para cada gatilho em aberto (origem `termometro`) e grava o desfecho quando a janela fecha; encadeado em `/api/cron/candles` e disponível em `/api/cron/termometro`. Ver `docs/termometro.md`.
 - Provedor de LLM: OpenAI como padrão (`ARGOS_LLM_API_KEY`, `OPENAI_API_KEY` ou `DEEPSEEK_API_KEY`; `ARGOS_LLM_MODEL` obrigatório); a DeepSeek continua aceita. Migração do banco aplicada no build (`tools/migrate.mjs --if-configured`). `web/js/config.js` liga o Argos AI de servidor nas páginas publicadas.
 - Movimento (13/10): fundação em `web/js/motion.js` e `web/css/motion.css` e dez animações. No site: cartão do caso real em sequência com a marca das quatro camadas, entrada das seções ao rolar, matriz dos 72 testes em onda, contadores (só contagens inteiras) e a linha do "como funciona". Na plataforma: troca de tela, painéis que esmaecem enquanto o motor recalcula, barras de intervalo que crescem a partir da taxa-base, mapa setup × regime em escada, esqueleto de carregamento e retorno visual do registro. Nenhum número é calculado ou alterado pela animação; taxa, p, IC e Brier nunca contam de zero. Desliga com `prefers-reduced-motion` e `?motion=off`.
