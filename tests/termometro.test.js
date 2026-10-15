@@ -146,8 +146,10 @@ test('handlers: exigem CRON_SECRET e banco; o de candles encadeia o Termômetro 
   const ok = await handleCronTermometro({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log() {}, termometro: async () => ({ series: [], registered: 0, resolved: 0, errors: 0, skipped: 0 }) } });
   assert.equal(ok.status, 200);
   const lines = [];
-  const chained = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log: (l) => lines.push(l), ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 0 }), termometro: async () => ({ series: [], registered: 3, resolved: 1, errors: 0, skipped: 0 }) } });
-  assert.equal(chained.status, 200);
+  const chained = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log: (l) => lines.push(l), ingest: async () => ({ series: [], seeded: 0, fetched: 0, errors: 0 }), termometro: async () => ({ series: [{ symbol: 'BTCUSDT', timeframe: '1h', open: 4, error: null }, { symbol: 'ETHUSDT', timeframe: '4h', open: 0, error: 'serie_atrasada' }], registered: 3, resolved: 1, errors: 1, skipped: 0 }) } });
+  assert.equal(chained.status, 207);
+  assert.equal(JSON.parse(lines[0]).termometro.open, 4);
+  assert.deepEqual(JSON.parse(lines[0]).termometro.refused, ['ETHUSDT 4h: serie_atrasada']);
   assert.equal(chained.body.termometro.registered, 3);
   assert.equal(JSON.parse(lines[0]).termometro.registered, 3, 'o log traz o resumo');
   const broken = await handleCronCandles({ authorization: 'Bearer segredo-de-teste-123', env, deps: { db: {}, log() {}, ingest: async () => ({ series: [], seeded: 0, fetched: 5, errors: 0 }), termometro: async () => { throw new Error('boom'); } } });
