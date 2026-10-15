@@ -103,3 +103,19 @@ test('analyze: brief=1 devolve só a identificação do resultado, com o mesmo h
   assert.deepEqual(brief.body.data, full.body.data);
   assert.ok(JSON.stringify(brief.body).length < 2500);
 });
+
+test('source=snapshot lê só o snapshot versionado, mesmo havendo base de candles, e entra na chave de cache', async () => {
+  const { snapshotSeries } = await import('../lib/data/series.js');
+  const dbLike = async (symbol, timeframe) => { const d = snapshotSeries(symbol, timeframe); const cut = { ...d, n: d.n - 5 }; for (const f of ['t', 'o', 'h', 'l', 'c', 'v']) cut[f] = d[f].slice(0, d.n - 5); return { d: cut, source: 'database' }; };
+  const q = { symbol: 'BTCUSDT', tf: '1d' };
+  const fromDb = await handleAnalyze({ query: q, deps: { loadSeries: dbLike } });
+  const snap = await handleAnalyze({ query: { ...q, source: 'snapshot' } });
+  assert.equal(fromDb.body.data.source, 'database');
+  assert.equal(snap.status, 200);
+  assert.equal(snap.body.data.source, 'snapshot');
+  assert.notEqual(snap.body.resultHash, fromDb.body.resultHash);
+  const again = await handleAnalyze({ query: { ...q, source: 'snapshot' } });
+  assert.equal(again.body.resultHash, snap.body.resultHash, 'reprodutível');
+  const bad = await handleAnalyze({ query: { ...q, source: 'banco' } });
+  assert.equal(bad.status, 400);
+});

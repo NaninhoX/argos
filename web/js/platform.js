@@ -347,6 +347,7 @@
     const p = ['symbol=' + sym, 'tf=' + tf, 'mode=' + cfg.mode, 'tgt=' + numStr(cfg.tgt), 'stp=' + numStr(cfg.stp), 'hold=' + cfg.hold];
     if (win) p.push('windowDays=' + win);
     p.push('live=' + (live ? 1 : 0));
+    if (!live) p.push('source=snapshot'); // "Snapshot versionado": o servidor lê o mesmo snapshot do navegador, e o resultHash é comparável
     if (brief) p.push('brief=1');
     const path = '/api/analyze?' + p.join('&');
     const origin = /^https?:$/.test(location.protocol) ? location.origin : 'http://localhost:3000';

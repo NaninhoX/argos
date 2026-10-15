@@ -12,7 +12,8 @@ Roda o `argos-engine` no servidor sobre uma série de candles e devolve o resumo
 | `tgt`, `stp` | regra de saída do teste: alvo e stop, de 0 a 50 | `2`, `1` |
 | `hold` | prazo máximo em candles, de 1 a 200 | `12` |
 | `windowDays` | janela em dias (30 a 5000); o servidor soma 200 candles de aquecimento | série inteira |
-| `live` | `0` usa só o snapshot versionado | `1` |
+| `live` | `0` não busca candles novos na Binance (com a base de candles ligada, o servidor ainda lê a base) | `1` |
+| `source` | `snapshot` lê só o snapshot versionado: sem base de candles e sem Binance; resultado reprodutível e comparável com o do navegador | automático |
 
 Em `POST`, o corpo JSON aceita os mesmos campos; a regra de saída pode vir em `cfg: { mode, tgt, stp, hold }`.
 
@@ -24,7 +25,7 @@ Em `POST`, o corpo JSON aceita os mesmos campos; a regra de saída pode vir em `
 {
   "engine": "argos-engine 1.1.0",
   "input": { "symbol": "BTCUSDT", "timeframe": "4h", "cfg": { "mode": "atr", "tgt": 2, "stp": 1, "hold": 12 }, "windowDays": null },
-  "data": { "source": "live | snapshot", "candles": 19951, "from": "...", "to": "...", "warmupCandles": 200, "hash": "<sha256 dos candles>", "liveError": "só quando caiu para o snapshot" },
+  "data": { "source": "database | live | snapshot", "candles": 19951, "from": "...", "to": "...", "warmupCandles": 200, "hash": "<sha256 dos candles>", "liveError": "só quando caiu para o snapshot" },
   "regime": { "current": { "regime": "LOW_VOL_RANGING", "label": "...", "confidence": 0.4, "since": "...", "bars": 12 }, "share": {}, "durations": {}, "transitions": {} },
   "base": { "rate": 0.265, "n": 19739 },
   "setups": [ { "id": "RSI_OVERSOLD", "n": 290, "nEff": 290, "winRate": 0.2069, "ci": [0.164, 0.257], "method": "wilson", "base": 0.265, "pTwo": 0.025, "q": 0.1, "family": 8, "verdict": { "key": "SEM_EDGE", "label": "Sem vantagem demonstrável" }, "byRegime": {}, "wf": {}, "lastTriggerTime": "..." } ],

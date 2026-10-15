@@ -17,6 +17,8 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 ### Adicionado
 
+- `GET /api/analyze?source=snapshot` (15/10): lê só o snapshot versionado, sem a base de candles nem a Binance. O Query do navegador, na opção "Snapshot versionado (reprodutível)", passa a pedir isso, para que servidor e navegador leiam os mesmos candles e o `resultHash` seja comparável. Antes, com a base de candles ligada, o servidor lia 20.062 candles até 15/10 e o navegador 19.951 até 26/09, e o Query avisava "candles diferentes" (o aviso estava certo; o pedido é que estava errado).
+
 - Endereço por tela (15/10): `#ao-vivo`, `#sandbox`, `#query`, `#regime` e `#calibracao` abrem a tela direto, atualizam a URL ao navegar e funcionam com o botão Voltar; sem hash, é o site. Mantém os parâmetros de pergunta (`?symbol=…`) e o `#plataforma` antigo. Teste de largura a 360 px nas cinco telas e no site: nenhuma passa da borda; o painel da regra de saída (Ao vivo) passou a abrir dentro da tela no celular.
 
 - Termômetro (15/10): `lib/jobs/termometro.js` registra por dia a probabilidade do motor para cada gatilho em aberto (origem `termometro`) e grava o desfecho quando a janela fecha; encadeado em `/api/cron/candles` e disponível em `/api/cron/termometro`. Ver `docs/termometro.md`.
