@@ -94,3 +94,22 @@ test('alertas: ingestão parada, sem registro recente e desfecho atrasado', asyn
   assert.ok(strict.alerts.some((a) => a.code === 'ingestao_parada'));
   assert.equal(strict.thresholds.ingestMaxAgeH, 3);
 });
+
+test('calibração interna no painel: TIMEOUT conta como não-acerto, abaixo de 30 é insuficiente, com 30 ou mais calcula', async () => {
+  await fresh();
+  const hour = 3600_000, real = Date.now();
+  await upsertCandles(db, { symbol: 'BTCUSDT', timeframe: '4h', series: [{ t: Math.floor((real - 5 * hour) / 1000), o: 1, h: 2, l: 0.5, c: 1.5, v: 10 }] });
+  const ids = [];
+  for (let i = 0; i < 31; i++) ids.push(await prev({ barTime: new Date(real - (100 + i) * hour), emittedAt: new Date(real - (100 + i) * hour) }));
+  for (let i = 0; i < 29; i++) await insertDesfecho(db, { previsao_id: ids[i], outcome: i % 4 === 0 ? 'WIN' : i % 4 === 1 ? 'TIMEOUT' : 'LOSS', ret: 0, bars: 12, bar_time: new Date(real - hour), resolved_at: new Date(real - hour) });
+  const few = (await call({ deps: { now: real } })).body.calibration;
+  assert.equal(few.n, 29);
+  assert.equal(few.verdict, 'insuficiente');
+  await insertDesfecho(db, { previsao_id: ids[29], outcome: 'LOSS', ret: 0, bars: 12, bar_time: new Date(real - hour), resolved_at: new Date(real - hour) });
+  const enough = (await call({ deps: { now: real } })).body.calibration;
+  assert.equal(enough.n, 30);
+  assert.ok(['dentro_do_acaso', 'acima_do_acaso'].includes(enough.verdict));
+  assert.ok(Number.isFinite(enough.ece) && enough.noise.eceP90 > 0);
+  // 8 acertos em 30 (p registrado = 0,25): acerto de 26,7%, bem calibrado
+  assert.ok(enough.bins.every((b) => b.reliable === (b.n >= 30)));
+});

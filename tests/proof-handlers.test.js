@@ -257,6 +257,18 @@ test('POST: código de acesso (x-argos-code) só é exigido quando ARGOS_ACCESS_
   assert.equal((await post(db, {}, { env, code: 'codigo-de-teste' })).status, 400);
 });
 
+test('POST: em produção, sem ARGOS_ACCESS_CODE, falha fechado (503) e não grava nada', async () => {
+  const db = await freshDb();
+  const r = await post(db, Q, { env: { VERCEL_ENV: 'production' }, code: 'qualquer' });
+  assert.equal(r.status, 503);
+  assert.equal(r.body.error.code, 'not_configured');
+  assert.equal(await count(db), 0);
+  // com o código configurado em produção, funciona como antes
+  assert.equal((await post(db, Q, { env: { VERCEL_ENV: 'production', ARGOS_ACCESS_CODE: 'c' }, code: 'c' })).status, 201);
+  // fora de produção (desenvolvimento e testes), sem código, segue aberto
+  assert.equal((await post(db, { ...Q, setupId: 'HAMMER' }, { env: { VERCEL_ENV: 'preview' } })).status, 201);
+});
+
 test('POST: erro inesperado no banco vira 500 sem vazar a mensagem interna', async (t) => {
   t.mock.method(console, 'error', () => {});
   const broken = { query: async () => { throw new Error('senha=segredo host=interno'); }, transaction: async () => { throw new Error('x'); } };
