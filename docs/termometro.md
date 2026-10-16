@@ -24,3 +24,9 @@ Idempotente: um gatilho tem no máximo uma previsão (trava de transação por `
 - O desfecho só é gravado se a janela de 12 candles não tem buraco de dados.
 - A resolução usa os candles que o banco tem; candle corrigido pela fonte depois do registro não reescreve o registro (a tabela é append-only).
 - A publicação do Termômetro (página pública, divulgação semanal) fica travada pelo parecer sobre CNPI. O job só registra.
+
+## Painel de saúde: `GET /api/termometro/status`
+
+Só contagens e datas (nenhuma probabilidade nem desempenho), para ver se o registro está vivo ou calado. Protegido pelo cabeçalho `x-argos-code` (`ARGOS_ACCESS_CODE`); em produção, sem a variável configurada, responde 503 (falha fechado). Resposta: `status` (`ok` ou `atencao`), `alerts`, `totals` (registros, resolvidos, em aberto, por resultado, início e último registro), `series` (por ativo e tempo gráfico), `candles` (último candle e última inserção por série, com o atraso em candles) e `perDay` (últimos 14 dias).
+
+Alertas: `sem_registros`; `sem_candles`; `ingestao_parada` (último candle inserido há mais de `ARGOS_INGEST_MAX_AGE_H` horas, padrão 30, para cadência diária); `sem_registro_recente` (nenhum registro há mais de `ARGOS_REGISTRO_MAX_AGE_H` horas, padrão 72: com disparo diário, dias sem gatilho são normais, três seguidos são raros); `desfecho_atrasado` (janela de 12 candles fechada há mais de 3 candles e sem desfecho). Quando a cadência passar a ser por candle, baixe os limiares por variável de ambiente.
