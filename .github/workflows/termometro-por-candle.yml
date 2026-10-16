@@ -2,9 +2,8 @@
 # de cada candle de 1h e de 4h. O plano gratuito da Vercel só aceita cron diário; este arquivo cobre o resto sem custo.
 # Contrato e passo a passo: docs/termometro-por-candle.md.
 #
-# DESLIGADO POR PADRÃO: só roda por disparo manual (workflow_dispatch). Para ligar o agendamento, descomente o bloco `schedule`
-# DEPOIS de (1) criar o segredo CRON_SECRET no repositório (mesmo valor da Vercel) e (2) um disparo manual verde, com o painel
-# /api/termometro/status confirmando os registros.
+# Agendamento do 1h LIGADO em 16/10/2026 (depois de um disparo manual verde e do painel em dia). O do 4h segue desligado até 24 h limpas.
+# Para desligar tudo: comente o bloco `schedule` (e remova as variáveis abaixo na Vercel, senão o painel fica em alerta).
 name: Termômetro por candle
 
 on:
@@ -14,11 +13,11 @@ on:
         description: 'Tempo gráfico (1h, 4h ou 1h,4h)'
         required: true
         default: '1h'
-  # schedule:
-  #   - cron: '6 * * * *'                 # 1h: 6 minutos depois do fechamento (a hora cheia UTC)
+  schedule:
+    - cron: '6 * * * *'                   # 1h: 6 minutos depois do fechamento (a hora cheia UTC). LIGADO em 16/10/2026.
   #   - cron: '9 0,4,8,12,16,20 * * *'    # 4h: 9 minutos depois do fechamento (00, 04, 08, 12, 16 e 20 UTC)
-# Ao ligar, na Vercel: ARGOS_POR_CANDLE=1h,4h (alerta por série), ARGOS_INGEST_MAX_AGE_H=3, ARGOS_REGISTRO_MAX_AGE_H=12 e,
-# opcional, TERMOMETRO_ATRASO_MAX_MIN=30 (recusa registrar mais de 30 min depois do fechamento).
+# Na Vercel, com o 1h ligado: ARGOS_POR_CANDLE=1h (alerta por série; acrescente 4h quando ligar o do 4h), ARGOS_INGEST_MAX_AGE_H=3,
+# ARGOS_REGISTRO_MAX_AGE_H=12 e, opcional, TERMOMETRO_ATRASO_MAX_MIN=30 (recusa registrar mais de 30 min depois do fechamento).
 
 permissions: {}
 
