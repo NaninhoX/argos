@@ -1,0 +1,61 @@
+# Termômetro por candle: agendador externo (GitHub Actions) que chama o cron de ingestão e registro logo depois do fechamento
+# de cada candle de 1h e de 4h. O plano gratuito da Vercel só aceita cron diário; este arquivo cobre o resto sem custo.
+# Contrato e passo a passo: docs/termometro-por-candle.md.
+#
+# DESLIGADO POR PADRÃO: só roda por disparo manual (workflow_dispatch). Para ligar o agendamento, descomente o bloco `schedule`
+# DEPOIS de (1) criar o segredo CRON_SECRET no repositório (mesmo valor da Vercel) e (2) um disparo manual verde, com o painel
+# /api/termometro/status confirmando os registros.
+name: Termômetro por candle
+
+on:
+  workflow_dispatch:
+    inputs:
+      tf:
+        description: 'Tempo gráfico (1h, 4h ou 1h,4h)'
+        required: true
+        default: '1h'
+  # schedule:
+  #   - cron: '6 * * * *'                 # 1h: 6 minutos depois do fechamento (a hora cheia UTC)
+  #   - cron: '9 0,4,8,12,16,20 * * *'    # 4h: 9 minutos depois do fechamento (00, 04, 08, 12, 16 e 20 UTC)
+# Ao ligar, na Vercel: ARGOS_POR_CANDLE=1h,4h (alerta por série), ARGOS_INGEST_MAX_AGE_H=3, ARGOS_REGISTRO_MAX_AGE_H=12 e,
+# opcional, TERMOMETRO_ATRASO_MAX_MIN=30 (recusa registrar mais de 30 min depois do fechamento).
+
+permissions: {}
+
+# Evita sobreposição entre execuções do MESMO agendamento; disparo manual tem grupo próprio. Quem impede duplicata de verdade é a trava do servidor.
+concurrency:
+  group: termometro-${{ github.event.schedule || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  disparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Define o tempo gráfico
+        id: tf
+        env:
+          EVENTO: ${{ github.event_name }}
+          AGENDA: ${{ github.event.schedule }}
+          ENTRADA: ${{ inputs.tf }}
+        run: |
+          if [ "$EVENTO" = "workflow_dispatch" ]; then TF="$ENTRADA"
+          elif [ "$AGENDA" = "6 * * * *" ]; then TF="1h"
+          else TF="4h"; fi
+          case "$TF" in 1h|4h|1h,4h) ;; *) echo "tempo gráfico inválido: $TF"; exit 1 ;; esac
+          echo "tf=$TF" >> "$GITHUB_OUTPUT"
+
+      - name: Chama o cron
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BASE_URL: ${{ vars.ARGOS_BASE_URL }}
+          TF: ${{ steps.tf.outputs.tf }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "Segredo CRON_SECRET ausente neste repositório."; exit 1; fi
+          BASE="${BASE_URL:-https://argossentinel.vercel.app}"
+          CODE=$(curl -sS -o resposta.json -w '%{http_code}' --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$BASE/api/cron/candles?tf=$TF")
+          echo "HTTP $CODE (tf=$TF)"
+          # Resumo só com contagens (sem eco do corpo: o repositório pode ser visto por outros, e o corpo pode trazer mensagens de erro)
+          jq -c '{fetched, seeded, errors, termometro: (.termometro | {registered, resolved, errors, skipped, error})}' resposta.json 2>/dev/null || echo "(resposta sem JSON esperado)"
+          # Só 200 passa. 207 = rodou com recusa, erro ou série pulada pelo prazo: é candle sem registro, então o job FALHA e o GitHub avisa por e-mail.
+          if [ "$CODE" != "200" ]; then echo "Falha: HTTP $CODE (veja o painel /api/termometro/status)"; exit 1; fi

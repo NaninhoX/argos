@@ -113,3 +113,19 @@ test('calibração interna no painel: TIMEOUT conta como não-acerto, abaixo de 
   // 8 acertos em 30 (p registrado = 0,25): acerto de 26,7%, bem calibrado
   assert.ok(enough.bins.every((b) => b.reliable === (b.n >= 30)));
 });
+
+test('cadência por candle: ARGOS_POR_CANDLE alerta POR SÉRIE quando um tempo gráfico atrasa 2 candles ou mais', async () => {
+  await fresh();
+  const hour = 3600_000, real = Date.now();
+  // 1h em dia; 4h parado há 13 h (3 candles de atraso)
+  await upsertCandles(db, { symbol: 'BTCUSDT', timeframe: '1h', series: [{ t: Math.floor((real - 2 * hour) / 1000), o: 1, h: 2, l: 0.5, c: 1.5, v: 10 }] });
+  await upsertCandles(db, { symbol: 'BTCUSDT', timeframe: '4h', series: [{ t: Math.floor((real - 17 * hour) / 1000), o: 1, h: 2, l: 0.5, c: 1.5, v: 10 }] });
+  await prev({ barTime: new Date(real - hour), emittedAt: new Date(real - hour) });
+  const off = (await call({ deps: { now: real } })).body;
+  assert.ok(!off.alerts.some((a) => a.code === 'serie_atrasada_por_candle'), 'sem a variável, a cadência diária não gera ruído');
+  const on = (await call({ req: { env: { ...okEnv, ARGOS_POR_CANDLE: '1h,4h' } }, deps: { now: real } })).body;
+  const alert = on.alerts.filter((a) => a.code === 'serie_atrasada_por_candle');
+  assert.equal(alert.length, 1);
+  assert.equal(alert[0].series, 'BTCUSDT 4h', 'só o 4h parado, apesar do 1h vivo');
+  assert.deepEqual(on.thresholds.porCandle, ['1h', '4h']);
+});
