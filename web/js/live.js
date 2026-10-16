@@ -889,7 +889,7 @@
   function renderEngineReport() {
     const R = buildReport(state.A), md = reportToMarkdown(R);
     const flags = scanTerms(md);
-    $('lvReport').innerHTML = highlightFlags(reportToHTML(R), flags);
+    $('lvReport').innerHTML = highlightFlags(reportToHTML(R), flags) + engineProvHTML();
     renderScan(md, $('lvScan'));
   }
   function aiHeader() {
@@ -910,10 +910,21 @@
       ['Série', esc(p.candles + ' candles até ' + fmtDate(Date.parse(p.lastCandle) / 1000) + ' · fonte: ') + src],
       ['Hash da série', '<code title="' + esc(p.seriesHash) + '">' + esc(p.seriesHash.slice(0, 16)) + '…</code>']
     ];
+    if (p.resultHash) rows.push(['Hash do resultado', '<code title="' + esc(p.resultHash) + '">' + esc(p.resultHash.slice(0, 16)) + '…</code>']);
     const cons = (p.consulted || []).map((c) => '<li><span>' + esc((PROV_TOOL[c.tool] || c.tool) + (c.setupId ? ' · ' + c.setupId : '')) + '</span><code title="' + esc(c.resultHash) + '">' + esc(c.resultHash.slice(0, 12)) + '</code></li>').join('');
     return '<details class="prov"><summary>Procedência dos números</summary><dl>' + rows.map((r) => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>' +
       (cons ? '<p class="prov-h">Consultas ao motor (hash do resultado entregue ao modelo)</p><ul>' + cons + '</ul>' : '') +
-      '<p class="prov-n">Estes dados vêm do servidor, não do modelo. Mesma série, mesma regra e mesmo motor reproduzem o mesmo hash. O texto passou por conferência numérica contra estes resultados e pela verificação de vocabulário.</p></details>';
+      (p.kind === 'motor'
+        ? '<p class="prov-n">Relatório do motor, sem IA: os números são calculados neste navegador pelo mesmo motor do servidor. Mesma série, mesma regra e mesmo motor reproduzem o mesmo hash (o /api/analyze devolve o mesmo resultado para a mesma série e regra).</p></details>'
+        : '<p class="prov-n">Estes dados vêm do servidor, não do modelo. Mesma série, mesma regra e mesmo motor reproduzem o mesmo hash. O texto passou por conferência numérica contra estes resultados e pela verificação de vocabulário.</p></details>');
+  }
+  // Procedência do relatório do motor (aba Motor): calculada aqui, com o mesmo resumo que o servidor usa (ArgosSummary).
+  function engineProvHTML() {
+    const S = window.ArgosSummary; if (!S || !state.A) return '';
+    const en = state.series[key(state.sym, state.tf)] || {};
+    const source = en.source === 'live' && en.via === 'base' ? 'database' : (en.source || 'snapshot');
+    let s; try { s = S.summarize(state.A, { symbol: state.sym, timeframe: state.tf, source, windowDays: state.win >= 30 ? state.win : null }); } catch (e) { return ''; }
+    return provHTML({ kind: 'motor', source, lastCandle: s.data.to, candles: s.data.candles, seriesHash: s.data.hash, resultHash: s.resultHash, engine: s.engine, symbol: state.sym, timeframe: state.tf, rule: s.input.cfg, windowDays: s.input.windowDays, consulted: [] });
   }
   function renderAiReport(final) {
     const t = aiBody();
