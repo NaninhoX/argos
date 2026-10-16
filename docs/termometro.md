@@ -36,3 +36,5 @@ Alertas: `sem_registros`; `sem_candles`; `ingestao_parada` (último candle inser
 O painel traz `calibration` com ECE, BSS, Brier e a curva por faixa das previsões **resolvidas**, pelo mesmo cálculo do motor (`calibSummary`): `p` é a probabilidade registrada, o acerto é 1 só para WIN (LOSS e TIMEOUT valem 0, como no motor) e a taxa-base é a registrada. Abaixo de 30 resolvidas o resultado é "insuficiente".
 
 Ao lado vai `noise`: o ECE que um motor **perfeitamente calibrado** teria só por acaso com os mesmos `p` e o mesmo N (500 simulações, semente fixa; mediana e P90). Regra de leitura: ECE observado dentro do P90 = sem evidência de descalibração (`dentro_do_acaso`); acima = `acima_do_acaso`, investigar. Com N em torno de 140 o acaso sozinho já dá ECE de alguns pontos percentuais, então um "descalibrado" do motor com poucos dados não é conclusão. Faixas com menos de 30 casos vêm com `reliable: false`. É interna: a publicação continua travada pelo parecer sobre CNPI.
+
+Para ver o painel sem terminal: abra `/saude.html` no endereço do Argos, digite o código de acesso e toque em Consultar (página interna, sem link no site).

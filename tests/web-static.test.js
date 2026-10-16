@@ -8,7 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 
 const WEB = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const read = (...p) => readFileSync(join(WEB, ...p), 'utf8');
-const PAGES = ['index.html', 'verificar.html'];
+const PAGES = ['index.html', 'verificar.html', 'saude.html'];
 // engine.js e os dados são gerados por tools/build-web.mjs; o teste não exige que já tenham sido gerados.
 const local = (ref) => !/^(https?:|data:|#|mailto:|javascript:)/.test(ref) && ref !== '';
 
