@@ -144,9 +144,9 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 
 /* ---------------- legenda e nota ---------------- */
 .hm-legend { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 28px; padding: 10px 16px 6px; border-top: 1px solid var(--hm-line-soft); }
-.hm-scale { flex: 0 1 340px; min-width: 240px; }
+.hm-scale { flex: 0 1 340px; min-width: min(240px, 100%); }
 .hm-scale-t { display: block; margin-bottom: 6px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-dim); }
-.hm-scale-row { display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: var(--hm-dim); }
+.hm-scale-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 10.5px; color: var(--hm-dim); }
 .hm-scale-l, .hm-scale-r { flex: 0 0 auto; white-space: nowrap; }
 .hm-bar { flex: 1 1 auto; min-width: 80px; height: 12px; border: 1px solid var(--hm-line); border-radius: 3px; }
 .hm-scale-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 10px; color: var(--hm-dim); }

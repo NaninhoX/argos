@@ -1186,9 +1186,12 @@
     $('lvPineCode').textContent = pineFor(s);
     $('lvPineToast').textContent = '';
     $('lvPineOpen').href = 'https://www.tradingview.com/chart/?symbol=BINANCE%3A' + state.sym + '&interval=' + ({ '1h': '60', '4h': '240', '1d': 'D' }[state.tf]);
+    pineBackdrop(true);
     $('lvPine').hidden = false; $('lvPineClose').focus();
   }
-  function closePine() { $('lvPine').hidden = true; if (pineOpener && pineOpener.focus) pineOpener.focus(); }
+  // aria-modal não impede o Tab de sair do diálogo: o resto da página fica inerte enquanto o modal está aberto.
+  function pineBackdrop(on) { document.querySelectorAll('#page-dashboard > :not(#lvPine), .meta-nav').forEach((el) => { el.inert = on; }); }
+  function closePine() { pineBackdrop(false); $('lvPine').hidden = true; if (pineOpener && pineOpener.focus) pineOpener.focus(); }
 
   // --------------------------------------------------- copiar / exportar
   async function copyText(text, toastEl, okMsg) {

@@ -39,8 +39,7 @@
      ============================================================ */
   .meta-nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
-    background: rgba(13,20,32,0.96);
-    backdrop-filter: blur(12px);
+    background: rgba(13,20,32,0.97);
     border-top: 1px solid #263447;
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
     display: flex; gap: 6px; justify-content: center;

@@ -30,8 +30,7 @@
     position: sticky;
     top: env(safe-area-inset-top, 0px);
     z-index: 50;
-    background: rgba(13,20,32,0.82);
-    backdrop-filter: blur(10px);
+    background: rgba(13,20,32,0.95);
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 #page-landing .nav-inner {
