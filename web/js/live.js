@@ -491,7 +491,7 @@
     try {
       r = await fetch(CFG.previsoes || '/api/previsoes', { method: 'POST', headers: { 'content-type': 'application/json', 'x-argos-code': getCode() }, body: JSON.stringify(body) });
       try { j = await r.json(); } catch (e) { j = null; }
-    } catch (e) { put({ phase: 'err', msg: 'Não foi possível registrar o veredito: sem conexão com o servidor (código: sem_conexao).' }); return; }
+    } catch (e) { put({ phase: 'err', msg: 'Não foi possível registrar o veredito. Verifique a conexão e tente de novo.' }); return; }
     const code = j && j.error && typeof j.error === 'object' && j.error.code ? String(j.error.code) : '';
     if ((r.status === 200 || r.status === 201) && j && typeof j.hash === 'string' && /^[0-9a-f]{64}$/i.test(j.hash)) {
       put({ phase: 'ok', res: j, fresh: regKey() === k }); // fresh: a caixa está na tela agora, então o hash entra digitado (só esta vez)
@@ -500,7 +500,8 @@
     }
     if (r.status === 503 && code === 'banco_ausente') { put({ phase: 'err', msg: 'Registro indisponível neste ambiente: banco não configurado.' }); return; }
     if (r.status === 401) { put({ phase: 'auth', msg: hadCode ? 'Código incorreto. Digite de novo:' : 'Digite o código de acesso para registrar o veredito:' }); return; }
-    put({ phase: 'err', msg: 'Não foi possível registrar o veredito (código: ' + (code || (r.ok ? 'resposta_invalida' : 'http_' + r.status)) + ').' });
+    console.warn('[argos] registro de veredito falhou:', code || (r.ok ? 'resposta_invalida' : 'http_' + r.status));
+    put({ phase: 'err', msg: 'Não foi possível registrar o veredito agora. Tente de novo em instantes.' });
   }
 
   // ------------------------------------ registros deste navegador (lista local)
@@ -908,9 +909,9 @@
       ['Recorte', esc(String(p.symbol || '').replace('USDT', '/USDT') + ' · ' + (p.timeframe || '') + (p.windowDays ? ' · janela de ' + p.windowDays + ' dias' : ''))],
       ['Regra de saída', esc(rule)],
       ['Série', esc(p.candles + ' candles até ' + fmtDate(Date.parse(p.lastCandle) / 1000) + ' · fonte: ') + src],
-      ['Hash da série', '<code title="' + esc(p.seriesHash) + '">' + esc(p.seriesHash.slice(0, 16)) + '…</code>']
+      ['Hash da série', '<code title="' + esc(p.seriesHash) + '">' + esc(p.seriesHash) + '</code>']
     ];
-    if (p.resultHash) rows.push(['Hash do resultado', '<code title="' + esc(p.resultHash) + '">' + esc(p.resultHash.slice(0, 16)) + '…</code>']);
+    if (p.resultHash) rows.push(['Hash do resultado', '<code title="' + esc(p.resultHash) + '">' + esc(p.resultHash) + '</code>']);
     const cons = (p.consulted || []).map((c) => '<li><span>' + esc((PROV_TOOL[c.tool] || c.tool) + (c.setupId ? ' · ' + c.setupId : '')) + '</span><code title="' + esc(c.resultHash) + '">' + esc(c.resultHash.slice(0, 12)) + '</code></li>').join('');
     return '<details class="prov"><summary>Procedência dos números</summary><dl>' + rows.map((r) => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>' +
       (cons ? '<p class="prov-h">Consultas ao motor (hash do resultado entregue ao modelo)</p><ul>' + cons + '</ul>' : '') +
@@ -941,7 +942,7 @@
   const runKey = () => state.sym + '_' + state.tf;
   function selectTab(tab) {
     state.tab = tab;
-    $('lvTabEngine').setAttribute('aria-selected', tab === 'engine'); $('lvTabAi').setAttribute('aria-selected', tab === 'ai');
+    $('lvTabEngine').setAttribute('aria-pressed', tab === 'engine'); $('lvTabAi').setAttribute('aria-pressed', tab === 'ai');
     $('lvAiNote').hidden = !(tab === 'ai' && !state.samp);
     $('lvAiStatus').hidden = !(tab === 'ai' && state.ai.log.length);
     if (tab === 'engine') { renderEngineReport(); return; }
@@ -1028,9 +1029,9 @@
     capability_disabled: 'O Argos AI não roda nesta visualização.', capability_removed: 'O Argos AI não roda nesta visualização.', rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Tente de novo em alguns minutos.',
     session_expired: 'A sessão expirou: entre de novo no Claude e tente outra vez.', refused: 'O pedido foi recusado. O relatório do motor segue disponível na outra aba.', empty_completion: 'O Argos AI não produziu texto. Tente de novo.',
     prompt_too_large: 'Dados grandes demais para uma chamada.', data_unavailable: 'O servidor não conseguiu carregar os dados do motor agora. Nenhum texto foi gerado; tente de novo em instantes.', tool_limit: 'O Argos AI pediu consultas demais ao motor. Tente de novo.', invalid_tool_call: 'O provedor de IA pediu uma consulta inválida. Tente de novo.', upstream_error: 'Falha temporária de conexão. O texto parcial foi mantido; tente de novo.', cancelled: 'Interrompido.',
-    unauthorized: 'Código de acesso ausente ou incorreto.', insufficient_balance: 'O saldo da conta do provedor de IA acabou. Recarregue o saldo para voltar a gerar relatórios.',
-    not_configured: 'O servidor ainda não tem a chave ou o modelo do provedor de IA configurados (variáveis OPENAI_API_KEY e ARGOS_LLM_MODEL).', bad_request: 'O provedor de IA recusou o pedido (formato ou modelo). Veja os logs da função no Vercel.',
-    provider_auth: 'A chave da API configurada no servidor foi recusada pelo provedor. Confira a chave do provedor (OPENAI_API_KEY) no Vercel.'
+    unauthorized: 'Código de acesso ausente ou incorreto.', insufficient_balance: 'O Argos AI está indisponível agora. Tente de novo mais tarde.',
+    not_configured: 'O Argos AI está indisponível agora. Tente de novo mais tarde.', bad_request: 'O Argos AI está indisponível agora. Tente de novo mais tarde.',
+    provider_auth: 'O Argos AI está indisponível agora. Tente de novo mais tarde.'
   };
 
   // ------------------------------------ Argos AI via servidor próprio (deploy Vercel)
@@ -1134,7 +1135,7 @@
       code = (e && e.code) || 'upstream_error';
       if (e && e.text) state.ai.text = e.text;
       state.ai.running = false;
-      if (code !== 'cancelled') logAi(AI_ERR[code] || AI_ERR.upstream_error, '!'); else logAi('Interrompido a pedido.', '■');
+      if (code !== 'cancelled') { console.warn('[argos-ai] falha:', code); logAi(AI_ERR[code] || AI_ERR.upstream_error, '!'); } else logAi('Interrompido a pedido.', '■');
       if (HIDE_CODES.indexOf(code) >= 0) { state.samp = null; $('lvAskAi').hidden = true; $('lvAiNote').hidden = false; $('lvAiNote').textContent = (AI_ERR[code] || '') + ' O relatório do motor segue completo na aba ao lado.'; }
     } finally {
       state.ai.running = false; $('lvAskAi').disabled = false; $('lvStopAi').hidden = true;

@@ -10,7 +10,7 @@
 .lv .lv-share-note { flex: 1 1 260px; max-width: 64ch; font-size: 11px; line-height: 1.5; color: var(--ink-faint); }
 .lv .lv-share-win { font-size: 11.5px; line-height: 1.4; color: var(--gold-bright); border: 1px dashed rgba(176, 141, 62, 0.45); border-radius: 6px; padding: 5px 9px; }
 .lv .lv-linkbtn { background: none; border: 0; padding: 0 0 0 6px; font: inherit; color: var(--ink-dim); text-decoration: underline; cursor: pointer; min-height: 24px; }
-.lv .lv-linkbtn:hover { color: var(--ink); }
+@media (hover: hover) { .lv .lv-linkbtn:hover { color: var(--ink); } }
 
 /* ---------------- registros deste navegador ---------------- */
 .lv .lv-regs { margin-top: 14px; padding: 16px; scroll-margin-top: 84px; }

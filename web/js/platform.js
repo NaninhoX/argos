@@ -263,7 +263,7 @@
       SB.last = { t, s, spec, name, sym, tf, cfg, d: res.d, calib: res.calib, reg: res.tech.regime.regime, ms: res.ms, source: ser.source, fallback: ser.fallback, code: $('sbCode').value };
       sbRender(); sbLog(); sbDataLine();
       emitResult('sandbox', out);
-      if (typeof out.scrollIntoView === 'function') out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (typeof out.scrollIntoView === 'function') out.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     } catch (e) {
       out.innerHTML = stateHTML('err', 'O motor não conseguiu rodar esta regra', 'Nenhum número foi calculado. ' + (e && e.message ? String(e.message).slice(0, 160) : ''));
     } finally {

@@ -9,7 +9,7 @@
   #page-landing .nav-inner { gap: 12px; }
   #page-landing .brand { font-size: 13px; gap: 6px; }
   #page-landing .brand .brand-mark { width: 18px; height: 18px; }
-  #page-landing .nav-cta { padding: 9px 12px; white-space: nowrap; }
+  #page-landing .nav-cta { padding: 9px 12px; white-space: normal; text-align: center; }
 }
 
 /* assinatura: símbolo, STRATUM em serifa e RESEARCH em monoespaçada dourada entre dois fios */

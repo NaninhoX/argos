@@ -121,7 +121,7 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
   cursor: pointer;
   transition: filter 0.12s ease, box-shadow 0.12s ease;
 }
-.hm-cell:hover { filter: brightness(1.18); }
+@media (hover: hover) { .hm-cell:hover { filter: brightness(1.18); } }
 .hm-cell:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--hm-gold-bright); outline-offset: -2px; }
 
 .hm-v { font-size: 14px; font-weight: 600; }

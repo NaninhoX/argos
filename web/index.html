@@ -131,8 +131,8 @@ alertcondition(ta.crossover(r, 30))</pre>
   <div class="wrap">
     <div class="section-head wide" data-reveal>
       <div class="kicker">O que já foi testado · estudo de referência v1.1</div>
-      <h2>De <span data-count>72</span> testes, 2 mostram vantagem que resiste à correção estatística.</h2>
-      <p>3 ficaram abaixo do acaso, 63 não se distinguem de entradas aleatórias e 4 não têm amostra suficiente. Toque em uma célula para ver o teste completo — e reproduzi-lo na plataforma.</p>
+      <h2>De <span data-count>72</span> testes, 1 mostra vantagem e 1 mostra vantagem sensível a subperíodos; ambos resistem à correção estatística.</h2>
+      <p>3 ficaram abaixo do acaso, 63 não se distinguem de entradas aleatórias e 4 têm evidência insuficiente. Toque em uma célula para ver o teste completo — e reproduzi-lo na plataforma.</p>
     </div>
 
     <div class="matrix-card" data-seq="mx">
@@ -142,7 +142,7 @@ alertcondition(ta.crossover(r, 30))</pre>
           <span class="lg" data-step="fade"><i class="sw sens">◆</i>Vantagem sensível a subperíodos</span>
           <span class="lg" data-step="fade"><i class="sw below">▼</i>Abaixo do acaso</span>
           <span class="lg" data-step="fade"><i class="sw none">·</i>Sem vantagem demonstrável</span>
-          <span class="lg" data-step="fade"><i class="sw insuf">○</i>Amostra insuficiente</span>
+          <span class="lg" data-step="fade"><i class="sw insuf">○</i>Evidência insuficiente</span>
           <span class="lg" data-step="fade"><i class="sw raw"></i>p bruto &lt; 0,05 que não resiste à correção</span>
         </div>
         <div class="mx-scale">Número na célula: taxa de acerto menos a taxa-base, em pontos percentuais</div>
@@ -248,7 +248,7 @@ alertcondition(ta.crossover(r, 30))</pre>
     <div class="topbar-inner">
       <div class="brand"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
       <nav class="tabs" role="tablist" aria-label="Telas da plataforma">
-        <a role="tab" id="tab-live" aria-controls="dash-live" aria-selected="true" tabindex="0" data-screen="live" class="active"><span class="live-dot" aria-hidden="true"></span>Ao vivo</a>
+        <a role="tab" id="tab-live" aria-controls="dash-live" aria-selected="true" tabindex="0" data-screen="live" class="active">Ao vivo</a>
         <a role="tab" id="tab-sandbox" aria-controls="dash-sandbox" aria-selected="false" tabindex="-1" data-screen="sandbox">Sandbox</a>
         <a role="tab" id="tab-query" aria-controls="dash-query" aria-selected="false" tabindex="-1" data-screen="query">Query</a>
         <a role="tab" id="tab-regime" aria-controls="dash-regime" aria-selected="false" tabindex="-1" data-screen="regime">Regime</a>
@@ -363,9 +363,9 @@ alertcondition(ta.crossover(r, 30))</pre>
           </div>
         </div>
         <div class="report-bar">
-          <div class="rtabs" role="tablist" aria-label="Versão do relatório">
-            <button type="button" role="tab" id="lvTabEngine" aria-selected="true">Motor · instantâneo</button>
-            <button type="button" role="tab" id="lvTabAi" aria-selected="false">Argos AI · LLM</button>
+          <div class="rtabs" role="group" aria-label="Versão do relatório">
+            <button type="button" id="lvTabEngine" aria-pressed="true">Motor · instantâneo</button>
+            <button type="button" id="lvTabAi" aria-pressed="false">Argos AI · LLM</button>
           </div>
           <div class="ractions">
             <button type="button" class="btn btn-ai" id="lvAskAi" hidden>Pedir análise ao Argos AI</button>

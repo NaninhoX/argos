@@ -1,6 +1,7 @@
 /* Argos · base: variáveis, reset, tipografia e a barra Site / Plataforma. Carrega antes de landing.css e platform.css. */
 
   :root {
+  --control-line: #6B788B; /* borda de campo de formulário: 3:1 ou mais sobre os fundos escuros (WCAG 1.4.11) */
     --bg: #0D1420;
     --bg-elevated: #141E2C;
     --navy: #1E2A3A;
