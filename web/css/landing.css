@@ -671,3 +671,37 @@
   #page-landing .cal-card figcaption .m { font-size: 11px; color: var(--ink-faint); }
   #page-landing .cal-cap { font-family: var(--mono); font-size: 11px; line-height: 1.55; color: var(--ink-faint); margin: 8px 0 0; }
   #page-landing .cal-read { font-family: var(--serif); font-size: 16px; line-height: 1.65; color: var(--ink-dim); margin: 22px 0 0; max-width: 900px; }
+
+/* ---------------- formulário de contato (#contato) ---------------- */
+#page-landing .contato-form { margin-top: 36px; max-width: 720px; padding: 24px; background: var(--bg-elevated); border: 1px solid var(--navy-line); border-radius: 6px; text-align: left; }
+#page-landing .ct-titulo { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0 0 6px; color: var(--ink); }
+#page-landing .ct-intro, #page-landing .ct-aviso { font-size: 15px; line-height: 1.55; color: var(--ink-dim); margin: 0 0 18px; max-width: 62ch; }
+#page-landing .ct-aviso { font-size: 14px; margin: 14px 0 18px; }
+#page-landing .ct-assunto { border: 0; padding: 0; margin: 0 0 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+#page-landing .ct-assunto legend { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); padding: 0; margin-bottom: 8px; }
+#page-landing .ct-radio { position: relative; display: inline-flex; }
+#page-landing .ct-radio input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+#page-landing .ct-radio span { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 16px; border: 1px solid var(--control-line); border-radius: 4px; font-family: var(--mono); font-size: 13px; color: var(--ink-dim); }
+#page-landing .ct-radio input:checked + span { border-color: var(--gold); background: rgba(176,141,62,0.13); color: var(--gold-bright); }
+#page-landing .ct-radio input:focus-visible + span { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+#page-landing .ct-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
+@media (min-width: 720px) { #page-landing .ct-grid { grid-template-columns: 1fr 1fr; } }
+#page-landing .ct-field label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 6px; }
+#page-landing .ct-opt { text-transform: none; letter-spacing: 0; color: var(--ink-faint); }
+#page-landing .ct-field input, #page-landing .ct-field select, #page-landing .ct-field textarea { width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; font-size: 16px; color: var(--ink); background: var(--bg); border: 1px solid var(--control-line); border-radius: 4px; }
+#page-landing .ct-field textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+#page-landing .ct-field input:focus-visible, #page-landing .ct-field select:focus-visible, #page-landing .ct-field textarea:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+#page-landing .ct-field [aria-invalid="true"] { border-color: #E8A69F; }
+#page-landing .ct-err { margin: 6px 0 0; font-size: 14px; color: #E8A69F; }
+#page-landing .ct-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+#page-landing .ct-count { margin-left: auto; margin-top: 6px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
+#page-landing .ct-summary { margin: 0 0 16px; padding: 10px 14px; border: 1px solid #E8A69F; border-radius: 4px; color: #E8A69F; font-size: 15px; }
+#page-landing .ct-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+#page-landing .contato-form button.btn-primary, #page-landing .contato-form button.btn-ghost { cursor: pointer; min-height: 44px; }
+#page-landing .contato-form button.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--control-line); }
+#page-landing .contato-form button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+#page-landing .ct-feito { margin-top: 20px; padding: 16px; border: 1px solid var(--gold); border-radius: 4px; color: var(--ink); font-size: 15px; line-height: 1.55; }
+#page-landing .ct-feito p { margin: 0 0 10px; }
+#page-landing .ct-feito a { color: var(--gold-bright); overflow-wrap: anywhere; }
+#page-landing .ct-copiado { color: var(--ink-dim); min-height: 1.4em; margin: 8px 0 0; }
+#page-landing .ct-texto { width: 100%; margin-top: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 13px; color: var(--ink); background: var(--bg); border: 1px solid var(--control-line); border-radius: 4px; }

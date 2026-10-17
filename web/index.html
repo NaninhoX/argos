@@ -225,10 +225,60 @@ alertcondition(ta.crossover(r, 30))</pre>
   <div class="wrap">
     <div class="kicker" data-reveal style="font-family: var(--mono); font-size: 12.5px; color: var(--gold); margin-bottom: 14px;">Acesso é limitado por tier</div>
     <h2 data-reveal style="--m-delay: 60ms">Se a pergunta que te trouxe aqui era "isso realmente funciona?" — já respondemos como respondemos qualquer coisa.</h2>
-    <div class="cta-row" data-reveal style="--m-delay: 120ms">
-      <a href="#contato" class="btn-primary">Solicitar acesso à plataforma</a>
-      <a href="#contato" class="btn-ghost">Falar com um analista</a>
-    </div>
+    <form class="contato-form" id="contatoForm" novalidate aria-labelledby="ctTitulo" data-reveal style="--m-delay: 120ms">
+      <h3 id="ctTitulo" class="ct-titulo">Peça acesso ou converse com um analista</h3>
+      <p class="ct-intro">Leva um minuto. O formulário abre o seu aplicativo de e-mail com a mensagem pronta; é você quem envia. Nada passa pelo nosso site.</p>
+      <div class="ct-summary" id="ctResumo" role="alert" hidden></div>
+      <fieldset class="ct-assunto">
+        <legend>O que você procura?</legend>
+        <label class="ct-radio"><input type="radio" name="assunto" value="acesso" checked><span>Acesso à plataforma</span></label>
+        <label class="ct-radio"><input type="radio" name="assunto" value="analista"><span>Conversar com um analista</span></label>
+      </fieldset>
+      <div class="ct-grid">
+        <div class="ct-field">
+          <label for="ctNome">Nome</label>
+          <input id="ctNome" name="nome" type="text" autocomplete="name" maxlength="120" required aria-describedby="ctNomeErr">
+          <p class="ct-err" id="ctNomeErr" hidden></p>
+        </div>
+        <div class="ct-field">
+          <label for="ctEmail">E-mail para resposta</label>
+          <input id="ctEmail" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="ctEmailErr">
+          <p class="ct-err" id="ctEmailErr" hidden></p>
+        </div>
+        <div class="ct-field">
+          <label for="ctPerfil">Você é</label>
+          <select id="ctPerfil" name="perfil" required aria-describedby="ctPerfilErr">
+            <option value="" selected disabled>Escolha uma opção</option>
+            <option value="investidor">Investidor ou fundo</option>
+            <option value="profissional">Gestor ou analista profissional</option>
+            <option value="trader">Trader por conta própria</option>
+            <option value="pesquisador">Pesquisador ou acadêmico</option>
+            <option value="imprensa">Imprensa</option>
+            <option value="outro">Outro</option>
+          </select>
+          <p class="ct-err" id="ctPerfilErr" hidden></p>
+        </div>
+        <div class="ct-field">
+          <label for="ctOrg">Organização <span class="ct-opt">(opcional)</span></label>
+          <input id="ctOrg" name="organizacao" type="text" autocomplete="organization" maxlength="120" aria-describedby="ctOrgErr">
+          <p class="ct-err" id="ctOrgErr" hidden></p>
+        </div>
+      </div>
+      <div class="ct-field">
+        <label for="ctMsg">O que você quer ver ou resolver? <span class="ct-opt">(opcional)</span></label>
+        <textarea id="ctMsg" name="mensagem" rows="4" maxlength="800" aria-describedby="ctMsgErr ctMsgCount"></textarea>
+        <div class="ct-meta"><p class="ct-err" id="ctMsgErr" hidden></p><span class="ct-count" id="ctMsgCount">0 / 800</span></div>
+      </div>
+      <p class="ct-aviso">Não escreva senha, chave de API, CPF nem dados de conta ou de cartão: não precisamos deles. Usamos o que você enviar só para responder a este contato.</p>
+      <div class="ct-actions"><button type="submit" class="btn-primary">Preparar e-mail</button></div>
+      <div class="ct-feito" id="ctFeito" tabindex="-1" hidden>
+        <p><strong>Pronto.</strong> Abrimos o seu aplicativo de e-mail com a mensagem preparada: falta só enviar.</p>
+        <p>Se nada abriu, escreva para <a id="ctEndereco" href="#contato"></a> e cole a mensagem:</p>
+        <div class="ct-actions"><button type="button" class="btn-ghost" id="ctCopiar">Copiar mensagem</button></div>
+        <p class="ct-copiado" id="ctCopiado" role="status"></p>
+        <textarea id="ctTexto" class="ct-texto" rows="6" readonly hidden aria-label="Mensagem preparada"></textarea>
+      </div>
+    </form>
   </div>
 </section>
 
@@ -620,6 +670,7 @@ alertcondition(ta.crossover(r, 30))</pre>
 <script src="js/analysis-summary.js"></script>
 <script src="js/url-state.js"></script>
 <script src="js/config.js"></script>
+<script src="js/contato.js"></script>
 <script src="js/live.js"></script>
 <script src="js/heatmap.js"></script>
 <script src="js/platform.js"></script>
