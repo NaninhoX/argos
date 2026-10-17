@@ -7,5 +7,5 @@
   'use strict';
   if (window.ARGOS_CONFIG) return;
   var h = location.hostname, published = location.protocol === 'https:' && !/^(localhost|127\.|\[::1\])/.test(h);
-  window.ARGOS_CONFIG = { llm: published ? 'server' : 'local', contatoEmail: '' };
+  window.ARGOS_CONFIG = { llm: published ? 'server' : 'local', contatoEmail: 'naninhoautomacoes@gmail.com' };
 })();
