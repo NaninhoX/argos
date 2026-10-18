@@ -1,0 +1,41 @@
+{
+  "study": "argos-estudo-v1.2",
+  "registered_on": "2026-10-18",
+  "status": "pre-registro: nenhum resultado dos setups novos foi calculado antes desta data",
+  "engine_baseline": "argos-engine 1.1.0",
+  "question": "Setups baseados em indicadores populares, com parametros-padrao fixos, superam a taxa-base de entradas aleatorias nas mesmas series do estudo v1.1?",
+  "null_hypothesis": "A taxa de acerto do setup (alvo antes do stop) nao supera a taxa-base de entradas aleatorias com a mesma regra de saida (teste de permutacao do motor, 3000 sorteios).",
+  "series": {
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT"],
+    "timeframes": ["1h", "4h", "1d"],
+    "cutoff": "2026-09-26",
+    "note": "mesmo corte e mesmas series do estudo v1.1; o hash da serie (seriesHash) de cada uma e registrado na execucao"
+  },
+  "exit_rule": { "mode": "atr", "target_atr": 2, "stop_atr": 1, "hold_candles": 12, "tie_same_candle": "perda" },
+  "setups": [
+    { "id": "EMA_9_21", "nome": "Cruzamento de EMA 9 e 21", "grupo": "Tendencia", "trigger": "EMA(9) cruza acima da EMA(21): ema9[i-1] <= ema21[i-1] e ema9[i] > ema21[i]." },
+    { "id": "MACD_ZERO", "nome": "MACD cruza a linha zero", "grupo": "Momento", "trigger": "Linha MACD(12,26,9) cruza acima de zero: macd[i-1] <= 0 e macd[i] > 0." },
+    { "id": "RSI_50", "nome": "RSI cruza acima de 50", "grupo": "Momento", "trigger": "RSI(14) cruza para cima de 50: rsi[i-1] < 50 e rsi[i] >= 50 (mesma convencao do RSI Oversold)." },
+    { "id": "CLOSE_SMA200", "nome": "Preco cruza acima da media de 200", "grupo": "Tendencia", "trigger": "Fechamento cruza acima da SMA(200): c[i-1] <= sma200[i-1] e c[i] > sma200[i]." },
+    { "id": "ADX_DI", "nome": "ADX acima de 25 com DI+ cruzando DI-", "grupo": "Tendencia", "trigger": "ADX(14) > 25 e DI+ cruza acima de DI-: diPlus[i-1] <= diMinus[i-1], diPlus[i] > diMinus[i] e adx[i] > 25." },
+    { "id": "BB_UPPER", "nome": "Fechamento acima da Bollinger superior", "grupo": "Momento", "trigger": "Fechamento acima da banda superior de Bollinger(20, 2), primeiro candle da sequencia (espelho do BB_LOWER)." },
+    { "id": "BREAKOUT_55", "nome": "Rompimento de 55 candles", "grupo": "Tendencia", "trigger": "Fechamento acima da maxima dos 55 candles anteriores, primeiro candle do rompimento (mesma construcao do BREAKOUT_20)." }
+  ],
+  "parameters_fixed": "Todos os periodos acima sao os padroes de mercado e ficam fixos. Nenhum parametro e ajustado depois de ver resultado; mudar um parametro e outro estudo, com outro registro.",
+  "variations_counted": { "new_setups": 7, "series": 9, "new_cells": 63, "discarded_before_registration": 0 },
+  "families": {
+    "official_for_new_cells": { "name": "F135", "cells": 135, "composition": "63 celulas novas + 72 celulas do estudo v1.1", "correction": "Benjamini-Hochberg do motor" },
+    "sensitivity": { "name": "F63", "cells": 63, "composition": "so as celulas novas" },
+    "v1.1_published_values": "ficam como publicados (familia 72); a familia 135 so aparece como recalculo rotulado, nunca no lugar do publicado"
+  },
+  "verdict_rules": "As do motor (verdictOf): nEff < 10 = evidencia insuficiente; q >= 0,05 = sem vantagem demonstravel; q < 0,05 e taxa de acerto abaixo da base = abaixo do acaso; q < 0,05 com walk-forward inconsistente = vantagem sensivel a subperiodos; demais = vantagem.",
+  "falsification": "O setup e abandonado como candidato a vantagem se o veredito for 'sem vantagem demonstravel', 'abaixo do acaso' ou 'evidencia insuficiente'. A pergunta so recebe 'vantagem' se q < 0,05 na familia 135, com intervalo de confianca da taxa de acerto acima da base e walk-forward consistente.",
+  "reporting": "Reportar a linha inteira de cada setup (as 9 series), inclusive celulas contrarias, com N, N efetivo, intervalo, p ajustado e a familia usada. Resultado negativo tem o mesmo destaque do positivo.",
+  "limits": [
+    "Custos nao testados no veredito (o motor so embute 0,1% em meanNet).",
+    "Os dados historicos ja existem: o registro garante que regras e parametros foram fixados antes do primeiro calculo dos setups novos, nao que o mercado seja desconhecido do autor. Evidencia fora da amostra so existe para candles posteriores a 2026-10-18.",
+    "Celulas de 1d tendem a ter poucos gatilhos e cair em evidencia insuficiente.",
+    "Publicar exige parecer CNPI; reproducao publica exige licenca dos dados."
+  ],
+  "implementation": "Exige versao MINOR do motor (argos-engine 1.2.0), apenas aditiva: novos arrays ema9, ema21 e hh55 em computeIndicators e os 7 gatilhos. As saidas do estudo v1.1 permanecem identicas byte a byte; tests/legacy-parity.test.js e tests/study-v1.1.test.js devem continuar verdes. Decisao de Michel; depois de 31/10/2026."
+}
