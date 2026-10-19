@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node tools/build-web.mjs && node tools/migrate.mjs --if-configured",
+  "buildCommand": "node tools/build-web.mjs && node tools/versionar-web.mjs && node tools/migrate.mjs --if-configured",
   "outputDirectory": "web",
   "functions": {
     "api/argos-ai.js": {

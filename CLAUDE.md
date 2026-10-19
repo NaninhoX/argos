@@ -36,6 +36,7 @@ npm test                 # todos os testes (~20 s)
 npm run lint:compliance  # linter de conformidade
 npm run dev              # servidor local (web + api) em http://localhost:3000
 npm run build:web        # gera web/js/engine.js e web/data/*.js a partir de engine/ e data/
+node tools/versionar-web.mjs  # põe ?v=<hash> nos CSS e JS dos HTML (roda só no deploy; não commitar o resultado)
 npm run migrate          # aplica db/migrations (usa DATABASE_URL)
 node tools/extract-html.mjs   # regenera legacy/blocks a partir do HTML original
 ```
