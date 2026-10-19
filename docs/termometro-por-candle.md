@@ -21,6 +21,8 @@ Hoje o Termômetro dispara uma vez por dia (00h05 UTC) e só enxerga o último c
 
 ## O que vigiar
 
+- **Dois disparos por hora (desde 19/10/2026):** o agendamento do 1h é `6,26 * * * *`. O GitHub atrasa e às vezes pula execuções agendadas (medido em 18 e 19/10: execuções de :06 que chegaram 35 a 40 minutos depois, e candles de 22:00 e 23:00 UTC sem disparo). Com o limite de `TERMOMETRO_ATRASO_MAX_MIN=30`, um disparo tardio é recusado (`registro_tardio`, HTTP 207, e-mail de falha). O disparo de :26 é uma segunda chance dentro da janela; se o de :06 já registrou, o servidor ignora a duplicata e o job passa (200). Gasto: cerca de 1.440 minutos de Actions por mês (limite gratuito de 2.000 em repositório privado). O cron diário da Vercel (plano gratuito) também só garante "dentro da hora": o 4h e o 1d, que só ele registra, recusam quando ele chega depois de 30 minutos do fechamento.
+
 - Painel de saúde: os limiares globais (`ingestao_parada`, `sem_registro_recente`) olham todas as séries juntas, então com o 1h vivo eles **não** acusam um job de 4h parado. Por isso existe `ARGOS_POR_CANDLE`: para os tempos gráficos listados, o painel alerta POR SÉRIE (`serie_atrasada_por_candle`) com 2 ou mais candles de atraso.
 - Alertas: `ingestao_parada`, `sem_registro_recente`, `serie_atrasada_por_candle`, `desfecho_atrasado`, `calibracao_fora_do_acaso`.
 - `TERMOMETRO_ATRASO_MAX_MIN` (opcional): recusa registrar (`registro_tardio`) quando já passou esse tempo desde o fechamento do candle; sem a variável, a tolerância continua de um candle. Recomendado 30 com a cadência por candle: um disparo manual a 55 minutos do fechamento deixaria o "antes do resultado" frouxo.

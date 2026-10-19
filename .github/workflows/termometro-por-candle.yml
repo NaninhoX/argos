@@ -14,7 +14,7 @@ on:
         required: true
         default: '1h'
   schedule:
-    - cron: '6 * * * *'                   # 1h: 6 minutos depois do fechamento (a hora cheia UTC). LIGADO em 16/10/2026.
+    - cron: '6,26 * * * *'                # 1h: 6 e 26 minutos depois do fechamento (a hora cheia UTC); o segundo é uma segunda chance, o servidor ignora duplicata. LIGADO em 16/10/2026; 2 disparos por hora desde 19/10/2026 (o GitHub atrasa ou pula execuções).
   #   - cron: '9 0,4,8,12,16,20 * * *'    # 4h: 9 minutos depois do fechamento (00, 04, 08, 12, 16 e 20 UTC)
 # Na Vercel, com o 1h ligado: ARGOS_POR_CANDLE=1h (alerta por série; acrescente 4h quando ligar o do 4h), ARGOS_INGEST_MAX_AGE_H=3,
 # ARGOS_REGISTRO_MAX_AGE_H=12 e, opcional, TERMOMETRO_ATRASO_MAX_MIN=30 (recusa registrar mais de 30 min depois do fechamento).
@@ -39,7 +39,7 @@ jobs:
           ENTRADA: ${{ inputs.tf }}
         run: |
           if [ "$EVENTO" = "workflow_dispatch" ]; then TF="$ENTRADA"
-          elif [ "$AGENDA" = "6 * * * *" ]; then TF="1h"
+          elif [ "$AGENDA" = "6,26 * * * *" ]; then TF="1h"
           else TF="4h"; fi
           case "$TF" in 1h|4h|1h,4h) ;; *) echo "tempo gráfico inválido: $TF"; exit 1 ;; esac
           echo "tf=$TF" >> "$GITHUB_OUTPUT"
