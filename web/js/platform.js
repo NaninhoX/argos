@@ -507,6 +507,19 @@
 
   // ================================================================ Calibração
   const C = { sym: 'BTCUSDT', tf: '4h', chart: null, s1: null, s2: null, shown: false };
+  // As cores do gráfico vêm do tema (js/tema.js). Sem o tema, ficam as do tema escuro.
+  function paintCalChart() {
+    if (!C.chart) return;
+    const tc = (name, fallback) => (window.ArgosTema && window.ArgosTema.cor(name)) || fallback;
+    const line = tc('--navy-line-soft', '#1F2B3B'), grid = tc('--grid-line', '#22303F');
+    C.chart.applyOptions({
+      layout: { background: { type: 'solid', color: tc('--chart-bg', '#101927') }, textColor: tc('--ink-mute', '#8D97A6'), fontFamily: tc('--sans', "'JetBrains Mono', monospace") },
+      grid: { vertLines: { color: grid }, horzLines: { color: grid } },
+      rightPriceScale: { borderColor: line }, timeScale: { borderColor: line }
+    });
+    C.s2.applyOptions({ color: tc('--ink-mute', '#8D97A6') });
+    C.s1.applyOptions({ color: tc('--gold-bright', '#D4B15C') });
+  }
   function tag(k, t) { return '<span class="brier-tag ' + k + '">' + esc(t) + '</span>'; }
   function relSVG(bins, w, h) {
     const W = w || 360, H = h || 300, P = { l: 44, r: 14, t: 14, b: 38 }, mx = 0.6;
@@ -549,6 +562,8 @@
       C.chart = LWC.createChart($('cChart'), { autoSize: true, layout: { background: { type: 'solid', color: '#101927' }, textColor: '#8D97A6', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, attributionLogo: true }, grid: { vertLines: { color: 'rgba(42,58,78,0.28)' }, horzLines: { color: 'rgba(42,58,78,0.28)' } }, rightPriceScale: { borderColor: '#1F2B3B' }, timeScale: { borderColor: '#1F2B3B' }, crosshair: { mode: LWC.CrosshairMode.Magnet }, handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false }, handleScale: { mouseWheel: false, pinch: true }, localization: { locale: 'pt-BR', priceFormatter: (p) => fmtN(p, 3) } });
       C.s2 = C.chart.addSeries(LWC.LineSeries, { color: '#8D97A6', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4 });
       C.s1 = C.chart.addSeries(LWC.LineSeries, { color: '#D4B15C', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4 });
+      paintCalChart();
+      document.addEventListener('argos:tema', paintCalChart);
     }
     if (C.chart) {
       C.s1.setData(c.rolling.map((r) => ({ time: r.time, value: r.brier })));

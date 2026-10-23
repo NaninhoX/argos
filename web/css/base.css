@@ -1,37 +1,100 @@
 /* Argos · base: variáveis, reset, tipografia e a barra Site / Plataforma. Carrega antes de landing.css e platform.css. */
 
+  /* Tema Papel (padrão), a mesma paleta do vídeo explicativo. Textos com 4,5:1 ou mais sobre --bg e --bg-elevated;
+     linhas de gráfico e bordas de campo com 3:1 ou mais (WCAG 1.4.11). O tema escuro fica logo abaixo, em [data-theme="dark"]. */
   :root {
-  --control-line: #6B788B; /* borda de campo de formulário: 3:1 ou mais sobre os fundos escuros (WCAG 1.4.11) */
-    --bg: #0D1420;
-    --bg-elevated: #141E2C;
-    --navy: #1E2A3A;
-    --navy-line: #2A3A4E;
-    --gold: #B08D3E;
-    --gold-bright: #D4B15C;
-    --ink: #E8E3D8;
-    --ink-dim: #9BA4B2;
-    --ink-faint: #7D8898; /* contraste mínimo de 4,5:1 sobre --bg, --bg-panel e --bg-elevated */
-    --red: #C4544A;
-    --green: #5FA37E;
+    color-scheme: light;
+    --control-line: #8E8571;
+    --bg: #F5F2EA;
+    --bg-elevated: #FFFDF8;
+    --bg-panel: #FFFDF8;
+    --navy: #F8F4EB;          /* painel rebaixado dentro de um cartão */
+    --navy-line: #CFC6B2;
+    --navy-line-soft: #E4DCCB;
+    --grid-line: #E6DFD0;
+    --gold: #B08D3E;          /* dourado de marca: fios, marcadores e item ativo; não é cor de texto */
+    --gold-bright: #85661F;   /* dourado para texto */
+    --ink: #1E2A3A;
+    --ink-dim: #4E5A6A;
+    --ink-faint: #5E6B7C;
+    --ink-mute: #626D7C;
+    --ink-line: #8E8571;      /* linhas de referência dos gráficos */
+    --ink-ghost: #A39B88;     /* só decoração, nunca texto */
+    --red: #B5452F;
+    --green: #2E7D5B;
+    --up: #2E7D5B;
+    --down: #B5452F;
+    --good-ink: #0B6B3C;
+    --bad-ink: #9A3A2A;
+    --warn-ink: #75591A;
+    --muted-ink: #4E5A6A;
+    --info-ink: #255C99;
+    --code-bg: #F1ECE0;
+    --code-ink: #1E2A3A;
+    --chart-bg: #FFFDF8;
+    --action-bg: #1E2A3A;
+    --action-hover: #2C3B50;
+    --action-ink: #FAF7F0;
+    --on-gold: #14100A;
+    --scrim: rgba(30, 42, 58, 0.45);
+    --shadow-c: #7A6A4C;
+    --glow: rgba(30, 42, 58, 0.04);   /* clarão de fundo da landing */
 
+    --sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
     --serif: 'Source Serif 4', Cambria, Georgia, serif;
     --mono: 'JetBrains Mono', 'Courier New', monospace;
 
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-  
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Tema escuro (opcional, escolhido no botão Tema): os valores de antes da troca para o Papel. */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --control-line: #6B788B;
+    --bg: #0D1420;
+    --bg-elevated: #141E2C;
+    --bg-panel: #101927;
+    --navy: #1E2A3A;
+    --navy-line: #2A3A4E;
+    --navy-line-soft: #1F2B3B;
+    --grid-line: #22303F;
+    --gold: #B08D3E;
+    --gold-bright: #D4B15C;
+    --ink: #E8E3D8;
+    --ink-dim: #9BA4B2;
+    --ink-faint: #7D8898;
+    --ink-mute: #8D97A6;
+    --ink-line: #5E6B7C;
+    --ink-ghost: #445164;
+    --red: #C4544A;
+    --green: #5FA37E;
+    --up: #199e70;
+    --down: #e66767;
+    --good-ink: #8FD3B4;
+    --bad-ink: #F0A39B;
+    --warn-ink: #E2C46A;
+    --muted-ink: #C7CCD4;
+    --info-ink: #9CC3F2;
+    --code-bg: #0B111B;
+    --code-ink: #C9D2DD;
+    --chart-bg: #101927;
+    --action-bg: #B08D3E;
+    --action-hover: #D4B15C;
+    --action-ink: #14100A;
+    --scrim: rgba(6, 10, 16, 0.85);
+    --shadow-c: #000000;
+    --glow: rgba(30, 42, 58, 0.5);
   }
   * { box-sizing: inherit; }
   html, body {
     margin: 0; padding: 0;
     background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: var(--gold); color: var(--bg); }
+  ::selection { background: var(--gold); color: var(--on-gold); }
   button { font-family: inherit; cursor: pointer; }
 
   /* ============================================================
@@ -39,19 +102,19 @@
      ============================================================ */
   .meta-nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
-    background: rgba(13,20,32,0.97);
-    border-top: 1px solid #263447;
+    background: color-mix(in srgb, var(--bg) 97%, transparent);
+    border-top: 1px solid var(--navy-line);
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
     display: flex; gap: 6px; justify-content: center;
   }
   .meta-nav button {
     flex: 1; max-width: 140px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-family: var(--sans); font-size: 11px;
     padding: 10px 8px; border-radius: 6px;
-    border: 1px solid #263447; background: #141E2C; color: #9BA4B2;
+    border: 1px solid var(--navy-line); background: var(--bg-elevated); color: var(--ink-dim);
     transition: all 0.15s;
   }
-  .meta-nav button.active { border-color: #B08D3E; color: #D4B15C; background: rgba(176,141,62,0.12); }
+  .meta-nav button.active { border-color: var(--gold); color: var(--gold-bright); background: rgba(176,141,62,0.12); }
 
   .page { display: none; padding-bottom: 64px; }
   .page.visible { display: block; }

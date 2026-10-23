@@ -24,6 +24,7 @@
 <meta name="twitter:description" content="Argos Sentinel, da Stratum Research, testa setups de análise técnica contra entradas aleatórias, com intervalo de confiança, p ajustado e calibração. Pesquisa estatística, sem recomendação de investimento.">
 <meta name="twitter:image" content="https://argossentinel.vercel.app/img/og-argos.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#F5F2EA">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/landing.css">
@@ -34,6 +35,7 @@
 <link rel="stylesheet" href="css/motion.css">
 <link rel="stylesheet" href="css/landing-motion.css">
 <link rel="stylesheet" href="css/platform-motion.css">
+<script src="js/tema.js"></script>
 <script src="js/motion.js"></script>
 </head>
 <body>
@@ -414,7 +416,7 @@ alertcondition(ta.crossover(r, 30))</pre>
           </div>
           <div class="table-scroll"><table class="bank" id="lvBank"></table><div class="sk sk-bank" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           <div class="bank-legend">
-            <span class="it"><span style="display:inline-block;width:26px;height:4px;border-radius:2px;background:#6d7a8e"></span>IC 95% da taxa de acerto</span>
+            <span class="it"><span style="display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--ink-line)"></span>IC 95% da taxa de acerto</span>
             <span class="it"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ink)"></span>taxa observada</span>
             <span class="it"><span style="display:inline-block;width:2px;height:14px;background:var(--gold-bright)"></span>taxa-base (entradas aleatórias)</span>
             <span class="it">p = permutação bicaudal, 3.000 sorteios · entre parênteses, ajustado para os 8 setups (Benjamini-Hochberg)</span>
@@ -623,8 +625,8 @@ alertcondition(ta.crossover(r, 30))</pre>
         <div class="pv-chart-h">
           <div class="section-label">Brier móvel de 90 dias · motor × referência</div>
           <div class="chart-legend">
-            <div class="legend-item"><span class="lk" style="background:#D4B15C"></span> Motor (probabilidade do setup)</div>
-            <div class="legend-item"><span class="lk" style="background:#8D97A6"></span> Referência (taxa-base)</div>
+            <div class="legend-item"><span class="lk" style="background:var(--gold-bright)"></span> Motor (probabilidade do setup)</div>
+            <div class="legend-item"><span class="lk" style="background:var(--ink-mute)"></span> Referência (taxa-base)</div>
           </div>
         </div>
         <div id="cChart" class="pv-lwc" aria-label="Gráfico do Brier móvel de 90 dias"></div>
@@ -670,9 +672,10 @@ alertcondition(ta.crossover(r, 30))</pre>
 </div>
 
 <!-- ============ META NAV: switch Landing <-> Dashboard ============ -->
-<div class="meta-nav" role="group" aria-label="Alternar entre o site e a plataforma">
+<div class="meta-nav" role="group" aria-label="Site, plataforma e tema">
   <button id="nav-landing" class="active" aria-pressed="true" onclick="showPage('landing')">Site</button>
   <button id="nav-dashboard" aria-pressed="false" onclick="showPage('dashboard')">Plataforma</button>
+  <button id="nav-tema" type="button" aria-pressed="false" onclick="ArgosTema.alternar()">Tema escuro</button>
 </div>
 
 <script src="js/landing-motion.js"></script>

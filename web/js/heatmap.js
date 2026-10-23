@@ -26,13 +26,30 @@
   /** Mesmo corte do recorte por regime (lib/regime-view.js): abaixo disso, evidência insuficiente. */
   var MIN_EFFECTIVE = 10;
 
-  // Escala divergente segura para daltônicos: azul = acima da taxa-base, laranja = abaixo.
-  // Os dois extremos têm a mesma luminância relativa (cerca de 0,15), para a escala ser simétrica
-  // também em luminância, e passam de 4,5:1 contra o texto claro (WCAG AA). Nunca verde/vermelho.
-  var NEUTRAL = [33, 40, 50];   // #212832  diferença zero
-  var BLUE = [47, 109, 181];    // #2F6DB5  acima da taxa-base
-  var ORANGE = [170, 83, 24];   // #AA5318  abaixo da taxa-base
-  var PANEL = [16, 25, 39];     // #101927  fundo do cartão (--bg-panel)
+  // Escala divergente segura para daltônicos: azul = acima da taxa-base, laranja = abaixo. Nunca verde/vermelho.
+  // Os dois extremos têm a mesma luminância relativa, para a escala ser simétrica também em luminância.
+  // Tema escuro: do fundo escuro a extremos de luminância 0,15, sempre com texto claro (4,5:1 ou mais).
+  // Tema Papel (padrão): do creme a extremos de luminância 0,27, sempre com texto escuro (5,7:1 ou mais);
+  // extremos mais escuros cairiam numa faixa em que nem o texto claro nem o escuro chega a 4,5:1.
+  var PALETTES = {
+    dark: {
+      NEUTRAL: [33, 40, 50],    // #212832  diferença zero
+      BLUE: [47, 109, 181],     // #2F6DB5  acima da taxa-base
+      ORANGE: [170, 83, 24],    // #AA5318  abaixo da taxa-base
+      PANEL: [16, 25, 39]       // #101927  fundo do cartão (--bg-panel)
+    },
+    light: {
+      NEUTRAL: [230, 229, 226], // #E6E5E2  diferença zero (quase cinza: o creme puxaria a matiz para o amarelo)
+      BLUE: [93, 146, 206],     // #5D92CE  acima da taxa-base
+      ORANGE: [204, 124, 66],   // #CC7C42  abaixo da taxa-base
+      PANEL: [255, 253, 248]    // #FFFDF8  fundo do cartão (--bg-panel)
+    }
+  };
+  /** Paleta do tema da página (js/tema.js); sem página (testes), a do tema Papel, que é o padrão. */
+  function palette() {
+    var d = root.document && root.document.documentElement;
+    return PALETTES[d && d.getAttribute && d.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'];
+  }
   var INK_LIGHT = [245, 242, 234];
   var INK_DARK = [13, 20, 32];
 
@@ -84,14 +101,15 @@
     var c = ok(cap) && cap > 0 ? cap : CAP_PP;
     var t = clamp01(Math.abs(deltaPP) / c);
     var side = deltaPP > 0 ? 'acima' : deltaPP < 0 ? 'abaixo' : 'neutro';
-    var end = side === 'acima' ? BLUE : side === 'abaixo' ? ORANGE : NEUTRAL;
-    var rgb = mix(NEUTRAL, end, t);
+    var P = palette();
+    var end = side === 'acima' ? P.BLUE : side === 'abaixo' ? P.ORANGE : P.NEUTRAL;
+    var rgb = mix(P.NEUTRAL, end, t);
     return { bg: hex(rgb), fg: textOn(rgb), t: t, side: side, rgb: rgb };
   }
 
   /** Versão esmaecida de uma cor da escala: mistura com o fundo do cartão. */
   function faded(color) {
-    var rgb = mix(PANEL, color.rgb, FADE);
+    var rgb = mix(palette().PANEL, color.rgb, FADE);
     return { bg: hex(rgb), fg: textOn(rgb) };
   }
 
@@ -584,8 +602,9 @@
     return v;
   }
 
-  var shownQuestion = null;
+  var shownQuestion = null, lastAnalysis = null;
   function onAnalysis(ev) {
+    lastAnalysis = ev;
     try {
       var d = ev && ev.detail;
       if (!d || !d.A || !d.E) return;
@@ -614,7 +633,11 @@
 
   var api = { model: model, colorFor: colorFor, render: render };
   root.ArgosHeatmap = api;
-  if (root.document && root.document.addEventListener) root.document.addEventListener('argos:analysis', onAnalysis);
+  if (root.document && root.document.addEventListener) {
+    root.document.addEventListener('argos:analysis', onAnalysis);
+    // troca de tema: as cores das células são calculadas aqui, então o mapa se redesenha com a paleta nova
+    root.document.addEventListener('argos:tema', function () { if (lastAnalysis) onAnalysis(lastAnalysis); });
+  }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

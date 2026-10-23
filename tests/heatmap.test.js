@@ -204,7 +204,7 @@ for (const [sym, tf] of [['BTCUSDT', '4h'], ['SOLUSDT', '1d']]) {
       if (c.state === 'cheia') assert.equal(c.fill, c.color.bg, `${where}: cor cheia`);
       else {
         assert.notEqual(c.fill, c.color.bg, `${where}: esmaecida difere da cheia`);
-        const panel = lum([16, 25, 39]);
+        const panel = lum([255, 253, 248]); // fundo do cartão no tema Papel, o padrão sem página
         // esmaecida fica entre o fundo do cartão e a cor da escala em luminância
         const lf = lum(rgbOf(c.fill)), lc = lum(rgbOf(c.color.bg));
         assert.ok(lf >= Math.min(panel, lc) - 1e-9 && lf <= Math.max(panel, lc) + 1e-9, `${where}: luminância entre o fundo e a cor`);
@@ -442,5 +442,24 @@ test('mapa: dica da célula abre com o mouse (não com o toque), mostra título,
     assert.ok(few.getAttribute('aria-label').endsWith(fewParts[fewParts.length - 1]));
   } finally {
     delete win.document;
+  }
+});
+
+test('mapa setup × regime: no tema escuro a escala sai do fundo escuro e continua simétrica, sem verde nem vermelho e com texto AA', () => {
+  const winDark = { document: { documentElement: { getAttribute: (k) => (k === 'data-theme' ? 'dark' : null) } } };
+  const modDark = { exports: {} };
+  new Function('window', 'module', SRC)(winDark, modDark);
+  const D = modDark.exports;
+  assert.equal(D.colorFor(0).bg, '#212832');
+  assert.equal(H.colorFor(0).bg, '#e6e5e2', 'sem página, vale o tema Papel (padrão)');
+  const light = rgbOf('#f5f2ea'), dark = rgbOf('#0d1420');
+  for (let x = -40; x <= 40; x += 0.25) {
+    const a = D.colorFor(x), b = D.colorFor(-x);
+    assert.ok(Math.abs(lum(rgbOf(a.bg)) - lum(rgbOf(b.bg))) < 0.012, `luminância de ±${x}`);
+    const { h, s } = hsl(rgbOf(a.bg));
+    if (s >= 0.12) assert.ok((h >= 200 && h <= 235) || (h >= 8 && h <= 45), `${x} p.p. deu ${a.bg}`);
+    const fg = rgbOf(a.fg);
+    assert.ok(contrast(rgbOf(a.bg), fg) >= 4.5, `${x} p.p.: contraste ${contrast(rgbOf(a.bg), fg).toFixed(2)}`);
+    assert.ok([light, dark].some((k) => k.join() === fg.join()));
   }
 });

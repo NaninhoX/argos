@@ -127,6 +127,24 @@
   // ------------------------------------------------------------- gráfico
   let chart = null, S = {}, markersApi = null;
   const PRICE_FMT = { type: 'custom', minMove: 0.01, formatter: (p) => fmtN(p, 2) };
+  // As cores do gráfico vêm do tema (js/tema.js). Sem o tema, ficam as do tema escuro.
+  const themeColor = (name, fallback) => (window.ArgosTema && window.ArgosTema.cor(name)) || fallback;
+  function paintChart() {
+    if (!chart) return;
+    const line = themeColor('--navy-line-soft', '#1F2B3B'), grid = themeColor('--grid-line', '#22303F'), ref = themeColor('--ink-line', '#5E6B7C');
+    chart.applyOptions({
+      layout: { background: { type: 'solid', color: themeColor('--chart-bg', '#101927') }, textColor: themeColor('--ink-mute', '#8D97A6'), fontFamily: themeColor('--sans', "'JetBrains Mono', monospace"), panes: { separatorColor: line } },
+      grid: { vertLines: { color: grid }, horzLines: { color: grid } },
+      rightPriceScale: { borderColor: line }, timeScale: { borderColor: line }
+    });
+    const up = themeColor('--up', '#199e70'), down = themeColor('--down', '#e66767');
+    S.candles.applyOptions({ borderUpColor: up, wickUpColor: up, downColor: down, borderDownColor: down, wickDownColor: down });
+    S.bbU.applyOptions({ color: ref }); S.bbL.applyOptions({ color: ref });
+    S.rsi.applyOptions({ color: themeColor('--gold-bright', '#D4B15C') });
+    S.macd.applyOptions({ color: themeColor('--ink', '#E8E3D8') });
+    S.rsi70.applyOptions({ color: ref }); S.rsi30.applyOptions({ color: ref });
+  }
+  document.addEventListener('argos:tema', () => { paintChart(); setMarkers(); });
   function buildChart() {
     const el = $('lvChart');
     chart = LWC.createChart(el, {
@@ -150,8 +168,8 @@
     S.ema50 = chart.addSeries(LWC.LineSeries, lo('#3987e5', 2), 0);
     S.ema20 = chart.addSeries(LWC.LineSeries, lo('#B08D3E', 2), 0);
     S.rsi = chart.addSeries(LWC.LineSeries, { color: '#D4B15C', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false, priceFormat: { type: 'custom', minMove: 0.1, formatter: (p) => fmtN(p, 1) }, autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) }, 1);
-    S.rsi.createPriceLine({ price: 70, color: 'rgba(155,164,178,0.5)', lineWidth: 1, lineStyle: LWC.LineStyle.Dashed, axisLabelVisible: false, title: '' });
-    S.rsi.createPriceLine({ price: 30, color: 'rgba(155,164,178,0.5)', lineWidth: 1, lineStyle: LWC.LineStyle.Dashed, axisLabelVisible: false, title: '' });
+    S.rsi70 = S.rsi.createPriceLine({ price: 70, color: 'rgba(155,164,178,0.5)', lineWidth: 1, lineStyle: LWC.LineStyle.Dashed, axisLabelVisible: false, title: '' });
+    S.rsi30 = S.rsi.createPriceLine({ price: 30, color: 'rgba(155,164,178,0.5)', lineWidth: 1, lineStyle: LWC.LineStyle.Dashed, axisLabelVisible: false, title: '' });
     const macdFmt = { type: 'custom', minMove: 0.0001, formatter: (p) => fmtN(p, Math.abs(p) >= 100 || p === 0 ? 0 : Math.abs(p) >= 1 ? 2 : 4) };
     S.macdH = chart.addSeries(LWC.HistogramSeries, { lastValueVisible: false, priceLineVisible: false, priceFormat: macdFmt }, 2);
     S.macd = chart.addSeries(LWC.LineSeries, { color: '#E8E3D8', lineWidth: 1, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, priceFormat: macdFmt }, 2);
@@ -165,6 +183,7 @@
       wm(panes[1], 'RSI (14) · 30 / 70'); wm(panes[2], 'MACD (12, 26, 9)');
     }
     markersApi = LWC.createSeriesMarkers(S.candles, []);
+    paintChart();
     chart.subscribeCrosshairMove((param) => {
       if (!state.A) return;
       if (!param || param.logical == null || param.point == null) { renderLegend(null); return; }
@@ -219,8 +238,8 @@
     if (!s) { markersApi.setMarkers([]); return; }
     markersApi.setMarkers(s.triggers.map((i) => {
       const o = A.outs[i];
-      let color = '#D4B15C', shape = 'circle';
-      if (o) { if (o.type === 'WIN') color = '#199e70'; else if (o.type === 'LOSS') { color = '#e66767'; shape = 'square'; } else color = '#8D97A6'; }
+      let color = themeColor('--gold-bright', '#D4B15C'), shape = 'circle';
+      if (o) { if (o.type === 'WIN') color = themeColor('--up', '#199e70'); else if (o.type === 'LOSS') { color = themeColor('--down', '#e66767'); shape = 'square'; } else color = themeColor('--ink-mute', '#8D97A6'); }
       return { time: A.d.t[i], position: 'belowBar', shape, color, size: 1 };
     }));
   }
@@ -241,7 +260,7 @@
     const regs = ['BULL_TREND', 'BEAR_TREND', 'HIGH_VOL_RANGING', 'LOW_VOL_RANGING', 'STRUCTURAL_BREAK'];
     $('lvFoot').innerHTML =
       '<span class="it">Velas: vazada = alta, cheia = baixa</span>' +
-      '<span class="it"><span class="mk c" style="background:#199e70"></span>alvo</span><span class="it"><span class="mk s" style="background:#e66767"></span>stop</span><span class="it"><span class="mk c" style="background:#8D97A6"></span>prazo esgotado</span><span class="it"><span class="mk c" style="background:#D4B15C"></span>sem desfecho ainda</span>' +
+      '<span class="it"><span class="mk c" style="background:var(--up)"></span>alvo</span><span class="it"><span class="mk s" style="background:var(--down)"></span>stop</span><span class="it"><span class="mk c" style="background:var(--ink-mute)"></span>prazo esgotado</span><span class="it"><span class="mk c" style="background:var(--gold-bright)"></span>sem desfecho ainda</span>' +
       '<span class="it" style="color:var(--ink-ghost)">|</span>' + regs.map((r) => '<span class="it"><span class="rg" style="background:' + esc(E.REGIMES[r].color) + '"></span>' + esc(E.REGIMES[r].short) + '</span>').join('') +
       '<span class="it" style="margin-left:auto">Gráfico: TradingView Lightweight Charts™</span>';
   }

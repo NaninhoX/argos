@@ -7,28 +7,46 @@
 <meta name="description" content="Confere no seu navegador a prova de data de um registro do Argos Sentinel: hash, árvore de Merkle, manifesto do dia e carimbo OpenTimestamps.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
+<script src="js/tema.js"></script>
 <style>
-  /* Tema copiado do :root e do body de web/index.html, com as mesmas fontes. Sem rede, o navegador usa
-     Cambria/Georgia e Courier New e a página continua legível. */
+  /* Tema copiado de web/css/base.css: Papel por padrão e escuro em [data-theme="dark"] (js/tema.js guarda a escolha).
+     Sem rede, o navegador usa as fontes do sistema e a página continua legível. */
   :root {
+    --bg: #F5F2EA;
+    --bg-elevated: #FFFDF8;
+    --navy: #F8F4EB;
+    --navy-line: #CFC6B2;
+    --gold: #B08D3E;
+    --gold-bright: #85661F;
+    --ink: #1E2A3A;
+    --ink-dim: #4E5A6A;
+    --ink-faint: #5E6B7C;
+    --red: #B5452F;
+    --green: #2E7D5B;
+    --red-text: #9A3A2A;
+    --glow: rgba(30, 42, 58, 0.04);
+
+    --sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --serif: 'Source Serif 4', Cambria, Georgia, serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    color-scheme: light;
+    box-sizing: border-box;
+  }
+  :root[data-theme="dark"] {
     --bg: #0D1420;
     --bg-elevated: #141E2C;
     --navy: #1E2A3A;
     --navy-line: #2A3A4E;
-    --gold: #B08D3E;
     --gold-bright: #D4B15C;
     --ink: #E8E3D8;
     --ink-dim: #9BA4B2;
-    --ink-faint: #5E6B7C;
+    --ink-faint: #7D8898;
     --red: #C4544A;
     --green: #5FA37E;
     --red-text: #E0857B;
-
-    --serif: 'Source Serif 4', Cambria, Georgia, serif;
-    --mono: 'JetBrains Mono', 'Courier New', monospace;
-
+    --glow: rgba(30, 42, 58, 0.5);
     color-scheme: dark;
-    box-sizing: border-box;
   }
   * { box-sizing: inherit; }
   [hidden] { display: none !important; }
@@ -39,13 +57,13 @@
   }
   body {
     color: var(--ink);
-    font-family: var(--serif);
+    font-family: var(--sans);
     font-size: 17px;
     line-height: 1.55;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background-image:
       radial-gradient(ellipse 900px 600px at 85% -10%, rgba(176,141,62,0.07), transparent 60%),
-      radial-gradient(ellipse 700px 500px at -10% 40%, rgba(30,42,58,0.5), transparent 60%);
+      radial-gradient(ellipse 700px 500px at -10% 40%, var(--glow), transparent 60%);
     background-repeat: no-repeat;
   }
   ::selection { background: var(--gold); color: var(--bg); }
@@ -56,7 +74,7 @@
 
   .wrap { max-width: 860px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
 
-  .top { background: rgba(13,20,32,0.82); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .top { background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); }
   .bar {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: 14px;
@@ -126,7 +144,7 @@
   .alert { color: var(--red-text); font-size: 15px; margin: 0 0 10px; }
 
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: etapa; }
-  .step { border: 1px solid var(--navy-line); border-left-width: 4px; border-radius: 4px; padding: 12px 14px; background: rgba(255,255,255,0.015); }
+  .step { border: 1px solid var(--navy-line); border-left-width: 4px; border-radius: 4px; padding: 12px 14px; background: color-mix(in srgb, var(--ink) 1.5%, transparent); }
   .step.ok { border-left-color: var(--green); }
   .step.fail { border-left-color: var(--red); }
   .step.wait { border-left-color: var(--gold); }
@@ -172,7 +190,7 @@
     background: var(--bg); border: 1px solid var(--navy-line); border-radius: 4px;
   }
 
-  footer { margin-top: 40px; padding: 24px 0 40px; border-top: 1px solid rgba(255,255,255,0.06); color: var(--ink-dim); font-size: 14px; }
+  footer { margin-top: 40px; padding: 24px 0 40px; border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink-dim); font-size: 14px; }
   footer p { margin: 0 0 14px; overflow-wrap: anywhere; }
   noscript p { margin: 20px 0; color: var(--red-text); }
 

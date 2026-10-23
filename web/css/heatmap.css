@@ -14,8 +14,8 @@
   --hm-gold: var(--gold, #B08D3E);
   --hm-gold-bright: var(--gold-bright, #D4B15C);
   --hm-gold-dim: var(--gold-dim, rgba(176, 141, 62, 0.13));
-  --hm-mono: var(--mono, 'JetBrains Mono', 'Courier New', monospace);
-  --hm-serif: var(--serif, 'Source Serif 4', Cambria, Georgia, serif);
+  --hm-mono: var(--sans);
+  --hm-serif: var(--sans);
 
   margin-top: 14px;
   min-width: 0;
@@ -130,13 +130,13 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 .hm-d { font-size: 10px; font-weight: 500; }
 
 /* IC exclui a taxa-base: cor cheia, com friso claro */
-.hm-cell.cheia { border-color: rgba(255, 255, 255, 0.36); }
+.hm-cell.cheia { border-color: color-mix(in srgb, var(--ink) 36%, transparent); }
 /* IC contém a taxa-base: cor esmaecida e contorno tracejado */
-.hm-cell.esmaecida { border: 1px dashed rgba(155, 164, 178, 0.6); background-color: rgba(255, 255, 255, 0.03); }
+.hm-cell.esmaecida { border: 1px dashed color-mix(in srgb, var(--ink-dim) 60%, transparent); background-color: color-mix(in srgb, var(--ink) 3%, transparent); }
 /* N efetivo abaixo de 10: sem cor, hachura */
 .hm-cell.insuficiente {
   border: 1px solid var(--hm-line);
-  background-image: repeating-linear-gradient(135deg, rgba(155, 164, 178, 0.24) 0, rgba(155, 164, 178, 0.24) 2px, transparent 2px, transparent 7px);
+  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-dim) 24%, transparent) 0, color-mix(in srgb, var(--ink-dim) 24%, transparent) 2px, transparent 2px, transparent 7px);
   color: var(--hm-dim);
 }
 /* sem gatilho encerrado no regime */
@@ -153,9 +153,9 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 .hm-keys { flex: 1 1 320px; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 11px; line-height: 1.45; color: var(--hm-dim); }
 .hm-key { display: flex; align-items: flex-start; gap: 8px; }
 .hm-sw { flex: 0 0 auto; width: 22px; height: 14px; margin-top: 1px; border: 1px solid transparent; border-radius: 3px; }
-.hm-sw.cheia { border-color: rgba(255, 255, 255, 0.36); }
-.hm-sw.esmaecida { border: 1px dashed rgba(155, 164, 178, 0.6); }
-.hm-sw.insuficiente { border-color: var(--hm-line); background-image: repeating-linear-gradient(135deg, rgba(155, 164, 178, 0.24) 0, rgba(155, 164, 178, 0.24) 2px, transparent 2px, transparent 7px); }
+.hm-sw.cheia { border-color: color-mix(in srgb, var(--ink) 36%, transparent); }
+.hm-sw.esmaecida { border: 1px dashed color-mix(in srgb, var(--ink-dim) 60%, transparent); }
+.hm-sw.insuficiente { border-color: var(--hm-line); background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-dim) 24%, transparent) 0, color-mix(in srgb, var(--ink-dim) 24%, transparent) 2px, transparent 2px, transparent 7px); }
 .hm-sw.vazia { border: 1px dotted var(--hm-line); }
 .hm-note { margin: 0; max-width: 110ch; padding: 8px 16px 14px; font-size: 11px; line-height: 1.6; color: var(--hm-dim); }
 
@@ -193,8 +193,8 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
   --hm-line: var(--navy-line, #2A3A4E);
   --hm-ink: var(--ink, #E8E3D8);
   --hm-dim: var(--ink-dim, #9BA4B2);
-  --hm-mono: var(--mono, 'JetBrains Mono', 'Courier New', monospace);
-  --hm-serif: var(--serif, 'Source Serif 4', Cambria, Georgia, serif);
+  --hm-mono: var(--sans);
+  --hm-serif: var(--sans);
 
   position: fixed;
   left: 0;
@@ -205,8 +205,8 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
   padding: 12px 14px;
   border: 1px solid var(--hm-line);
   border-radius: 6px;
-  background: #0B111B;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  background: var(--code-bg);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--shadow-c) 45%, transparent);
   color: var(--hm-ink);
   font-family: var(--hm-mono);
   font-size: 11.5px;
@@ -224,15 +224,15 @@ html.motion-off .hm-tip { transition: none; }
 .hm-tip-g { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0 0 8px; }
 .hm-tip-g dt { margin: 0; white-space: nowrap; color: var(--hm-dim); }
 .hm-tip-g dd { margin: 0; min-width: 0; text-align: right; color: var(--hm-ink); font-variant-numeric: tabular-nums; }
-.hm-tip-n { margin: 0; font-size: 10.5px; line-height: 1.5; color: #7D8898; }
+.hm-tip-n { margin: 0; font-size: 10.5px; line-height: 1.5; color: var(--ink-faint); }
 
 /* Celular: a coluna fixa dos setups é mais estreita e opaca, e a rolagem começa na borda do cartão (sem faixa onde as células
    passavam por trás da coluna fixa). */
 @media (max-width: 720px) {
   .hm-scroll { padding: 10px 0 4px; }
   .hm-corner { width: 124px; padding: 8px 6px 8px 10px; }
-  .hm-rowh { padding: 3px 8px 3px 10px; background: #101927; box-shadow: 8px 0 8px -6px rgba(0, 0, 0, 0.55); }
-  .hm-corner { background: #101927; }
+  .hm-rowh { padding: 3px 8px 3px 10px; background: var(--bg-panel); box-shadow: 8px 0 8px -6px color-mix(in srgb, var(--shadow-c) 55%, transparent); }
+  .hm-corner { background: var(--bg-panel); }
   .hm-table { min-width: 600px; }
   .hm-sname { font-size: 11.5px; }
 }
