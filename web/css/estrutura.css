@@ -1,0 +1,67 @@
+/* Argos · estrutura da plataforma (menu lateral e caminho de navegação) e comandos da tabela dos 72 testes.
+   Carrega por último. Menu lateral só a partir de 1100 px; abaixo disso as abas continuam no topo, como antes.
+   O caminho (.crumb) é montado por js/estrutura.js; os comandos da tabela (.mx-bar), por js/tabela-72.js. */
+
+:root { --rail-w: 216px; }
+
+/* ---------------- caminho de navegação no topo da plataforma ---------------- */
+.dashboard-page .crumb { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-faint); margin-left: 20px; margin-right: auto; }
+.dashboard-page .crumb .sep { color: var(--ink-ghost); }
+.dashboard-page .crumb .now { color: var(--ink); font-weight: 600; }
+
+@media (min-width: 1100px) {
+  .dashboard-page .topbar-inner { max-width: none; padding: 0 24px; justify-content: flex-start; }
+  .dashboard-page .crumb { display: flex; }
+
+  /* ---------------- menu lateral ---------------- */
+  .dashboard-page nav.tabs {
+    position: fixed; z-index: 40;
+    top: calc(56px + env(safe-area-inset-top, 0px)); bottom: 0; left: 0; width: var(--rail-w);
+    flex-direction: column; gap: 2px; padding: 16px 10px 88px;
+    background: var(--bg-elevated); border-right: 1px solid var(--navy-line-soft);
+    overflow-y: auto;
+  }
+  .dashboard-page nav.tabs::before {
+    content: "Plataforma"; display: block; padding: 4px 12px 8px;
+    font-size: 12px; font-weight: 600; color: var(--ink-faint);
+  }
+  .dashboard-page nav.tabs a {
+    position: relative; display: flex; align-items: center; gap: 8px;
+    min-height: 36px; padding: 0 12px 0 16px; border-radius: 4px;
+    font-size: 14px; letter-spacing: 0; color: var(--ink-dim);
+  }
+  @media (hover: hover) { .dashboard-page nav.tabs a:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); } }
+  .dashboard-page nav.tabs a.active {
+    color: var(--ink); font-weight: 600;
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
+  }
+  .dashboard-page nav.tabs a.active::before {
+    content: ""; position: absolute; left: 5px; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--gold);
+  }
+  .dashboard-page .dash-screen { margin-left: var(--rail-w); }
+}
+
+/* ---------------- comandos da tabela dos 72 testes ---------------- */
+#page-landing .mx-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-top: 10px; }
+#page-landing .mx-filter { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-faint); }
+#page-landing .mx-filter select {
+  min-height: 36px; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--bg-panel); border: 1px solid var(--control-line); border-radius: 4px;
+}
+#page-landing .mx-count { font-size: 13px; color: var(--ink-dim); align-self: center; margin-left: auto; }
+#page-landing .mx-export {
+  min-height: 36px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600;
+  color: var(--action-ink); background: var(--action-bg); border: 1px solid var(--action-bg); border-radius: 4px;
+}
+@media (hover: hover) { #page-landing .mx-export:hover { background: var(--action-hover); border-color: var(--action-hover); } }
+#page-landing table.mx-full th { padding: 0; }
+#page-landing table.mx-full .mx-sort {
+  display: block; width: 100%; padding: 8px 10px; border: 0; background: transparent;
+  font: inherit; font-weight: 600; color: var(--ink-dim); text-align: left; white-space: nowrap;
+}
+#page-landing table.mx-full .mx-sort::after { content: " ↕"; color: var(--ink-ghost); }
+#page-landing table.mx-full th[aria-sort="ascending"] .mx-sort::after { content: " ↑"; color: var(--ink); }
+#page-landing table.mx-full th[aria-sort="descending"] .mx-sort::after { content: " ↓"; color: var(--ink); }
+#page-landing .mx-sort:focus-visible, #page-landing .mx-export:focus-visible, #page-landing .mx-filter select:focus-visible {
+  outline: 2px solid var(--gold-bright); outline-offset: 2px;
+}
