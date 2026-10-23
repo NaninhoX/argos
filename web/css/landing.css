@@ -47,7 +47,7 @@
   }
 #page-landing .brand .argos { color: var(--ink); }
 #page-landing .brand .divider { color: var(--ink-faint); }
-#page-landing .brand .sentinel { color: var(--gold); }
+#page-landing .brand .sentinel { color: var(--gold-text); }
 #page-landing .nav-links {
     display: flex; gap: 36px;
     font-family: var(--sans);
@@ -197,7 +197,7 @@
     margin-bottom: 56px;
   }
 #page-landing .section-head .kicker {
-    font-family: var(--sans); font-size: 12.5px; color: var(--gold);
+    font-family: var(--sans); font-size: 12.5px; color: var(--gold-text);
     margin-bottom: 14px;
   }
 #page-landing h2 {
@@ -291,7 +291,7 @@
 #page-landing .c-str { color: var(--gold-bright); }
 #page-landing .sandbox-arrow {
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--sans); font-size: 24px; color: var(--gold);
+    font-family: var(--sans); font-size: 24px; color: var(--gold-text);
   }
 #page-landing .sandbox-extracted {
     background: var(--navy);
@@ -506,7 +506,7 @@
     padding-bottom: 18px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 5%, transparent);
   }
 #page-landing .compliance-line:last-child { border-bottom: none; padding-bottom: 0; }
-#page-landing .compliance-line .mark { color: var(--gold); font-family: var(--sans); font-size: 14px; flex-shrink: 0; }
+#page-landing .compliance-line .mark { color: var(--gold-text); font-family: var(--sans); font-size: 14px; flex-shrink: 0; }
 #page-landing .disclaimer {
     margin-top: 32px;
     padding: 18px 20px;
@@ -573,7 +573,7 @@
   @media (max-width: 560px) { #page-landing .how-steps { grid-template-columns: minmax(0, 1fr); } }
   #page-landing .how-example { display: grid; grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1fr); gap: 20px; align-items: stretch; }
   #page-landing .how-code { margin: 0; background: var(--bg-elevated); border: 1px solid var(--navy-line); border-radius: 6px; padding: 20px 22px; font-family: var(--mono); font-size: 13px; line-height: 1.85; color: var(--ink-dim); white-space: pre; overflow-x: auto; }
-  #page-landing .how-arrow { display: flex; align-items: center; justify-content: center; font-family: var(--sans); font-size: 24px; color: var(--gold); }
+  #page-landing .how-arrow { display: flex; align-items: center; justify-content: center; font-family: var(--sans); font-size: 24px; color: var(--gold-text); }
   #page-landing .how-read { background: var(--navy); border: 1px solid var(--navy-line); border-radius: 6px; padding: 18px 22px; }
   #page-landing .how-read-h { font-family: var(--sans); font-size: 11px; letter-spacing: 0.03em; color: var(--gold-bright); margin-bottom: 10px; }
   #page-landing .how-read .ext-row .val { text-align: right; padding-left: 12px; }

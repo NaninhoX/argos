@@ -62,7 +62,7 @@
   }
 .dashboard-page .section-label .step-n {
     width: 16px; height: 16px; border-radius: 50%;
-    background: var(--navy-line); color: var(--ink-dim);
+    background: var(--navy-line); color: var(--ink);
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 9.5px; font-weight: 600;
   }
@@ -281,7 +281,7 @@
     max-width: 980px; margin: 0 auto; padding: 20px 24px;
     display: flex; gap: 12px; align-items: flex-start;
   }
-.dashboard-page .disclaimer-inner .mark { color: var(--gold); font-size: 14px; }
+.dashboard-page .disclaimer-inner .mark { color: var(--gold-text); font-size: 14px; }
 .dashboard-page .disclaimer-inner p { font-size: 11px; line-height: 1.7; color: var(--ink-faint); margin: 0; }
 .dashboard-page .disclaimer-calib-link { color: var(--gold-bright); text-decoration: none; font-weight: 500; display: inline-block; margin-top: 4px; }
 @media (hover: hover) { .dashboard-page .disclaimer-calib-link:hover { color: var(--ink); } }
@@ -387,7 +387,7 @@
 .dashboard-page .interp-card p.desc { font-size: 11.5px; color: var(--ink-faint); line-height: 1.65; margin: 0; }
 .dashboard-page .tree-card { background: var(--bg-panel); border: 1px solid var(--navy-line); border-radius: 5px; padding: 18px; margin-bottom: 20px; }
 .dashboard-page .tree-rule { font-size: 11.5px; color: var(--ink-faint); line-height: 2; }
-.dashboard-page .tree-rule.highlight { color: var(--amber); }
+.dashboard-page .tree-rule.highlight { color: var(--warn-ink); }
 .dashboard-page footer.disclaimer { margin-top: 20px; border-top: 1px solid var(--navy-line-soft); background: var(--bg-panel); }
 .dashboard-page .query-bar { display: flex; gap: 12px; align-items: flex-end; padding: 16px 18px; margin-bottom: 24px; flex-wrap: wrap; }
 .dashboard-page .query-bar .field { flex: 1; min-width: 180px; }
@@ -763,7 +763,7 @@
 
   /* Compartilhado com o site (gráficos de calibração, cores de estado, [hidden]).
      Fica neste arquivo, nesta posição, para manter a ordem original da cascata. */
-  :root { --st-good: #3DAA6E; --st-warn: #C9A227; --st-bad: #DA5F55; --st-none: #8D97A6; }
+  /* cores de estado (--st-*) vêm do tema, em base.css */
   [hidden] { display: none !important; }
   .rel-svg, .roll-svg { width: 100%; height: auto; display: block; overflow: visible; font-family: var(--sans); }
   .rel-svg .gl, .roll-svg .gl { stroke: var(--grid-line); stroke-width: 1; }

@@ -13,13 +13,15 @@
     --navy-line-soft: #E4DCCB;
     --grid-line: #E6DFD0;
     --gold: #B08D3E;          /* dourado de marca: fios, marcadores e item ativo; não é cor de texto */
-    --gold-bright: #85661F;   /* dourado para texto */
+    --gold-bright: #7A5D1A;   /* dourado para texto (4,5:1 ou mais também sobre fundo tingido de dourado) */
+    --gold-text: #7A5D1A;     /* dourado de marca quando é texto */
+    --st-good: #1F7A4D; --st-warn: #8A6A10; --st-bad: #B5452F; --st-none: #6B7686; /* símbolos de veredito: 3:1 ou mais sobre o próprio fundo tingido */
     --ink: #1E2A3A;
     --ink-dim: #4E5A6A;
-    --ink-faint: #5E6B7C;
+    --ink-faint: #56626F;
     --ink-mute: #626D7C;
     --ink-line: #8E8571;      /* linhas de referência dos gráficos */
-    --ink-ghost: #A39B88;     /* só decoração, nunca texto */
+    --ink-ghost: #8A826E;     /* separadores e setas: 3:1 ou mais */
     --red: #B5452F;
     --green: #2E7D5B;
     --up: #2E7D5B;
@@ -61,6 +63,8 @@
     --grid-line: #22303F;
     --gold: #B08D3E;
     --gold-bright: #D4B15C;
+    --gold-text: #B08D3E;
+    --st-good: #3DAA6E; --st-warn: #C9A227; --st-bad: #DA5F55; --st-none: #8D97A6;
     --ink: #E8E3D8;
     --ink-dim: #9BA4B2;
     --ink-faint: #7D8898;
