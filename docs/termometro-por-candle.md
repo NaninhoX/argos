@@ -1,5 +1,7 @@
 # Termômetro por candle (cadência de 1h e 4h)
 
+> **Agendador decidido em 24/10/2026:** o disparo por candle passa a ser feito pelo cron-job.org (serviço externo gratuito). URLs, horários, cabeçalho e passo a passo estão em [cron-externo.md](cron-externo.md). O agendamento do GitHub Actions continua como está até a semana em paralelo acabar.
+
 Hoje o Termômetro dispara uma vez por dia (00h05 UTC) e só enxerga o último candle de cada série: o 1h cobre 1 candle em 24 e o 4h, 1 em 6. Com disparo por candle, o registro prospectivo passa de ≈ 60 para ≈ 660 previsões por mês (estimativa medida sobre 55 meses de histórico, com o script `estimar-volume.mjs` da skill `stratum-previsoes-prospectivas`, na pasta do Projeto, fora deste repositório), e o relógio da evidência anda mais rápido. Cada dia sem isso é evidência que não se recupera.
 
 ## Como funciona
