@@ -37,7 +37,18 @@ Medido em produção em 24/10/2026, numa conexão rápida, abrindo só a landing
 
 ## Itens
 
-1. [ ] Carregador sob demanda em `nav.js`; `boot.js` só roteia; `ArgosLive.init()` na primeira abertura.
-2. [ ] Snapshot por série em `tools/build-web.mjs`; `live.js` e `platform.js` pedem a série ao carregador.
-3. [ ] `headers` em `vercel.json` (estáticos imutáveis, fontes uma semana, `s-maxage` nas duas APIs).
-4. [ ] Medir de novo em produção (mesma conexão) e registrar aqui o antes e o depois.
+1. [x] Carregador sob demanda em `nav.js`; `boot.js` só roteia; `ArgosLive.init()` na primeira abertura.
+2. [x] Snapshot por série em `tools/build-web.mjs`; `live.js` e `platform.js` pedem a série ao carregador.
+3. [x] `headers` em `vercel.json` (estáticos imutáveis, fontes uma semana, `s-maxage` nas duas APIs).
+4. [x] Medir de novo em produção (mesma conexão) e registrar aqui o antes e o depois.
+
+## Resultado (medido em produção em 24/10/2026, mesma máquina e conexão da medição de contexto, commit c4b7263)
+
+| Landing | Antes | Depois |
+|---|---|---|
+| Requisições | 40 | 28 |
+| Transferido | 1,6 MB | 308 KB (−81%) |
+| `DOMContentLoaded` | 3,2 s | 1,7 s |
+| Plataforma carregada sem ser aberta | sim | não |
+
+Abrir a plataforma depois disso carrega o núcleo e 4 séries (a pedida e as 3 diárias) e completa as outras em segundo plano; a análise ao vivo aparece com dados da Binance e sem erro no console. `/api/analyze` responde do cache da CDN na segunda chamada igual (`X-Vercel-Cache: HIT`). Uma medição só, numa conexão rápida: no celular em 4G a diferença absoluta deve ser maior, mas isso não foi medido.
