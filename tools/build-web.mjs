@@ -4,7 +4,7 @@
 //   web/js/pine-reader.js <- lib/pine-reader.js (leitor de Pine do Sandbox, embrulhado para window.ArgosPineReader)
 //   web/js/analysis-summary.js <- lib/canonical.js + lib/analysis-summary.js (mesmo resumo e mesmo resultHash do servidor,
 //                                 embrulhados para window.ArgosSummary; só o SHA-256 do node:crypto é trocado por um em JS)
-//   web/data/snapshot.js  <- data/snapshot-v1.1.json
+//   web/data/snapshot/<SIMBOLO>_<tf>.js <- data/snapshot-v1.1.json, um arquivo por série
 //   web/data/study.js     <- data/study-v1.1.json
 // São arquivos gerados: não editar à mão. Roda no deploy (buildCommand) e ao subir o servidor local.
 // Uso: node tools/build-web.mjs
@@ -154,14 +154,17 @@ export function buildWeb() {
     fs.writeFileSync(file, text);
     return rel;
   };
-  const snapshot = fs.readFileSync(path.join(root, 'data', 'snapshot-v1.1.json'), 'utf8');
+  const { series, ...meta } = JSON.parse(fs.readFileSync(path.join(root, 'data', 'snapshot-v1.1.json'), 'utf8'));
+  fs.rmSync(path.join(root, 'web', 'data', 'snapshot.js'), { force: true }); // formato antigo: as 9 séries num arquivo só
   const study = JSON.stringify(JSON.parse(fs.readFileSync(path.join(root, 'data', 'study-v1.1.json'), 'utf8')));
   return [
     out('js/engine.js', browserEngineSource()),
     out('js/regime-view.js', browserRegimeViewSource()),
     out('js/pine-reader.js', browserPineReaderSource()),
     out('js/analysis-summary.js', browserSummarySource()),
-    out('data/snapshot.js', `${BANNER}data/snapshot-v1.1.json */\nwindow.ARGOS_SNAPSHOT=${snapshot};\n`),
+    // um arquivo por série: cada um acrescenta a sua em window.ARGOS_SNAPSHOT.series (a plataforma carrega só as que usa)
+    ...Object.keys(series).map((k) => out(`data/snapshot/${k}.js`,
+      `${BANNER}data/snapshot-v1.1.json */\n(window.ARGOS_SNAPSHOT=window.ARGOS_SNAPSHOT||${JSON.stringify({ ...meta, series: {} })}).series[${JSON.stringify(k)}]=${JSON.stringify(series[k])};\n`)),
     out('data/study.js', `${BANNER}data/study-v1.1.json */\nwindow.ARGOS_STUDY=${study};\n`)
   ];
 }

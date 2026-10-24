@@ -49,7 +49,7 @@
   <div class="nav-inner">
     <div class="brand"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></div>
     <div class="nav-links">
-      <a href="#ao-vivo" onclick="openLive(); return false;">Ao vivo</a>
+      <a href="#ao-vivo" data-acao="ao-vivo">Ao vivo</a>
       <a href="#como-funciona">Como funciona</a>
       <a href="#estudo">Estudo</a>
       <a href="#calibracao">Calibração</a>
@@ -66,7 +66,7 @@
       <h1>A pergunta não é se um setup parece funcionar. É se ele <em>resiste</em> ao teste.</h1>
       <p class="hero-sub">O Argos testa setups de trading contra o histórico real do mercado e contra entradas aleatórias com a mesma regra de saída. Quando não há vantagem estatística, o resultado é publicado assim mesmo.</p>
       <div class="hero-actions">
-        <a href="#ao-vivo" class="btn-primary btn-live" onclick="openLive(); return false;"><span class="d"></span>Ver análise ao vivo</a>
+        <a href="#ao-vivo" class="btn-primary btn-live" data-acao="ao-vivo"><span class="d"></span>Ver análise ao vivo</a>
         <a href="#contato" class="btn-ghost">Solicitar acesso à plataforma</a>
       </div>
     </div>
@@ -89,7 +89,7 @@
           <div class="verdict">Sem vantagem estatística demonstrável frente ao acaso.</div>
         </div>
         <p class="qp-note" data-step="fade">O setup mais popular do varejo acertou menos que entradas aleatórias. O p bruto sugere diferença, mas, corrigido para os 72 testes da rodada, ela não se sustenta. É assim que o Argos evita enxergar padrão no ruído.</p>
-        <div class="qp-foot" data-step="fade"><span>Alvo 2×ATR · stop 1×ATR · 12 candles</span><a href="#ao-vivo" class="qp-open" onclick="openCase('BTCUSDT','4h','RSI_OVERSOLD'); return false;">Reproduzir na plataforma →</a></div>
+        <div class="qp-foot" data-step="fade"><span>Alvo 2×ATR · stop 1×ATR · 12 candles</span><a href="#ao-vivo" class="qp-open" data-caso="BTCUSDT,4h,RSI_OVERSOLD">Reproduzir na plataforma →</a></div>
       </div>
     </div>
   </div>
@@ -140,7 +140,7 @@ alertcondition(ta.crossover(r, 30))</pre>
         <div class="ext-row"><span>Direção</span><span class="val">compra teórica (long)</span></div>
         <div class="ext-row"><span>Saída</span><span class="val">alvo 2×ATR · stop 1×ATR · 12 candles</span></div>
         <div class="ext-row"><span>Comparação</span><span class="val">entradas aleatórias, mesma regra</span></div>
-        <a href="#plataforma" class="how-link" data-feature="sandbox" onclick="openTab('sandbox'); return false;">Testar um script no Sandbox →</a>
+        <a href="#plataforma" class="how-link" data-feature="sandbox" data-tela="sandbox">Testar um script no Sandbox →</a>
       </div>
     </div>
   </div>
@@ -667,38 +667,29 @@ alertcondition(ta.crossover(r, 30))</pre>
   <footer class="disclaimer">
   <div class="disclaimer-inner">
     <span class="mark">⚠</span>
-    <p>SOMENTE FERRAMENTA DE PESQUISA. Esta plataforma é exclusivamente para fins de pesquisa e análise histórica. Não constitui consultoria de investimentos, recomendação de compra ou venda de ativos, nem qualquer tipo de sinal de operação. Desempenho passado não garante resultados futuros. Quem usa a plataforma é inteiramente responsável por suas decisões.<br><a href="#" onclick="switchDashTab('calibration'); return false;" class="disclaimer-calib-link">Ver a calibração do motor →</a></p>
+    <p>SOMENTE FERRAMENTA DE PESQUISA. Esta plataforma é exclusivamente para fins de pesquisa e análise histórica. Não constitui consultoria de investimentos, recomendação de compra ou venda de ativos, nem qualquer tipo de sinal de operação. Desempenho passado não garante resultados futuros. Quem usa a plataforma é inteiramente responsável por suas decisões.<br><a href="#calibracao" data-tela="calibration" class="disclaimer-calib-link">Ver a calibração do motor →</a></p>
   </div>
 </footer>
 </div>
 
 <!-- ============ META NAV: switch Landing <-> Dashboard ============ -->
 <div class="meta-nav" role="group" aria-label="Site, plataforma e tema">
-  <button id="nav-landing" class="active" aria-pressed="true" onclick="showPage('landing')">Site</button>
-  <button id="nav-dashboard" aria-pressed="false" onclick="showPage('dashboard')">Plataforma</button>
-  <button id="nav-tema" type="button" aria-pressed="false" onclick="ArgosTema.alternar()">Tema escuro</button>
+  <button id="nav-landing" type="button" class="active" aria-pressed="true" data-acao="site">Site</button>
+  <button id="nav-dashboard" type="button" aria-pressed="false" data-acao="plataforma">Plataforma</button>
+  <button id="nav-tema" type="button" aria-pressed="false" data-acao="tema">Tema escuro</button>
 </div>
 
 <script src="js/landing-motion.js"></script>
+<script src="js/platform-motion.js"></script>
 <script src="js/estrutura.js"></script>
+<script src="js/carregador.js"></script>
 <script src="js/nav.js"></script>
+<script src="js/site.js"></script>
 <script src="js/tabela-72.js"></script>
-
-<!-- TradingView Lightweight Charts™ v5.2.1 · Copyright (c) 2026 TradingView, Inc. · Apache License 2.0 · https://www.tradingview.com/ -->
-<script src="js/vendor/lightweight-charts.js"></script>
-<script src="data/snapshot.js"></script>
-<script src="data/study.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/regime-view.js"></script>
-<script src="js/pine-reader.js"></script>
-<script src="js/analysis-summary.js"></script>
-<script src="js/url-state.js"></script>
 <script src="js/config.js"></script>
 <script src="js/contato.js"></script>
-<script src="js/live.js"></script>
-<script src="js/heatmap.js"></script>
-<script src="js/platform.js"></script>
-<script src="js/platform-motion.js"></script>
+<!-- A plataforma (gráfico, motor, telas e séries de candles) entra sob demanda por js/carregador.js (ADR 0011).
+     TradingView Lightweight Charts™ v5.2.1 · Copyright (c) 2026 TradingView, Inc. · Apache License 2.0 · https://www.tradingview.com/ -->
 <script src="js/boot.js"></script>
 </body>
 </html>

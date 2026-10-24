@@ -9,4 +9,8 @@ web/js/regime-view.js
 web/js/pine-reader.js
 web/js/analysis-summary.js
 web/data/snapshot.js
+web/data/snapshot/
 web/data/study.js
+
+# worktrees dos agentes do Claude Code
+.claude/worktrees/

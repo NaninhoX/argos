@@ -12,7 +12,10 @@ import { migrate } from '../tools/migrate.mjs';
 const TABLES = [
   'schema_migrations', 'engine_versions', 'candles', 'regimes', 'previsoes', 'desfechos', 'provas_merkle',
   'previsao_prova', 'resultados_matriz', 'query_log', 'tool_audit', 'agent_runs', 'revisao_humana', 'plano_calibracao',
+  'acessos', 'acessos_uso', 'limite_taxa',
 ];
+// as migrações da pasta, em ordem (001_init, 002_acessos, ...)
+const MIGRATIONS = fs.readdirSync(fileURLToPath(new URL('../db/migrations/', import.meta.url))).filter((f) => f.endsWith('.sql')).sort().map((f) => f.slice(0, -4));
 
 async function tableNames(db) {
   const r = await db.query("select table_name from information_schema.tables where table_schema = 'public' order by 1");
@@ -23,14 +26,15 @@ test('migração aplica o esquema completo e semeia a versão do motor', async (
   const db = await createTestDb();
   try {
     const res = await migrate(db);
-    assert.deepEqual(res.applied, ['001_init']);
+    assert.deepEqual(res.applied, MIGRATIONS);
+    assert.equal(MIGRATIONS[0], '001_init');
     assert.deepEqual(res.skipped, []);
     const names = await tableNames(db);
     for (const t of TABLES) assert.ok(names.includes(t), `tabela ausente: ${t}`);
     const ev = await db.query('select version, commit_sha from engine_versions');
     assert.deepEqual(ev.rows, [{ version: 'argos-engine 1.1.0', commit_sha: null }]);
     const sm = await db.query('select version from schema_migrations');
-    assert.deepEqual(sm.rows, [{ version: '001_init' }]);
+    assert.deepEqual(sm.rows.map((x) => x.version).sort(), MIGRATIONS);
   } finally {
     await db.close();
   }
@@ -42,9 +46,9 @@ test('reaplicar não faz nada e não dá erro', async () => {
     await migrate(db);
     const again = await migrate(db);
     assert.deepEqual(again.applied, []);
-    assert.deepEqual(again.skipped, ['001_init']);
+    assert.deepEqual(again.skipped, MIGRATIONS);
     const sm = await db.query('select count(*)::int as n from schema_migrations');
-    assert.equal(sm.rows[0].n, 1);
+    assert.equal(sm.rows[0].n, MIGRATIONS.length);
     const ev = await db.query('select count(*)::int as n from engine_versions');
     assert.equal(ev.rows[0].n, 1);
   } finally {

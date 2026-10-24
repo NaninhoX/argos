@@ -29,7 +29,16 @@
     window.scrollTo(0, 0);
     if (which === 'dashboard') { var cur = document.querySelector('.dash-screen.visible'); if (cur) afterTab(cur.id.replace('dash-', '')); }
   }
-  function afterTab(screen) {
+  // A plataforma é carregada na primeira abertura (js/carregador.js, ADR 0011); até lá a tela mostra o esqueleto.
+  function comPlataforma(fn) {
+    if (!window.ArgosCarga) { fn(); return; }
+    window.ArgosCarga.plataforma().then(fn, function () {
+      var t = document.getElementById('lvSrcText');
+      if (t) t.textContent = 'Não foi possível carregar a plataforma. Confira a conexão e toque em Plataforma de novo.';
+    });
+  }
+  function afterTab(screen) { comPlataforma(function () { afterTabNow(screen); }); }
+  function afterTabNow(screen) {
     if (screen === 'live' && window.ArgosLive) window.ArgosLive.onShow();
     if (window.ArgosPlatform) window.ArgosPlatform.onTab(screen);
     // argos:screen (saída): a tela `screen` da plataforma acabou de ficar visível. Gancho para o movimento.
@@ -72,4 +81,17 @@
   });
   function openLive() { showPage('dashboard', true); switchDashTab('live'); }
   function openTab(screen) { showPage('dashboard', true); switchDashTab(screen); }
-  function openCase(sym, tf, id) { openLive(); if (window.ArgosLive && window.ArgosLive.openCase) window.ArgosLive.openCase(sym, tf, id); }
+  function openCase(sym, tf, id) { openLive(); comPlataforma(function () { if (window.ArgosLive && window.ArgosLive.openCase) window.ArgosLive.openCase(sym, tf, id); }); }
+  // Botões e links do site (sem onclick no HTML, por causa da política de conteúdo): data-acao, data-caso e data-tela.
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('[data-acao], [data-caso], [data-tela]');
+    if (!el) return;
+    e.preventDefault();
+    if (el.hasAttribute('data-caso')) { var c = el.getAttribute('data-caso').split(','); openCase(c[0], c[1], c[2]); return; }
+    if (el.hasAttribute('data-tela')) { openTab(el.getAttribute('data-tela')); return; }
+    var a = el.getAttribute('data-acao');
+    if (a === 'ao-vivo') openLive();
+    else if (a === 'site') showPage('landing');
+    else if (a === 'plataforma') showPage('dashboard');
+    else if (a === 'tema' && window.ArgosTema) window.ArgosTema.alternar();
+  });

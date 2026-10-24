@@ -41,7 +41,8 @@ export function createHandler({ env = process.env, ...deps } = {}) {
       ip: forwarded || (req.socket && req.socket.remoteAddress) || '',
       code: req.headers['x-argos-code'],
       env,
-      deps: { scanText, withDisclaimer, audit: async (e) => { logAudit(e); await dbAudit(env)(e); }, ...deps }
+      // banco (quando há): códigos de cliente, uso por cliente e limite de chamadas compartilhado (lib/acesso.js)
+      deps: { scanText, withDisclaimer, audit: async (e) => { logAudit(e); await dbAudit(env)(e); }, db: env.DATABASE_URL ? await resolveDb(env).catch(() => null) : null, ...deps }
     });
     for (const [k, v] of Object.entries(out.headers || {})) res.setHeader(k, v);
     if (out.sse) {

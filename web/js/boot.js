@@ -1,2 +1,1 @@
-  if (window.ArgosLive) window.ArgosLive.init();
-  routeFromHash(); // abre a tela que o endereço indica (#ao-vivo, #sandbox, #query, #regime, #calibracao)
+  routeFromHash(); // abre a tela que o endereço indica (#ao-vivo, #sandbox, #query, #regime, #calibracao); a plataforma carrega sob demanda (js/carregador.js)

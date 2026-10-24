@@ -17,12 +17,31 @@ export function versionarHtml(html, hashDe) {
   });
 }
 
+// Endereços que um script pede em tempo de execução, escritos como literais entre aspas simples (js/carregador.js).
+const LITERAL = /'((?:css|js|data)\/[^'?#]+\.(?:css|js))(?:\?v=[0-9a-f]+)?'/g;
+/** Scripts cujos literais de endereço também recebem ?v=: são versionados antes dos HTML, que os carregam. */
+export const SCRIPTS_COM_ENDERECOS = ['js/carregador.js'];
+
+/** Reescreve os literais de endereço de um script, como versionarHtml faz com os atributos. */
+export function versionarScript(js, hashDe) {
+  return js.replace(LITERAL, (m, rel) => {
+    const h = hashDe(rel);
+    return h ? `'${rel}?v=${h}'` : m;
+  });
+}
+
 export function versionarWeb(webDir) {
   const hashDe = (rel) => {
     const f = path.join(webDir, rel);
     return fs.existsSync(f) ? crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 8) : null;
   };
   const feitos = [];
+  for (const rel of SCRIPTS_COM_ENDERECOS) {
+    const f = path.join(webDir, rel);
+    if (!fs.existsSync(f)) continue;
+    const antes = fs.readFileSync(f, 'utf8'), depois = versionarScript(antes, hashDe);
+    if (depois !== antes) { fs.writeFileSync(f, depois); feitos.push(rel); }
+  }
   for (const nome of fs.readdirSync(webDir).filter((n) => n.endsWith('.html'))) {
     const f = path.join(webDir, nome);
     const antes = fs.readFileSync(f, 'utf8'), depois = versionarHtml(antes, hashDe);

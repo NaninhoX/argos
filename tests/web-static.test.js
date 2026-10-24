@@ -47,3 +47,27 @@ test('fontes: cada url() de fonts.css aponta para um arquivo woff2 presente, com
   }
   for (const lic of ['OFL-SourceSerif4.txt', 'OFL-JetBrainsMono.txt']) assert.match(read('fonts', lic), /SIL Open Font License, Version 1\.1/);
 });
+
+test('páginas: sem handler inline (onclick e afins) nem <script> embutido, para a política de conteúdo do vercel.json (script-src self)', () => {
+  for (const page of PAGES) {
+    const html = read(page);
+    assert.doesNotMatch(html, /\son[a-z]+\s*=\s*["']/i, `${page}: handler inline`);
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, `${page}: <script> sem src`);
+  }
+  const csp = JSON.parse(readFileSync(join(WEB, '..', 'vercel.json'), 'utf8')).headers.find((h) => h.source === '/(.*)').headers.find((h) => h.key === 'Content-Security-Policy').value;
+  assert.match(csp, /script-src 'self';/);
+  assert.match(csp, /frame-ancestors 'none'/);
+});
+
+test('carregador da plataforma (ADR 0011): todo script que ele pede existe, e as séries são as 9 do snapshot', () => {
+  const src = read('js', 'carregador.js');
+  const paths = [...src.matchAll(/'((?:js|data)\/[^'?]+\.js)(?:\?v=[0-9a-f]+)?'/g)].map((m) => m[1]);
+  const snapshot = JSON.parse(readFileSync(join(WEB, '..', 'data', 'snapshot-v1.1.json'), 'utf8'));
+  const series = paths.filter((p) => p.startsWith('data/snapshot/')).map((p) => p.slice('data/snapshot/'.length, -3)).sort();
+  assert.deepEqual(series, Object.keys(snapshot.series).sort());
+  // data/*.js é gerado no build (tools/build-web.mjs); js/ é fonte e tem de existir
+  for (const p of paths.filter((x) => x.startsWith('js/'))) assert.ok(existsSync(join(WEB, p)), p);
+  // a landing não carrega a plataforma: nenhum desses scripts entra direto no index.html
+  const html = read('index.html');
+  for (const p of ['js/live.js', 'js/platform.js', 'js/engine.js', 'js/vendor/lightweight-charts.js']) assert.ok(!html.includes(`src="${p}`), `index.html carrega ${p} direto`);
+});

@@ -112,7 +112,7 @@ test('build do navegador: resumo e resultHash do navegador são idênticos aos d
 
 test('build do navegador: buildWeb lista os arquivos gerados, incluindo o leitor de Pine e o resumo', () => {
   const out = buildWeb();
-  for (const f of ['js/engine.js', 'js/regime-view.js', 'js/pine-reader.js', 'js/analysis-summary.js', 'data/snapshot.js', 'data/study.js']) assert.ok(out.includes(f), f);
+  for (const f of ['js/engine.js', 'js/regime-view.js', 'js/pine-reader.js', 'js/analysis-summary.js', 'data/snapshot/BTCUSDT_4h.js', 'data/snapshot/SOLUSDT_1d.js', 'data/study.js']) assert.ok(out.includes(f), f);
 });
 
 test('build do navegador: import inesperado em lib/analysis-summary.js é recusado, não ignorado', () => {

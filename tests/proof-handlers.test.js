@@ -516,7 +516,7 @@ test('resolveDb: pglite://memory abre PGlite migrado, memoizado por URL, e serve
   await other.close();
   assert.equal(typeof db.transaction, 'function');
   assert.equal((await db.query("show timezone")).rows[0].TimeZone, 'UTC');
-  assert.equal((await db.query("select count(*)::int as n from schema_migrations")).rows[0].n, 1);
+  assert.equal((await db.query("select count(*)::int as n from schema_migrations")).rows[0].n, fs.readdirSync(new URL('../db/migrations/', import.meta.url)).filter((f) => f.endsWith('.sql')).length);
   assert.equal(await count(db), 0);
 
   clock = T0;
@@ -542,7 +542,7 @@ test('resolveDb: pglite://<pasta> persiste em disco entre aberturas', async () =
     assert.notEqual(b, a);
     const row = await getPrevisaoByHash(b, r.body.hash);
     assert.equal(row.id, r.body.id);
-    assert.equal((await b.query('select count(*)::int as n from schema_migrations')).rows[0].n, 1, 'migrações não são reaplicadas');
+    assert.equal((await b.query('select count(*)::int as n from schema_migrations')).rows[0].n, fs.readdirSync(new URL('../db/migrations/', import.meta.url)).filter((f) => f.endsWith('.sql')).length, 'migrações não são reaplicadas');
     await b.close();
   } finally {
     try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3 }); } catch { /* o sistema pode segurar o arquivo por um instante */ }

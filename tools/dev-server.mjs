@@ -13,6 +13,8 @@ buildWeb(); // motor e dados do navegador sempre em dia com engine/ e data/
 const webDir = path.join(root, 'web');
 const apiDir = path.join(root, 'api');
 const port = Number(process.env.PORT || 3000);
+// Os cabeçalhos de segurança de produção (vercel.json, regra "/(.*)") valem também aqui: a política de conteúdo se testa local.
+const SECURITY = Object.fromEntries(((JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8')).headers || []).find((h) => h.source === '/(.*)') || { headers: [] }).headers.map((h) => [h.key, h.value]));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' };
 
 // .env local (fora do Git): CHAVE=valor por linha
@@ -54,7 +56,7 @@ const server = http.createServer(async (req, res) => {
     const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
     const file = path.join(webDir, rel);
     if (!file.startsWith(webDir) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('não encontrado'); }
-    res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });
+    res.writeHead(200, { ...SECURITY, 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });
     fs.createReadStream(file).pipe(res);
   } catch (e) {
     console.error(e);

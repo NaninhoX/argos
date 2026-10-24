@@ -43,7 +43,9 @@ node tools/extract-html.mjs   # regenera legacy/blocks a partir do HTML original
 
 ## Front
 
-`web/index.html` e `web/js/{nav,live,platform,boot}.js` são fonte editável (saíram do HTML legado por `tools/split-web.mjs`, uma vez). `web/js/engine.js`, `web/data/snapshot.js` e `web/data/study.js` são gerados: não editar. O front ainda calcula no navegador com o mesmo motor; o servidor expõe `/api/analyze` com resultado idêntico.
+`web/index.html` e `web/js/{nav,live,platform,boot}.js` são fonte editável (saíram do HTML legado por `tools/split-web.mjs`, uma vez). `web/js/engine.js`, `web/data/snapshot/<SIMBOLO>_<tf>.js` (uma série por arquivo) e `web/data/study.js` são gerados: não editar. O front ainda calcula no navegador com o mesmo motor; o servidor expõe `/api/analyze` com resultado idêntico.
+
+Carregamento (ADR 0011): a landing não baixa a plataforma. Ela carrega `tema.js`, `motion.js`, `landing-motion.js`, `platform-motion.js`, `estrutura.js`, `carregador.js`, `nav.js`, `site.js` (matriz do estudo e dicas), `tabela-72.js`, `config.js`, `contato.js` e `boot.js` (só roteia). O resto (gráfico, motor, `live.js`, `heatmap.js`, `platform.js` e as séries) entra pela primeira abertura da plataforma, via `ArgosCarga.plataforma()` em `js/carregador.js`; as séries que faltam vêm em segundo plano, e quem lê uma série espera `ArgosCarga.serie(sym, tf)`. Arquivo novo que a plataforma precise entra na lista do carregador, como literal (o deploy põe `?v=<hash>` nele, `tools/versionar-web.mjs`). Nada de `onclick` nem `<script>` embutido no HTML: a política de conteúdo do `vercel.json` só aceita script do próprio site (`tests/web-static.test.js`); ação de link ou botão vai por `data-acao`, `data-caso` ou `data-tela` (`nav.js`). Cache: CSS, JS e dados com `?v=` ficam um ano no navegador; `/api/analyze` e `/api/candles` ficam 60 s na CDN.
 
 CSS em `web/css/`, nesta ordem (a ordem é a cascata): `fonts.css`, `base.css`, `landing.css` (tudo sob `#page-landing`), `platform.css`, `extras.css`, `heatmap.css`, `brand.css`, `motion.css`, `landing-motion.css`, `platform-motion.css`, `estrutura.css` (menu lateral da plataforma a partir de 1100 px, caminho no topo montado por `js/estrutura.js`, e comandos da tabela dos 72 testes de `js/tabela-72.js`). `index.html` não tem `<style>` embutido (`tests/web-static.test.js`). Fontes em `web/fonts/` (SIL OFL), sem chamada a terceiros. Tema: Papel por padrão (variáveis no `:root` de `base.css`) e escuro em `:root[data-theme="dark"]`, alternado por `web/js/tema.js` (carregado no `<head>`, global `ArgosTema`, evento `argos:tema`). Cor nova entra como variável nos dois blocos, nunca como valor fixo; gráfico que guarda cor em JavaScript lê `ArgosTema.cor('--nome')` e se redesenha no `argos:tema`. Texto em `var(--sans)`; `var(--mono)` só para código, hashes e Pine.
 
@@ -57,6 +59,10 @@ Marca: Stratum Research é a casa, Argos Sentinel é o produto. Guia em `../_lay
 - `tests/study-v1.1.test.js`: o motor reproduz o estudo publicado v1.1 inteiro: 72 células, p ajustado e veredito sobre os 72 testes, contagem 63/3/4/1/1 e calibração agregada (N 42.489, BSS, ECE).
 
 - `tests/prospective.test.js`: a previsão prospectiva devolve os mesmos p e r da calibração do motor.
+
+## Acesso
+
+Rotas fechadas (`/api/argos-ai`, `POST /api/previsoes`, `/api/termometro/status`) aceitam, no cabeçalho `x-argos-code`, o código geral (`ARGOS_ACCESS_CODE`) ou um código de cliente da tabela `acessos` (migração 002; só o SHA-256 fica no banco), conferidos em `lib/acesso.js`. Michel cria, lista, revoga e vê o uso com `node tools/acesso.mjs criar --rotulo "…" [--dias N] | listar | revogar --id N | uso` (precisa de `DATABASE_URL`; o código aparece uma vez, nunca o copie para chat ou repositório). O limite de chamadas do Argos AI fica no banco (`limite_taxa`, chave com hash do IP) quando há banco. Agendador do Termômetro: cron-job.org, configurado por Michel conforme `docs/cron-externo.md`.
 
 ## Prova de previsão
 

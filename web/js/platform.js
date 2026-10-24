@@ -15,7 +15,6 @@
   const U = L.util, E = U.E, $ = (id) => document.getElementById(id);
   const { fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDay, esc, PAIR, TF_LABEL, pl } = U;
   const PR = window.ArgosPineReader, SUM = window.ArgosSummary;
-  const IN_CLAUDE = !!U.IN_CLAUDE;
   const DEF = { mode: 'atr', tgt: 2, stp: 1, hold: 12 };
   const ASSETS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'], TFS = ['1h', '4h', '1d'], TF_SEC = { '1h': 3600, '4h': 14400, '1d': 86400 };
   const TONE = { EDGE: 'good', EDGE_SENSIVEL: 'warn', ABAIXO: 'bad', SEM_EDGE: 'muted', INSUFICIENTE: 'neutral' };
@@ -187,17 +186,20 @@
   // ================================================================ Séries para os testes
   // Candles: o snapshot versionado sempre existe; o ao vivo (Binance) é tentado antes de rodar e, se falhar, o teste usa o snapshot e diz isso.
   const snapCache = {};
+  // séries de candles carregam sob demanda (js/carregador.js): toda leitura de série espera a dela chegar
+  const need = (sym, tf) => (window.ArgosCarga ? window.ArgosCarga.serie(sym, tf) : Promise.resolve());
   function snapshotEntry(sym, tf) {
     const k = sym + '_' + tf;
     if (!snapCache[k]) snapCache[k] = { d: E.decodeSnapshot(window.ARGOS_SNAPSHOT.series[k]), source: 'snapshot' };
     return snapCache[k];
   }
   async function ensureSeries(sym, tf) {
+    await need(sym, tf);
     const en0 = U.entry(sym, tf);
     const fresh = en0.source === 'live' && en0.updatedAt && Date.now() - en0.updatedAt < 5 * 60 * 1000;
-    if (!fresh && !IN_CLAUDE && typeof U.refreshLive === 'function') { try { await U.refreshLive(sym, tf); } catch (e) { /* refreshLive guarda o erro no próprio registro da série */ } }
+    if (!fresh && typeof U.refreshLive === 'function') { try { await U.refreshLive(sym, tf); } catch (e) { /* refreshLive guarda o erro no próprio registro da série */ } }
     const en = U.entry(sym, tf);
-    return { d: en.d, source: en.via === 'base' ? 'database' : en.source, fallback: en.source === 'live' ? '' : IN_CLAUDE ? '' : (en.liveError ? 'a Binance não respondeu' : 'sem resposta da Binance') };
+    return { d: en.d, source: en.via === 'base' ? 'database' : en.source, fallback: en.source === 'live' ? '' : (en.liveError ? 'a Binance não respondeu' : 'sem resposta da Binance') };
   }
   const seriesLine = (sym, tf, d, source) => PAIR(sym) + ' ' + TF_LABEL[tf] + ' · ' + fmtInt(d.n) + ' candles até ' + fmtDay(d.t[d.n - 1]) + ' · ' + (source === 'live' ? 'Binance Spot ao vivo' : source === 'database' ? 'base de candles da Stratum (Binance Spot)' : 'snapshot versionado');
 
@@ -207,7 +209,9 @@
   function sbRR() { const c = sbCfgRead(); $('sbRR').textContent = 'Alvo : stop = ' + fmtN(c.tgt / c.stp, 1) + ' : 1 · ' + U.cfgText(c); }
   function sbDataLine() {
     const el = $('sbData'); if (!el) return;
-    const sym = pressed('sbAsset') || 'BTCUSDT', tf = pressed('sbTf') || '4h', en = U.entry(sym, tf);
+    const sym = pressed('sbAsset') || 'BTCUSDT', tf = pressed('sbTf') || '4h';
+    if (!window.ARGOS_SNAPSHOT || !window.ARGOS_SNAPSHOT.series[sym + '_' + tf]) { need(sym, tf).then(sbDataLine, () => {}); return; }
+    const en = U.entry(sym, tf);
     el.textContent = 'Candles: ' + seriesLine(sym, tf, en.d, en.source) + '. O ao vivo é carregado ao executar; sem resposta da Binance, o teste usa o snapshot.';
   }
   function sbCount() {
@@ -368,6 +372,7 @@
   }
   // Candles do navegador para o Query: snapshot versionado ou ao vivo (com queda para o snapshot)
   async function qSeries(sym, tf, live) {
+    await need(sym, tf);
     if (!live) return { d: snapshotEntry(sym, tf).d, source: 'snapshot', fallback: '' };
     // "Base de candles": snapshot + candles da base, a mesma série que o servidor lê (o resultHash é comparável); sem a base, tenta a Binance
     const db = await U.dbSeries(sym, tf);
@@ -429,7 +434,7 @@
     const req = qRequest(sym, tf, cfg, win, live, brief);
     try {
       if (!SUM) throw new Error('o módulo de resumo não foi carregado nesta página');
-      const skipped = !custom && (IN_CLAUDE || !/^https?:$/.test(location.protocol));
+      const skipped = !custom && !/^https?:$/.test(location.protocol);
       const serverP = custom || skipped ? Promise.resolve(null) : fetchServer(req);
       const local = custom ? await qLocalCustom(custom, sym, tf, cfg, win, live) : await qLocalBank(sym, tf, cfg, win, live);
       const server = await serverP;
@@ -538,7 +543,9 @@
   // Completa a série com os candles novos (Binance ou base da Stratum) e redesenha só se algo mudou.
   async function cFresh() {
     try {
-      const sym = C.sym, tf = C.tf, before = U.entry(sym, tf).d.n;
+      const sym = C.sym, tf = C.tf;
+      await need(sym, tf);
+      const before = U.entry(sym, tf).d.n;
       await ensureSeries(sym, tf);
       if (sym === C.sym && tf === C.tf && U.entry(sym, tf).d.n !== before) cRender();
     } catch (e) { /* segue com a série que já estava na tela */ }
@@ -584,48 +591,8 @@
   }
   function cInit() {
     if (!$('cAsset')) return;
-    bindSeg('cAsset', (v) => { C.sym = v; cRender(); cFresh(); });
-    bindSeg('cTf', (v) => { C.tf = v; cRender(); cFresh(); });
-  }
-
-  // ================================================================ Site: matriz e gráficos
-  function mxDetail(btn) {
-    const host = $('mxDetail'); if (!host || !btn) return;
-    document.querySelectorAll('.mx-cell.sel').forEach((x) => x.classList.remove('sel')); btn.classList.add('sel');
-    const g = (k) => btn.getAttribute('data-' + k);
-    const tone = TONE[g('v')] || 'muted';
-    host.innerHTML = '<div class="mxd-h"><span class="mxd-t">' + esc(g('pair')) + ' · ' + esc(g('name')) + '</span><span class="verdict ' + tone + '">' + esc(g('vl')) + '</span></div>' +
-      '<div class="mxd-grid"><div><span>Gatilhos com desfecho</span><b>' + esc(g('n')) + '</b></div><div><span>Taxa de acerto</span><b>' + esc(g('wr')) + '</b></div><div><span>IC 95%</span><b>' + esc(g('ci')) + '</b></div><div><span>Entradas aleatórias</span><b>' + esc(g('base')) + '</b></div><div><span>p bruto</span><b>' + esc(g('p')) + '</b></div><div><span>p ajustado (72 testes)</span><b>' + esc(g('q')) + '</b></div></div>' +
-      '<div class="mxd-f"><span>' + esc(g('win')) + '</span><a href="#ao-vivo" class="mxd-open">Reproduzir na plataforma →</a></div>';
-    host.querySelector('.mxd-open').onclick = (e) => { e.preventDefault(); if (window.openCase) window.openCase(g('sym'), g('tf'), g('id')); };
-  }
-  function tipInit() {
-    let tip = document.getElementById('vizTip');
-    if (!tip) { tip = document.createElement('div'); tip.id = 'vizTip'; tip.className = 'viz-tip'; tip.setAttribute('role', 'tooltip'); tip.hidden = true; document.body.appendChild(tip); }
-    const show = (el, x, y) => { tip.textContent = el.getAttribute('data-tip'); tip.hidden = false; const r = tip.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(window.innerWidth - r.width - 8, x + 12)) + 'px'; tip.style.top = Math.max(8, y - r.height - 12) + 'px'; };
-    document.addEventListener('pointermove', (e) => { if (e.target.closest && e.target.closest('.roll-svg')) return; const el = e.target.closest && e.target.closest('[data-tip]'); if (el) show(el, e.clientX, e.clientY); else if (!tip.hidden && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-tip]'))) tip.hidden = true; });
-    document.addEventListener('focusin', (e) => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) { const r = el.getBoundingClientRect(); show(el, r.left + r.width / 2, r.top); } });
-    document.addEventListener('focusout', () => { tip.hidden = true; });
-    // gráfico móvel (SVG do site): cursor vertical + leitura
-    document.querySelectorAll('.roll-svg').forEach((svg) => {
-      const data = JSON.parse(svg.getAttribute('data-pts') || '[]'); if (!data.length) return;
-      const vb = svg.viewBox.baseVal, cross = svg.querySelector('.cross'), dot = svg.querySelector('.cross-dot');
-      const move = (e) => {
-        const r = svg.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * vb.width;
-        let best = data[0]; data.forEach((p) => { if (Math.abs(p[0] - x) < Math.abs(best[0] - x)) best = p; });
-        cross.setAttribute('x1', best[0]); cross.setAttribute('x2', best[0]); cross.style.opacity = 1; dot.setAttribute('cx', best[0]); dot.setAttribute('cy', best[1]); dot.style.opacity = 1;
-        tip.textContent = best[2]; tip.hidden = false; const tr = tip.getBoundingClientRect();
-        tip.style.left = Math.max(8, Math.min(window.innerWidth - tr.width - 8, e.clientX + 12)) + 'px'; tip.style.top = Math.max(8, e.clientY - tr.height - 14) + 'px';
-      };
-      svg.addEventListener('pointermove', move);
-      svg.addEventListener('pointerleave', () => { cross.style.opacity = 0; dot.style.opacity = 0; tip.hidden = true; });
-    });
-  }
-  function siteInit() {
-    const cells = document.querySelectorAll('.mx-cell');
-    cells.forEach((c) => c.addEventListener('click', () => mxDetail(c)));
-    const def = document.querySelector('.mx-cell[data-default="1"]') || cells[0];
-    if (def) mxDetail(def);
+    bindSeg('cAsset', (v) => { C.sym = v; need(C.sym, C.tf).then(() => { cRender(); cFresh(); }); });
+    bindSeg('cTf', (v) => { C.tf = v; need(C.sym, C.tf).then(() => { cRender(); cFresh(); }); });
   }
 
   // ================================================================ Telas em construção (FEATURES)
@@ -661,10 +628,10 @@
   // ================================================================ navegação
   const shown = {};
   function onTab(screen) {
-    if (screen === 'calibration') { if (!shown.cal) { shown.cal = true; } later(cRender); cFresh(); }
+    if (screen === 'calibration') { if (!shown.cal) { shown.cal = true; } need(C.sym, C.tf).then(() => later(cRender)); cFresh(); }
     if (screen === 'query') qFillSetups();
   }
   window.ArgosPlatform = { onTab, cRender, readPine: PR ? PR.readPine : null };
-  function boot() { applyFeatures(); sbInit(); qInit(); cInit(); siteInit(); tipInit(); }
+  function boot() { applyFeatures(); sbInit(); qInit(); cInit(); } // matriz do site e dicas: js/site.js
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

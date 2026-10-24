@@ -7,7 +7,6 @@
   'use strict';
   const E = window.ArgosEngine, SNAP = window.ARGOS_SNAPSHOT, LWC = window.LightweightCharts, RV = window.ArgosRegimeView;
   const US = window.ArgosUrlState; // estado da análise na URL (web/js/url-state.js); sem ele a URL simplesmente não é lida nem escrita
-  const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
   const $ = (id) => document.getElementById(id);
   const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Movimento (web/js/motion.js): sem ele, ou desligado (prefers-reduced-motion, ?motion=off), todo gancho abaixo vira no-op.
@@ -73,7 +72,7 @@
   // Candles novos da base da Stratum (depois do corte do snapshot). Reserva quando a Binance não responde (celular, rede
   // bloqueada) e fonte do Query/Calibração: snapshot + estes candles é a mesma série que o servidor analisa.
   async function fetchServerTail(sym, tf, since) {
-    if (IN_CLAUDE || !/^https?:$/.test(location.protocol)) return null;
+    if (!/^https?:$/.test(location.protocol)) return null;
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
     try {
       const r = await fetch('/api/candles?symbol=' + sym + '&tf=' + tf + '&since=' + since, { signal: ctl.signal });
@@ -102,7 +101,6 @@
     return changed;
   }
   async function refreshLive(sym, tf) {
-    if (IN_CLAUDE) return false; // no Claude a página não acessa a rede: usa o snapshot real embutido
     const en = entry(sym, tf), snapD = E.decodeSnapshot(SNAP.series[key(sym, tf)]);
     try {
       const now = Date.now();
@@ -307,7 +305,7 @@
     else if (en.source === 'live') { el.classList.add('live'); $('lvSrcText').innerHTML = '<b>Ao vivo</b> · Binance Spot · último candle fechado ' + fmtDate(last) + ' · atualiza a cada 60 s'; }
     else {
       el.classList.remove('live');
-      $('lvSrcText').innerHTML = '<b>Dados reais</b> · Binance Spot · snapshot até ' + fmtDate(last) + (IN_CLAUDE ? ' · o arquivo baixado busca a Binance ao vivo' : en.liveError ? ' · sem conexão com a Binance agora' : ' · conectando à Binance…');
+      $('lvSrcText').innerHTML = '<b>Dados reais</b> · Binance Spot · snapshot até ' + fmtDate(last) + (en.liveError ? ' · sem conexão com a Binance agora' : ' · conectando à Binance…');
     }
   }
 
@@ -469,7 +467,7 @@
   // O registro é do servidor: ele roda o motor sobre os candles que tem, monta o registro canônico e grava o hash
   // (contrato em docs/api-proof.md, seção 2). O navegador manda só a pergunta, nunca número. Por isso a tela
   // mostra apenas o que o servidor devolveu (hash, hora, link da prova), não os números calculados aqui.
-  const CAN_REGISTER = !IN_CLAUDE && /^https?:$/.test(location.protocol);
+  const CAN_REGISTER = /^https?:$/.test(location.protocol);
   const regKey = () => [state.sym, state.tf, state.cfg.mode, state.cfg.tgt, state.cfg.stp, state.cfg.hold, state.win || 'all', state.selected].join('|');
   function proofUrl(r) { // só caminho relativo do próprio site (a resposta do servidor não pode levar a outro endereço)
     if (typeof r.verifyUrl === 'string' && /^\/(?!\/)[^\s\\]*$/.test(r.verifyUrl)) return r.verifyUrl;
@@ -1044,9 +1042,8 @@
     ];
   }
   const AI_ERR = {
-    not_granted: 'O uso do Argos AI não foi autorizado nesta visualização.', sampling_disabled: 'O Claude não está disponível para esta conta.', not_declared: 'Esta versão da página não declara o Argos AI.',
-    capability_disabled: 'O Argos AI não roda nesta visualização.', capability_removed: 'O Argos AI não roda nesta visualização.', rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Tente de novo em alguns minutos.',
-    session_expired: 'A sessão expirou: entre de novo no Claude e tente outra vez.', refused: 'O pedido foi recusado. O relatório do motor segue disponível na outra aba.', empty_completion: 'O Argos AI não produziu texto. Tente de novo.',
+    rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Tente de novo em alguns minutos.',
+    refused: 'O pedido foi recusado. O relatório do motor segue disponível na outra aba.', empty_completion: 'O Argos AI não produziu texto. Tente de novo.',
     prompt_too_large: 'Dados grandes demais para uma chamada.', data_unavailable: 'O servidor não conseguiu carregar os dados do motor agora. Nenhum texto foi gerado; tente de novo em instantes.', tool_limit: 'O Argos AI pediu consultas demais ao motor. Tente de novo.', invalid_tool_call: 'O provedor de IA pediu uma consulta inválida. Tente de novo.', upstream_error: 'Falha temporária de conexão. O texto parcial foi mantido; tente de novo.', cancelled: 'Interrompido.',
     unauthorized: 'Código de acesso ausente ou incorreto.', insufficient_balance: 'O Argos AI está indisponível agora. Tente de novo mais tarde.',
     not_configured: 'O Argos AI está indisponível agora. Tente de novo mais tarde.', bad_request: 'O Argos AI está indisponível agora. Tente de novo mais tarde.',
@@ -1058,7 +1055,7 @@
   // motor e guarda a chave do provedor de LLM. O cliente não declara ferramenta nem envia resultado de ferramenta
   // (o servidor recusa): era o caminho para forjar o número que a guarda numérica aceitaria. Resposta em SSE.
   const CFG = window.ARGOS_CONFIG || {};
-  const SERVER_LLM = !IN_CLAUDE && CFG.llm === 'server';
+  const SERVER_LLM = CFG.llm === 'server';
   function getCode() { try { return sessionStorage.getItem('argos_code') || state.code || ''; } catch (e) { return state.code || ''; } }
   function setCode(c) { state.code = c; try { sessionStorage.setItem('argos_code', c); } catch (e) { /* sessão sem storage */ } }
   // Pede o código de acesso no `host` (padrão: aviso da tela de IA) e, ao receber, chama `retry` (padrão: nova rodada de IA).
@@ -1231,10 +1228,6 @@
   async function downloadReport() {
     const fname = 'Relatorio_Argos_' + state.sym + '_' + TF_LABEL[state.tf] + '_' + (state.tab === 'ai' && state.ai.text ? 'ArgosAI_' : '') + isoDay() + '.html';
     const html = reportDocHTML();
-    if (state.dl) {
-      try { await state.dl.save({ filename: fname, data: html }); } catch (e) { if (e && (e.code === 'unavailable' || e.code === 'not_granted')) $('lvDown').hidden = true; }
-      return;
-    }
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
@@ -1319,11 +1312,12 @@
   }
   function setPressed(groupId, v) { document.querySelectorAll('#' + groupId + ' button').forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-v') === v)); }
   async function switchTo(sym, tf, sel) {
+    if (window.ArgosCarga) await window.ArgosCarga.serie(sym, tf); // séries de candles carregam sob demanda (js/carregador.js)
     state.urlOn = true;
     state.sym = sym; state.tf = tf; setPressed('lvAsset', sym); setPressed('lvTf', tf);
     const w = settle(); if (w !== true && !(await w)) return; // outra troca chegou durante a pintura: é ela quem roda
     try { await run(false, false, sel); } catch (e) { staleOff(); throw e; }
-    if (!IN_CLAUDE) refreshLive(sym, tf).then((ch) => { if (ch && state.sym === sym && state.tf === tf) run(false, true); else renderSource(); });
+    refreshLive(sym, tf).then((ch) => { if (ch && state.sym === sym && state.tf === tf) run(false, true); else renderSource(); });
   }
   // Abre a plataforma já no recorte de um caso (site → Ao vivo), com a regra de saída padrão
   async function openCase(sym, tf, setupId) {
@@ -1463,7 +1457,7 @@
       interps.push('<div class="interp-card"><div class="interp-head"><span class="interp-dot ' + esc(cls[r.regime]) + '"></span><span>' + PAIR(sym) + ' — ' + esc(R.label) + '</span></div><p class="desc">' + esc(INTERP[r.regime]) + ' Critério: ' + esc(regimeWhy(r)) + '</p></div>');
     });
     host.innerHTML = cards.join(''); if (ih) ih.innerHTML = interps.join('');
-    const src = document.getElementById('lvRegimeSrc'); if (src) { const dd = entry('BTCUSDT', '1d').d; src.textContent = 'Calculado agora no navegador · Binance Spot' + (IN_CLAUDE ? ' (snapshot real)' : '') + ' · último candle diário fechado em ' + fmtDay(dd.t[dd.n - 1]) + '.'; }
+    const src = document.getElementById('lvRegimeSrc'); if (src) { const dd = entry('BTCUSDT', '1d').d; src.textContent = 'Calculado agora no navegador · Binance Spot · último candle diário fechado em ' + fmtDay(dd.t[dd.n - 1]) + '.'; }
   }
 
   // ------------------------------------------------------------- init
@@ -1477,7 +1471,7 @@
     $('lvRun').addEventListener('click', async () => {
       readCfg(); state.urlOn = true; $('lvRun').disabled = true;
       const w = settle(); if (w !== true && !(await w)) { $('lvRun').disabled = false; return; } // outra mudança chegou durante a pintura: é ela quem roda
-      try { if (!IN_CLAUDE) await refreshLive(state.sym, state.tf); await run(true, true); } catch (e) { staleOff(); throw e; }
+      try { await refreshLive(state.sym, state.tf); await run(true, true); } catch (e) { staleOff(); throw e; }
       $('lvRun').disabled = false;
     });
     $('lvZin').addEventListener('click', () => zoom(0.7)); $('lvZout').addEventListener('click', () => zoom(1.45)); $('lvZfit').addEventListener('click', fitDefault);
@@ -1496,16 +1490,9 @@
     $('lvPineCopy').addEventListener('click', () => copyText($('lvPineCode').textContent, $('lvPineToast'), 'Código copiado.'));
     document.addEventListener('click', (e) => { const det = $('lvExit'); if (det.open && !det.contains(e.target)) det.open = false; });
   }
-  async function initCapabilities() {
-    if (!IN_CLAUDE) {
-      $('lvDown').hidden = false; $('lvPrint').hidden = false;
-      if (SERVER_LLM) { state.samp = makeServerSampler(); $('lvAskAi').hidden = false; }
-      return;
-    }
-    try { const s = await window.claude.use('sample'); if (s) { state.samp = s; $('lvAskAi').hidden = false; } } catch (e) { /* ausente */ }
-    try { const dl = await window.claude.use('downloads'); if (dl) { state.dl = dl; $('lvDown').hidden = false; } } catch (e) { /* ausente */ }
-    if (!state.samp) { $('lvAiNote').textContent = 'O Argos AI (camada LLM) não está disponível nesta visualização. O relatório do motor, com os mesmos números, está na aba ao lado.'; }
-    if (state.tab === 'ai') selectTab('ai');
+  function initCapabilities() {
+    $('lvDown').hidden = false; $('lvPrint').hidden = false;
+    if (SERVER_LLM) { state.samp = makeServerSampler(); $('lvAskAi').hidden = false; }
   }
   function onShow() {
     regOpen(); // lista de registros deste navegador: relê e consulta o carimbo (no máximo uma vez por minuto)
@@ -1517,15 +1504,15 @@
       if (document.querySelectorAll) document.querySelectorAll('#dash-live .sk').forEach((n) => n.remove());
       return;
     }
-    $('lvAiNote').textContent = IN_CLAUDE || SERVER_LLM ? '' : 'Neste arquivo, o relatório é redigido pelo motor determinístico, com os mesmos números. A camada Argos AI (LLM) roda na versão publicada da plataforma.';
+    $('lvAiNote').textContent = SERVER_LLM ? '' : 'Neste arquivo, o relatório é redigido pelo motor determinístico, com os mesmos números. A camada Argos AI (LLM) roda na versão publicada da plataforma.';
     const urlSetup = readUrl(); // pergunta da URL (se houver) antes de ler os campos da regra de saída
     buildChart(); bind(); readCfg(); renderFoot(); buildShare(); buildRegs();
     run(true, false, urlSetup);
     setTimeout(renderRegimeScreen, 60);
     // A tela Regime usa as séries diárias: completa com os candles novos (Binance ou base da Stratum) e redesenha se algo mudou.
-    if (!IN_CLAUDE) Promise.all(['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].map((sy) => refreshLive(sy, '1d').catch(() => false))).then((r) => { if (r.some(Boolean)) renderRegimeScreen(); });
+    Promise.all(['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].map((sy) => refreshLive(sy, '1d').catch(() => false))).then((r) => { if (r.some(Boolean)) renderRegimeScreen(); });
     initCapabilities();
-    if (!IN_CLAUDE) {
+    {
       refreshLive(state.sym, state.tf).then((ch) => { if (ch) run(false, true); else renderSource(); });
       state.liveTimer = setInterval(() => { if (document.visibilityState !== 'visible') return; const s0 = state.sym, t0 = state.tf; refreshLive(s0, t0).then((ch) => { if (ch && s0 === state.sym && t0 === state.tf) run(false, true); }); }, 60000);
     }
@@ -1533,7 +1520,7 @@
   window.ArgosLive = {
     init, onShow, openCase, run: () => run(true, true), state,
     check: { scan: scanTerms, reportMd: () => reportToMarkdown(buildReport(state.A)), switchTo, shareUrl },
-    util: { E, IN_CLAUDE, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, dbSeries, refreshLive, cfgText, analysisFor, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
+    util: { E, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, dbSeries, refreshLive, cfgText, analysisFor, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
   };
 })();
 
