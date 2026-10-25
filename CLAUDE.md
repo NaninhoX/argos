@@ -51,7 +51,7 @@ CSS em `web/css/`, nesta ordem (a ordem é a cascata): `fonts.css`, `base.css`, 
 
 Movimento: `web/js/motion.js` (global `ArgosMotion`, carregado no `<head>`) e `web/css/motion.css`. Regras: três famílias (interface 160 ms, revelação 240–360 ms, crescimento de dado 360–480 ms); só `transform` e `opacity`; estado inicial escondido só sob `html.motion-ok`; número estatístico nunca conta de zero (`data-count` só aceita contagem inteira); sem biblioteca externa e sem acaso. Desliga com `prefers-reduced-motion` e `?motion=off`; `?motion=freeze:<ms>` congela as sequências num instante. `tests/motion.test.js` cobra essas regras em todo arquivo `*motion*`. O movimento da plataforma que não precisa mexer em `live.js` nem em `platform.js` fica em `web/js/platform-motion.js`, pendurado em dois eventos: `argos:screen` (nav.js, uma tela ficou visível) e `argos:result` (platform.js, resultado novo desenhado). Conferir animação no navegador com `?motion=freeze:<ms>` e capturas: o painel de pré-visualização não renderiza em tempo real.
 
-Marca: Stratum Research é a casa, Argos Sentinel é o produto. Guia em `../_layout/marca/`; na web, `css/brand.css`, `img/stratum-simbolo.svg` e `favicon.svg`.
+Marca: Stratum Research & Analytics é a casa (desde 25/10/2026; antes Stratum Research), Argos Sentinel é o produto. Guia em `../_layout/marca/`; na web, `css/brand.css`, `img/stratum-simbolo.svg` e `favicon.svg`.
 
 ## Verificação que não pode regredir
 

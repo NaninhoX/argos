@@ -15,7 +15,7 @@ describe('disclaimer padrão', () => {
   test('texto exato', () => {
     assert.equal(
       DISCLAIMER_PADRAO,
-      'Este material é produzido pela Stratum Research e constitui research e análise estatística. Não constitui recomendação de investimento personalizada, consultoria financeira regulamentada, oferta ou solicitação de compra ou venda de qualquer ativo. Resultados estatísticos históricos, incluindo win rate, intervalos de confiança e Brier Score, não constituem garantia de resultados futuros. O CONTRATANTE é o único responsável por todas as decisões de investimento e por sua execução. A Stratum Research não é instituição financeira, gestora de recursos registrada na CVM ou corretora, não executa ordens, não gerencia e não custodia capital de clientes sob este Contrato.'
+      'Este material é produzido pela Stratum Research & Analytics e constitui research e análise estatística. Não constitui recomendação de investimento personalizada, consultoria financeira regulamentada, oferta ou solicitação de compra ou venda de qualquer ativo. Resultados estatísticos históricos, incluindo win rate, intervalos de confiança e Brier Score, não constituem garantia de resultados futuros. O CONTRATANTE é o único responsável por todas as decisões de investimento e por sua execução. A Stratum Research & Analytics não é instituição financeira, gestora de recursos registrada na CVM ou corretora, não executa ordens, não gerencia e não custodia capital de clientes sob este Contrato.'
     );
   });
 

@@ -810,13 +810,13 @@
     sections.push({ n: 6, title: 'Calibração', blocks: cal6 });
     const first = d.t[A.warm], last = d.t[d.n - 1];
     return {
-      kicker: 'Stratum Research · Relatório Estratégico',
+      kicker: 'Stratum Research & Analytics · Relatório Estratégico',
       title: pair + ' · ' + tfl + ' — ' + R.label,
       meta: ['Gerado em ' + nowBrt() + ' · último candle fechado ' + fmtDate(last), 'Janela avaliada: ' + fmtDay(first) + ' a ' + fmtDay(last) + ' · ' + fmtInt(d.n) + ' candles · fonte Binance Spot (' + (entry(state.sym, state.tf).source === 'live' ? 'ao vivo' : 'snapshot') + ')', 'Regra de saída dos backtests: ' + cfgText(state.cfg) + ' · permutação com 3.000 sorteios · seed fixa'],
       draft: 'Rascunho gerado automaticamente — requer revisão humana antes de qualquer envio a cliente.',
       sections,
-      disc: 'Este material é produzido pela Stratum Research e constitui research e análise estatística histórica. Não é consultoria de investimentos, não é recomendação de compra ou venda de ativos e não é sinal de trading. Resultados passados não garantem resultados futuros. A Stratum não tem acesso a contas ou carteiras de clientes; toda decisão e execução é do cliente.',
-      sign: 'Argos Sentinel (motor) + Argos AI · Stratum Research — responsável: Michel Eleutério de Andrade Ramon · ' + new Date().toLocaleDateString('pt-BR')
+      disc: 'Este material é produzido pela Stratum Research & Analytics e constitui research e análise estatística histórica. Não é consultoria de investimentos, não é recomendação de compra ou venda de ativos e não é sinal de trading. Resultados passados não garantem resultados futuros. A Stratum não tem acesso a contas ou carteiras de clientes; toda decisão e execução é do cliente.',
+      sign: 'Argos Sentinel (motor) + Argos AI · Stratum Research & Analytics — responsável: Michel Eleutério de Andrade Ramon · ' + new Date().toLocaleDateString('pt-BR')
     };
   }
 
@@ -912,7 +912,7 @@
   }
   function aiHeader() {
     const k = state.ai.key || runKey();
-    return '<div class="r-kicker"><span>Stratum Research · Relatório Estratégico</span><span>Argos AI · redigido por LLM</span></div><h2 class="r-title">' + esc(k.replace('_', ' · ').replace('USDT', '/USDT').replace('1d', '1D')) + '</h2><div class="r-meta">Redigido pelo Argos AI a partir de consultas ao motor Argos Sentinel · ' + esc(nowBrt()) + '<br>Todos os números vêm das ferramentas do motor; o texto é verificado contra o vocabulário da Política de Compliance.</div>';
+    return '<div class="r-kicker"><span>Stratum Research &amp; Analytics · Relatório Estratégico</span><span>Argos AI · redigido por LLM</span></div><h2 class="r-title">' + esc(k.replace('_', ' · ').replace('USDT', '/USDT').replace('1d', '1D')) + '</h2><div class="r-meta">Redigido pelo Argos AI a partir de consultas ao motor Argos Sentinel · ' + esc(nowBrt()) + '<br>Todos os números vêm das ferramentas do motor; o texto é verificado contra o vocabulário da Política de Compliance.</div>';
   }
   function aiBody() { const t = state.ai.text || ''; const k = t.search(/^#{1,3}\s/m); return k > 0 ? t.slice(k) : t; }
   // Procedência dos números do relatório do Argos AI: tudo vem do servidor (não do modelo), para conferir e reproduzir.
@@ -1024,7 +1024,7 @@
     'Entre 450 e 700 palavras no total.'
   ].join('\n');
   function buildPrompt(A, withTools) {
-    const intro = 'Você é o Argos AI, a camada de linguagem da Stratum Research (research quantitativo em criptoativos). O motor estatístico Argos Sentinel já calculou tudo o que você precisa sobre ' + PAIR(state.sym) + ' no tempo gráfico ' + TF_LABEL[state.tf] + '. Sua tarefa: redigir o Relatório Estratégico desse recorte.';
+    const intro = 'Você é o Argos AI, a camada de linguagem da Stratum Research & Analytics (pesquisa e análise estatística de criptoativos). O motor estatístico Argos Sentinel já calculou tudo o que você precisa sobre ' + PAIR(state.sym) + ' no tempo gráfico ' + TF_LABEL[state.tf] + '. Sua tarefa: redigir o Relatório Estratégico desse recorte.';
     if (withTools) return intro + '\n\nComo trabalhar:\n1. Chame obter_leitura_tecnica e consultar_banco_de_setups.\n2. Chame detalhar_setup para cada setup com gatilho nos últimos 3 candles (no máximo 2). Se nenhum disparou, detalhe o de menor p-valor.\n3. Escreva o relatório. Se quiser, passe o texto em verificar_vocabulario antes de responder.\n\n' + PROMPT_RULES + '\n\n' + PROMPT_FORMAT;
     const act = A.setups.filter((s) => s.activeNow).slice(0, 2);
     return intro + '\n\nDados do motor (JSON):\n' + JSON.stringify({ leitura_tecnica: toolContext(A), banco_de_setups: toolBank(A), detalhes: act.map((s) => toolDetail(A, s.id)) }) + '\n\n' + PROMPT_RULES + '\n\n' + PROMPT_FORMAT;
@@ -1111,7 +1111,7 @@
     }
     const samp = async function (prompt, opts) {
       const messages = [
-        { role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research. Escreva em português do Brasil e siga à risca as regras da mensagem do usuário.' },
+        { role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research & Analytics. Escreva em português do Brasil e siga à risca as regras da mensagem do usuário.' },
         { role: 'user', content: prompt }
       ];
       const context = { symbol: state.sym, timeframe: state.tf, cfg: state.cfg, windowDays: state.win >= 30 ? state.win : null };
@@ -1178,7 +1178,7 @@
     return [
       '//@version=5',
       'indicator("Argos · ' + pineStr(s.nome) + ' (' + PAIR(state.sym) + ' ' + TF_LABEL[state.tf] + ')", overlay=true, max_labels_count=500)',
-      '// Gerado pelo Argos Sentinel · Stratum Research. Pesquisa estatística, não recomendação.',
+      '// Gerado pelo Argos Sentinel · Stratum Research & Analytics. Pesquisa estatística, não recomendação.',
       '// Definição: ' + s.def,
       '// Evidência calculada em ' + new Date().toLocaleDateString('pt-BR') + ' sobre ' + fmtInt(d.n) + ' candles (' + fmtDay(d.t[A.warm]) + ' a ' + fmtDay(d.t[d.n - 1]) + '), Binance Spot.',
       '// Regra de saída do backtest: ' + cfgText(state.cfg) + '.',

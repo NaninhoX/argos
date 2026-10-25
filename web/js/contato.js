@@ -7,7 +7,7 @@
 (function (root) {
   'use strict';
 
-  var ASSUNTOS = { acesso: 'Acesso à plataforma', analista: 'Conversar com um analista' };
+  var ASSUNTOS = { acesso: 'Acesso à plataforma', equipe: 'Conversar com a equipe' };
   var PERFIS = {
     investidor: 'Investidor ou fundo', profissional: 'Gestor ou analista profissional', trader: 'Trader por conta própria',
     pesquisador: 'Pesquisador ou acadêmico', imprensa: 'Imprensa', outro: 'Outro'
@@ -52,7 +52,7 @@
   /** @returns {string} URL mailto: ou '' se o destino não for um e-mail simples. */
   function buildMailto(to, v) {
     if (typeof to !== 'string' || !EMAIL.test(to) || /[\s,;<>"]/.test(to)) return '';
-    var subject = 'Argos Sentinel: ' + (v.assunto === 'analista' ? 'conversa com um analista' : 'pedido de acesso');
+    var subject = 'Argos Sentinel: ' + (v.assunto === 'equipe' ? 'conversa com a equipe' : 'pedido de acesso');
     return 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildMessage(v).replace(/\n/g, '\r\n'));
   }
 
@@ -125,7 +125,7 @@
     copyText(done.dataset.msg || '').then(function () { out.textContent = 'Mensagem copiada. Cole no seu e-mail.'; }, function () { out.textContent = 'Não consegui copiar. Selecione e copie o texto abaixo.'; $('ctTexto').hidden = false; $('ctTexto').value = done.dataset.msg || ''; $('ctTexto').select(); });
   });
 
-  // Os botões do topo da página escolhem o assunto: data-assunto="acesso" | "analista".
+  // Os botões do topo da página escolhem o assunto: data-assunto="acesso" | "equipe".
   Array.prototype.forEach.call(document.querySelectorAll('[data-assunto]'), function (a) {
     a.addEventListener('click', function () { setAssunto(a.getAttribute('data-assunto')); });
   });

@@ -54,14 +54,14 @@ test('contato: entrada hostil (tipos errados, protótipo) não lança e não pas
 });
 
 test('contato: mailto só com destino simples e dados só no corpo', () => {
-  const v = validate({ ...OK, assunto: 'analista', organizacao: 'Fundo X', mensagem: 'Linha 1\nLinha 2' }).value;
+  const v = validate({ ...OK, assunto: 'equipe', organizacao: 'Fundo X', mensagem: 'Linha 1\nLinha 2' }).value;
   const url = buildMailto('contato@stratum.example', v);
   assert.match(url, /^mailto:contato@stratum\.example\?subject=/);
   assert.equal((url.match(/\?/g) || []).length, 1);
   const body = decodeURIComponent(url.split('&body=')[1]);
   assert.match(body, /Nome: Ana Souza/);
   assert.match(body, /Linha 1\r\nLinha 2/);
-  assert.match(decodeURIComponent(url), /conversa com um analista/);
+  assert.match(decodeURIComponent(url), /conversa com a equipe/);
   for (const bad of ['', 'sem-arroba', 'a@b.com,outro@x.com', 'a@b.com?cc=x@y.com', 'a b@c.com', 'a@b.com\r\nbcc:x@y.com', undefined, null, 5]) {
     assert.equal(buildMailto(bad, v), '', String(bad));
   }

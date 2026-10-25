@@ -32,7 +32,7 @@ const tools = [
   { type: 'function', function: { name: 'consultar_banco_de_setups', description: 'Setups testados pelo motor: N, taxa de acerto com IC 95%, taxa-base, p bruto, p ajustado e veredito.', parameters: { type: 'object', properties: {} } } }
 ];
 const messages = [
-  { role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research. Escreva em português do Brasil e siga à risca as regras da mensagem do usuário.' },
+  { role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research & Analytics. Escreva em português do Brasil e siga à risca as regras da mensagem do usuário.' },
   { role: 'user', content: [
     'Redija um resumo estatístico de 120 a 180 palavras sobre o recorte calculado pelo motor.',
     '1. Chame obter_leitura_tecnica e consultar_banco_de_setups.',

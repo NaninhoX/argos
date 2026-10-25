@@ -31,7 +31,7 @@ for (const c of CASOS) {
   const t0 = Date.now();
   let r, corpo;
   try {
-    r = await fetch(`${BASE}/api/argos-ai`, { method: 'POST', headers, body: JSON.stringify({ messages: [{ role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research. Escreva em português do Brasil e siga à risca as regras do usuário.' }, { role: 'user', content: PEDIDO }], context: c }) });
+    r = await fetch(`${BASE}/api/argos-ai`, { method: 'POST', headers, body: JSON.stringify({ messages: [{ role: 'system', content: 'Você é o Argos AI, camada de linguagem da Stratum Research & Analytics. Escreva em português do Brasil e siga à risca as regras do usuário.' }, { role: 'user', content: PEDIDO }], context: c }) });
     corpo = await r.json();
   } catch (e) { confere(false, 'requisição falhou: ' + e.message); continue; }
   console.log(`  HTTP ${r.status} em ${Date.now() - t0} ms`);
