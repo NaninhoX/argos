@@ -55,6 +55,6 @@ jobs:
           CODE=$(curl -sS -o resposta.json -w '%{http_code}' --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$BASE/api/cron/candles?tf=$TF")
           echo "HTTP $CODE (tf=$TF)"
           # Resumo só com contagens (sem eco do corpo: o repositório pode ser visto por outros, e o corpo pode trazer mensagens de erro)
-          jq -c '{fetched, seeded, errors, termometro: (.termometro | {registered, resolved, errors, skipped, error})}' resposta.json 2>/dev/null || echo "(resposta sem JSON esperado)"
+          jq -c '{fetched, seeded, errors, termometro: (.termometro | {registered, resolved, errors, skipped, error, recusas: [.series[]? | select(.error) | (.symbol + " " + .timeframe + ": " + .error)]})}' resposta.json 2>/dev/null || echo "(resposta sem JSON esperado)"
           # Só 200 passa. 207 = rodou com recusa, erro ou série pulada pelo prazo: é candle sem registro, então o job FALHA e o GitHub avisa por e-mail.
           if [ "$CODE" != "200" ]; then echo "Falha: HTTP $CODE (veja o painel /api/termometro/status)"; exit 1; fi
