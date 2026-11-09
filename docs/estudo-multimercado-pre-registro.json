@@ -1,0 +1,65 @@
+{
+  "estudo": "multimercado-1",
+  "dataRegistro": "2026-11-09",
+  "motor": "argos-engine 1.1.0",
+  "motorAlterado": false,
+  "pergunta": "Os setups de reversão (comprar após queda) ficam abaixo da taxa-base de entradas aleatórias e os de tendência ficam acima, de forma consistente entre mercados, em séries que ainda não foram analisadas?",
+  "origemDaHipotese": "Observação exploratória de 09/11/2026 em sete séries já vistas (EURUSD, PETR4, VALE3, ITUB4, BTCUSDT, ETHUSDT, SOLUSDT, diário): RSI_OVERSOLD abaixo da base em 7 de 7, BB_LOWER em 6 de 7, MACD_CROSS acima em 7 de 7, BREAKOUT_20 acima em 6 de 7. Essas sete séries são exploratórias e não entram na contagem do estudo.",
+  "hipoteses": [
+    { "id": "H1", "setup": "RSI_OVERSOLD", "direcao": "abaixo" },
+    { "id": "H2", "setup": "BB_LOWER", "direcao": "abaixo" },
+    { "id": "H3", "setup": "MACD_CROSS", "direcao": "acima" },
+    { "id": "H4", "setup": "BREAKOUT_20", "direcao": "acima" }
+  ],
+  "hipoteseNula": "Em cada setup, a diferença entre a taxa de acerto e a taxa-base tem sinal aleatório entre as séries (metade abaixo, metade acima).",
+  "universo": {
+    "regraDeSelecao": "Lista fechada nesta ficha, antes de qualquer cálculo. Escolhida por liquidez conhecida do autor, não por dado.",
+    "acoesB3": ["BBDC4.SA", "ABEV3.SA", "BBAS3.SA", "B3SA3.SA", "WEGE3.SA", "RENT3.SA", "SUZB3.SA", "GGBR4.SA", "JBSS3.SA", "ELET3.SA", "RADL3.SA", "EQTL3.SA", "LREN3.SA", "RAIL3.SA", "CSNA3.SA", "PRIO3.SA", "HAPV3.SA", "CMIG4.SA", "ITSA4.SA", "UGPA3.SA"],
+    "forex": ["GBPUSD=X", "JPY=X", "AUDUSD=X", "CAD=X", "CHF=X", "BRL=X"],
+    "excluidasPorJaVistas": ["EURUSD=X", "PETR4.SA", "VALE3.SA", "ITUB4.SA", "BTCUSDT", "ETHUSDT", "SOLUSDT"],
+    "totalPrevisto": 26
+  },
+  "dados": {
+    "fonte": "API pública de gráfico do Yahoo Finance, intervalo diário, 10 anos, sem licença comercial (uso interno)",
+    "corte": "2026-11-06",
+    "campos": "open, high, low, close e volume como a API devolve; candles com qualquer preço nulo são descartados e contados",
+    "minimoDeCandles": 1700,
+    "regraDeExclusao": "Série com menos de 1.700 candles diários (200 de aquecimento mais 1.500) é excluída e listada no relatório, antes de ver resultado",
+    "hashDaSerie": "seriesHash do motor, registrado por série"
+  },
+  "regraDeSaidaPadrao": { "modo": "atr", "alvo": 2, "stop": 1, "candles": 12, "empateNoMesmoCandle": "perda", "gaps": "não tratados" },
+  "familiaPorSerie": "8 setups, como em /api/analyze; o veredito por série segue o motor (verdictOf) e vem com a família",
+  "resultadoPrimario": {
+    "medida": "alphaPP por série e setup: taxa de acerto menos a taxa-base, em pontos percentuais, calculada pelo motor",
+    "porHipotese": "fração das séries com o sinal previsto, e média das alphaPP com intervalo de 95% por reamostragem das séries (10.000 sorteios, semente 20261109)",
+    "testeDeSinal": "binomial unilateral contra 50%, com correção de Benjamini-Hochberg sobre as 4 hipóteses (família 4)",
+    "hipoteseSustentada": "fração de séries com o sinal previsto de pelo menos 75% E intervalo da média excluindo zero no sentido previsto E q < 0,05 na família 4",
+    "padraoGeral": "declarado somente se pelo menos 3 das 4 hipóteses forem sustentadas"
+  },
+  "criterioDeFalsificacao": "Uma hipótese é abandonada se a fração com o sinal previsto ficar abaixo de 75% ou se o intervalo da média incluir zero. Se menos de 3 das 4 forem sustentadas, o padrão geral é abandonado e o resultado é publicado como negativo, com o mesmo destaque.",
+  "sensibilidadeARegraDeSaida": {
+    "papel": "Relatório de sensibilidade, não teste: não gera veredito nem entra na família",
+    "regrasAlternativas": [
+      { "alvo": 1, "stop": 1, "candles": 12 },
+      { "alvo": 3, "stop": 1, "candles": 20 }
+    ],
+    "rotulo": "robusto à regra se a fração com o sinal previsto for de pelo menos 75% nas duas alternativas; senão, sensível à regra",
+    "regraVariacoes": "Três regras de saída (a padrão e duas alternativas) × 4 setups. Nenhuma outra será rodada."
+  },
+  "subgrupos": "Forex (6 séries) e Ações da B3 (20 séries) são reportados à parte, só como descrição. O critério primário vale para o conjunto das 26.",
+  "limitesDeclarados": [
+    "Viés de sobrevivência: as 20 ações são papéis listados e líquidos hoje; os que saíram do índice ou foram deslistados não estão. Isso tende a favorecer setups de tendência (H3 e H4), então a confirmação de H3 e H4 vale menos que a refutação.",
+    "As séries não são independentes: as ações brasileiras andam juntas, e os pares com dólar também. O teste de sinal supõe independência; a reamostragem por série não corrige isso. A leitura honesta é de poder menor que o número 26 sugere.",
+    "Mesmo período e mesma fase de mercado das séries exploratórias: a amostra é nova nos ativos, não no tempo.",
+    "Custos não testados. Gaps de abertura não tratados: o retorno médio é otimista em ações e Forex, o rótulo de acerto ou perda não muda.",
+    "Dados do Yahoo sem licença comercial e sem conferência de ajuste por dividendo; podem ser revisados pela fonte.",
+    "Poucos gatilhos por série (dezenas); veredito por série muitas vezes será 'evidência insuficiente' ou 'sem vantagem demonstrável', que não prova ausência de efeito."
+  ],
+  "traducao": {
+    "alphaPP": "quantos pontos percentuais a taxa de acerto do setup fica acima ou abaixo do acaso (entradas aleatórias com a mesma regra)",
+    "testeDeSinal": "conta em quantas séries o sinal foi o previsto e compara com o que o cara-ou-coroa daria"
+  },
+  "disclosure": "Seis regras de saída e sete séries já foram vistas na análise exploratória de 09/11/2026 (planilha de resultados em 04_Produto_Argos/_prototipo_fx_acoes). O que acima é registrado vale para as 26 séries novas.",
+  "travas": "Publicar resultado exige parecer sobre CNPI. Reprodução pública exige licença dos dados.",
+  "custo": "Cerca de 4 h de Michel (revisão e leitura); o cálculo roda em minutos."
+}
