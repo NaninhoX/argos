@@ -284,7 +284,21 @@
       '<p class="pv-context"><strong>' + esc(x.name) + '</strong> · ' + esc(PAIR(x.sym) + ' ' + TF_LABEL[x.tf]) + ' · ' + esc(U.cfgText(x.cfg)) + ' · ' + fmtInt(x.d.n - 200) + ' candles avaliados (' + fmtDay(x.d.t[200]) + ' a ' + fmtDay(x.d.t[x.d.n - 1]) + ') · ' + (x.source === 'live' ? 'Binance Spot ao vivo' : 'snapshot versionado') + ' · variação ' + t.k + ' da sessão · motor em ' + fmtN(x.ms, 0) + ' ms</p>' +
       (x.fallback ? '<div class="warnings"><div class="warning-item"><span class="mark">⚠</span> Candles ao vivo indisponíveis (' + esc(x.fallback) + '). O teste usou o snapshot versionado, até ' + fmtDay(x.d.t[x.d.n - 1]) + '.</div></div>' : '') +
       statCards(s, x.calib, fam + ' ' + pl(fam, 'variação', 'variações') + ' na sessão') + adjustHTML(s, fam) + riskAndRegime(s, x.reg) + wfCard(s, x.d) + warningsFor(s, fam, x.d, x.cfg) +
+      '<details class="sens" id="sbSens"><summary>Sensibilidade à regra de saída</summary><p class="note">A mesma regra sua sob duas regras de saída alternativas (alvo 1×ATR, stop 1×ATR, 12 candles; e alvo 3×ATR, stop 1×ATR, 20 candles). Mostra se o sinal contra o acaso depende da regra de saída escolhida. Não conta como variação da sessão.</p><button type="button" class="btn btn-sm" id="sbSensBtn">Calcular com as duas regras</button><div id="sbSensOut" role="status"></div></details>' +
       '<div class="action-row">' + (FEATURES.query ? '<button type="button" class="btn" id="sbSave">Salvar para o Query</button>' : '') + '<button type="button" class="btn btn-ghost-blue" id="sbCopyPine">Copiar Pine com a evidência</button><span class="toast" id="sbToast" role="status"></span></div>';
+    // Sensibilidade: relatório, não teste. Roda analyzeSpec direto (nada vai ao Reg), então não entra na família de variações.
+    $('sbSensBtn').onclick = () => {
+      const btn = $('sbSensBtn'), box = $('sbSensOut');
+      btn.disabled = true; box.textContent = 'Calculando…';
+      setTimeout(() => {
+        try {
+          const regras = [x.cfg].concat(U.SENS_REGRAS.filter((r) => JSON.stringify(r) !== JSON.stringify(x.cfg)));
+          const rows = regras.map((cfg, i) => { const R = i === 0 ? { setup: s, base: { rate: s.base } } : E.analyzeSpec(x.d, Object.assign({}, cfg), x.spec, { sym: x.sym, tf: x.tf }); return { cfg, base: R.base.rate, x: R.setup, atual: i === 0 }; });
+          box.innerHTML = U.sensHTML(rows);
+        } catch (e) { box.textContent = 'Não foi possível calcular a sensibilidade.'; }
+        btn.disabled = false;
+      }, 30);
+    };
     if ($('sbSave')) {
       $('sbSave').onclick = () => {
         const i = Saved.add(x.spec, x.name); qFillSetups(); $('qSetup').value = 'CUSTOM:' + i;
