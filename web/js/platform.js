@@ -62,7 +62,7 @@
     const c = calib && calib.n >= 30 ? calib : null;
     return '<div class="stat-grid pv-grid">' +
       '<div class="stat-card tone-' + tone + '"><div class="label">Evidência</div><div class="value v-verdict">' + esc(s.verdict.label) + '</div><div class="sub">N ' + fmtInt(s.n) + ' · efetivo ' + fmtInt(s.nEff) + '</div></div>' +
-      '<div class="stat-card"><div class="label">Taxa de acerto</div><div class="value">' + fmtPct(s.winRate, 1) + '</div>' + ciBar(s) + '<div class="sub">IC 95% ' + fmtPct(s.ci[0], 1) + '–' + fmtPct(s.ci[1], 1) + ' (' + (s.method === 'wilson' ? 'Wilson' : 'Bayes') + ') · base ' + fmtPct(s.base, 1) + '</div></div>' +
+      '<div class="stat-card"><div class="label">Taxa de acerto</div><div class="value">' + fmtPct(s.winRate, 1) + '</div>' + ciBar(s) + '<div class="sub">IC 95% ' + fmtPct(s.ci[0], 1) + '–' + fmtPct(s.ci[1], 1) + ' (' + (s.method === 'wilson' ? 'Wilson' : 'Bayes') + ') · acaso ' + fmtPct(s.base, 1) + ' (taxa-base)</div></div>' +
       '<div class="stat-card"><div class="label">Contra o acaso</div><div class="value">' + (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp</div><div class="sub">p ' + fmtP(s.pTwo) + ' · ajustado ' + fmtP(isFinite(s.q) ? s.q : s.pTwo) + (famTxt ? ' (' + esc(famTxt) + ')' : '') + '</div></div>' +
       '<div class="stat-card"><div class="label">Calibração</div><div class="value">' + (c ? fmtSPct(c.bss, 1) : '—') + '</div><div class="sub">' + (c ? 'ganho sobre a taxa-base · ECE ' + fmtN(c.ece * 100, 1) + ' p.p. · ' + fmtInt(c.n) + ' previsões' : 'previsões fora da amostra insuficientes') + '</div></div>' +
       '</div>';

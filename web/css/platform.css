@@ -1001,3 +1001,9 @@
 .lv .report .prov ul { list-style: none; margin: 0; padding: 0; }
 .lv .report .prov li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 2px 0; }
 .lv .report .prov .prov-n { margin: 8px 0 0; color: #5C6776; }
+
+/* Sensibilidade à regra de saída (live.js, painel do setup) */
+.sens{margin:14px 0 6px}
+.sens summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.sens .note{margin:8px 0}
+.sens #lvSensOut{margin-top:10px}

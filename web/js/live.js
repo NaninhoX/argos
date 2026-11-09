@@ -400,7 +400,7 @@
     const baseNow = reg ? V.bySetup[A.setups[0].id][reg].base.rate : A.base.rate;
     const maxX = Math.min(1, Math.max(0.5, fin(baseNow), ...A.setups.map((s) => fin((reg ? cellOf(s) : s).ci[1]))) * 1.04);
     const X = (v) => Math.max(0, Math.min(100, (v / maxX) * 100));
-    const head = '<thead><tr><th scope="col">Setup</th><th scope="col">Agora</th><th scope="col">N (efetivo)</th><th scope="col">Taxa de acerto</th><th scope="col">IC 95% · escala 0–' + fmtN(maxX * 100, 0) + '%</th><th scope="col">' + (reg ? 'Taxa-base no regime' : 'Taxa-base') + '</th><th scope="col">p (ajustado)</th><th scope="col">Veredito</th></tr></thead>';
+    const head = '<thead><tr><th scope="col">Setup</th><th scope="col">Agora</th><th scope="col">N (efetivo)</th><th scope="col">Taxa de acerto</th><th scope="col">IC 95% · escala 0–' + fmtN(maxX * 100, 0) + '%</th><th scope="col">' + (reg ? 'Acaso no regime (taxa-base)' : 'Acaso (taxa-base)') + '</th><th scope="col">p (ajustado)</th><th scope="col">Veredito</th></tr></thead>';
     const rows = A.setups.map((s, ri) => {
       const now = s.activeNow ? '<span class="now on">Disparou ' + (s.barsSinceLast === 0 ? 'no último candle' : 'há ' + s.barsSinceLast + ' ' + pl(s.barsSinceLast, 'candle', 'candles')) + '</span>' : '<span class="now off">' + (s.lastTrigger >= 0 ? 'há ' + s.barsSinceLast + ' candles' : 'sem gatilhos') + '</span>';
       const c = cellOf(s), v = c || s, bRate = c ? c.base.rate : s.base;
@@ -421,7 +421,7 @@
     if (tbl.classList.contains('ci-grow')) tbl.style.setProperty('--ci-skip', '-' + (Date.now() - mo.growT0) + 'ms'); // redesenho no meio do crescimento (ex.: candles ao vivo chegando): a faixa nova continua do ponto em que a anterior estava
     tbl.innerHTML = head + '<tbody>' + rows + '</tbody>';
     const d = A.d;
-    $('lvBankSub').textContent = 'Cada setup é testado agora contra ' + fmtInt(d.n - A.warm) + ' candles reais de ' + PAIR(state.sym) + ' ' + TF_LABEL[state.tf] + ' (' + fmtDay(d.t[A.warm]) + ' a ' + fmtDay(d.t[d.n - 1]) + '), com a regra de saída "' + cfgText(state.cfg) + '" aplicada também a entradas aleatórias (taxa-base: ' + fmtPct(A.base.rate, 1) + '). Toque numa linha para ver os gatilhos no gráfico.';
+    $('lvBankSub').textContent = 'Cada setup é testado agora contra ' + fmtInt(d.n - A.warm) + ' candles reais de ' + PAIR(state.sym) + ' ' + TF_LABEL[state.tf] + ' (' + fmtDay(d.t[A.warm]) + ' a ' + fmtDay(d.t[d.n - 1]) + '), com a regra de saída "' + cfgText(state.cfg) + '" aplicada também a entradas aleatórias (acaso neste mercado, a taxa-base: ' + fmtPct(A.base.rate, 1) + '). Compare cada taxa de acerto com esse número, não com 50%. Toque numa linha para ver os gatilhos no gráfico.';
   }
   function selectSetup(id, scroll) {
     state.selected = id;
@@ -450,10 +450,11 @@
       '<div class="detail-h"><div><h3>' + esc(s.nome) + ' <span class="verdict ' + esc(s.verdict.tone) + '" style="vertical-align:3px;margin-left:6px">' + esc(s.verdict.label) + '</span></h3><p>' + esc(s.def) + '</p></div>' +
       '<div class="detail-actions"><button type="button" class="btn btn-sm" id="lvShowTrig">Ver gatilhos no gráfico</button><button type="button" class="btn btn-sm" id="lvRegBtn" title="O servidor calcula e registra este veredito com data comprovável">Registrar este veredito</button><button type="button" class="btn btn-sm btn-ai" id="lvOpenPine">Levar para o TradingView (Pine)</button></div></div>' +
       '<div class="ai-note" id="lvRegBox" role="status" hidden></div>' +
+      '<details class="sens" id="lvSens"><summary>Sensibilidade à regra de saída</summary><p class="note">O mesmo setup sob duas regras de saída alternativas (alvo 1×ATR, stop 1×ATR, 12 candles; e alvo 3×ATR, stop 1×ATR, 20 candles). Mostra se o sinal contra o acaso depende da regra escolhida.</p><button type="button" class="btn btn-sm" id="lvSensBtn">Calcular com as duas regras</button><div id="lvSensOut" role="status"></div></details>' +
       '<div class="dgrid">' +
       stat('Gatilhos com desfecho', s.n + ' <span style="font-size:12px;color:var(--ink-faint)">(N efetivo ' + s.nEff + ')</span>', 'ρ serial ' + fmtN(s.rho, 2) + ' · evidência ' + esc({ INSUFFICIENT: 'insuficiente', LOW: 'baixa', MODERATE: 'moderada', HIGH: 'alta' }[s.tier] || String(s.tier))) +
       stat('Taxa de acerto', fmtPct(s.winRate, 1), 'IC 95% ' + fmtPct(s.ci[0], 1) + '–' + fmtPct(s.ci[1], 1) + ' (' + (s.method === 'wilson' ? 'Wilson' : 'Bayes Beta-Binomial') + ')') +
-      stat('Contra o acaso', (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp', 'taxa-base ' + fmtPct(s.base, 1) + ' · p ' + fmtP(s.pTwo) + ' · ajustado (' + s.family + ' testes) ' + fmtP(s.q)) +
+      stat('Contra o acaso', (s.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(s.alphaPP), 1) + ' pp', 'acaso ' + fmtPct(s.base, 1) + ' (taxa-base) · p ' + fmtP(s.pTwo) + ' · ajustado (' + s.family + ' testes) ' + fmtP(s.q)) +
       stat('Risco por gatilho', fmtSPct(s.cvar, 2), 'CVaR 5% · excursão adversa mediana ' + fmtSPct(s.maeMedian, 2)) +
       '</div>' +
       '<div class="dcols"><div><div class="mini-h">Walk-forward · treino acumulado → próxima janela</div>' + wf + '</div><div><div class="mini-h">Taxa de acerto por regime no gatilho · │ taxa-base</div><div class="rbars">' + rb + '</div><p class="note">Resultado médio por gatilho após custo de 0,1%: ' + fmtSPct(s.meanNet, 2) + ' · ' + s.timeouts + ' ' + pl(s.timeouts, 'gatilho terminou', 'gatilhos terminaram') + ' por prazo. ' + (V && regs.some((r) => V.bySetup[s.id][r].insufficient) ? 'Regime marcado como evidência insuficiente tem menos de ' + RV.MIN_EFFECTIVE + ' gatilhos efetivos: a barra é só descrição. ' : '') + 'Dados históricos: não garantem resultado futuro.</p></div></div>';
@@ -461,6 +462,31 @@
     $('lvOpenPine').onclick = () => openPine(s);
     $('lvRegBtn').onclick = registerVerdict;
     renderRegBox();
+    wireSens(s);
+  }
+
+  // Sensibilidade à regra de saída: relatório, não teste. Roda o mesmo motor sob duas regras alternativas declaradas; não gera veredito
+  // e não entra na contagem de testes. Calcula só quando o botão é tocado (cada regra é uma análise completa).
+  const SENS_REGRAS = [{ mode: 'atr', tgt: 1, stp: 1, hold: 12 }, { mode: 'atr', tgt: 3, stp: 1, hold: 20 }];
+  function wireSens(s) {
+    const btn = $('lvSensBtn'), out = $('lvSensOut'); if (!btn || !out) return;
+    btn.onclick = () => {
+      btn.disabled = true; out.textContent = 'Calculando…';
+      setTimeout(() => { // deixa o navegador pintar "Calculando…" antes do cálculo
+        try {
+          const regras = [state.cfg].concat(SENS_REGRAS.filter((r) => JSON.stringify(r) !== JSON.stringify(state.cfg)));
+          const rows = regras.map((cfg, i) => { const B = analysisFor(state.sym, state.tf, cfg, state.win); return { cfg, base: B.base.rate, x: B.setups.find((y) => y.id === s.id), atual: i === 0 }; });
+          const sgn = (r) => (isFinite(r.x.alphaPP) && r.x.n > 0 ? Math.sign(r.x.alphaPP) : 0);
+          const same = rows.every((r) => sgn(r) !== 0 && sgn(r) === sgn(rows[0]));
+          const few = rows.some((r) => r.x.n < 10);
+          out.innerHTML = '<div class="table-scroll"><table class="wf"><thead><tr><th>Regra de saída</th><th>N</th><th>Taxa de acerto</th><th>Acaso (taxa-base)</th><th>Contra o acaso</th></tr></thead><tbody>' +
+            rows.map((r) => '<tr><td>' + esc(cfgText(r.cfg)) + (r.atual ? ' <span class="num-dim">(regra atual)</span>' : '') + '</td><td>' + r.x.n + '</td><td>' + fmtPct(r.x.winRate, 1) + '</td><td>' + fmtPct(r.base, 1) + '</td><td>' + (isFinite(r.x.alphaPP) ? (r.x.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(r.x.alphaPP), 1) + ' pp' : '—') + '</td></tr>').join('') +
+            '</tbody></table></div><p class="note"><b style="color:var(--ink)">' + (same ? 'O sinal contra o acaso é o mesmo nas ' + rows.length + ' regras. Sinal igual não é prova de efeito: o tamanho e o veredito é que contam.' : 'O sinal contra o acaso muda com a regra: a leitura é sensível à regra de saída.') + '</b>' + (few ? ' Com menos de 10 gatilhos em alguma regra, a leitura é frágil.' : '') +
+            ' Este quadro não gera veredito nem entra na contagem de testes; o veredito acima vale para a regra atual. Alvo e stop são parâmetros do teste, não orientação.</p>';
+        } catch (e) { out.textContent = 'Não foi possível calcular a sensibilidade.'; }
+        btn.disabled = false;
+      }, 30);
+    };
   }
 
   // ------------------------------------ registro do veredito (prova de previsão)
