@@ -1003,7 +1003,8 @@
 .lv .report .prov .prov-n { margin: 8px 0 0; color: #5C6776; }
 
 /* Sensibilidade à regra de saída (live.js, painel do setup) */
-.sens{margin:14px 0 6px}
+.sens{margin:14px 0 6px;padding:12px 14px;border:1px solid var(--navy-line);border-radius:8px;background:var(--bg-panel)}
 .sens summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.sens .btn{margin-top:4px}
 .sens .note{margin:8px 0}
 .sens #lvSensOut{margin-top:10px}
