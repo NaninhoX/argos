@@ -65,8 +65,11 @@ test('carregador da plataforma (ADR 0011): todo script que ele pede existe, e as
   const snapshot = JSON.parse(readFileSync(join(WEB, '..', 'data', 'snapshot-v1.1.json'), 'utf8'));
   const series = paths.filter((p) => p.startsWith('data/snapshot/')).map((p) => p.slice('data/snapshot/'.length, -3)).sort();
   assert.deepEqual(series, Object.keys(snapshot.series).sort());
-  // data/*.js é gerado no build (tools/build-web.mjs); js/ é fonte e tem de existir
-  for (const p of paths.filter((x) => x.startsWith('js/'))) assert.ok(existsSync(join(WEB, p)), p);
+  // data/*.js e alguns js/ são gerados no build (tools/build-web.mjs, listados no .gitignore) e não existem num checkout limpo (CI): ficam de fora.
+  // O resto de js/ é fonte e tem de existir.
+  const gerados = readFileSync(join(WEB, '..', '.gitignore'), 'utf8').split('\n').map((l) => l.trim()).filter((l) => l.startsWith('web/js/')).map((l) => l.slice('web/'.length));
+  assert.ok(gerados.includes('js/engine.js'), 'o .gitignore lista js/engine.js como gerado');
+  for (const p of paths.filter((x) => x.startsWith('js/') && !gerados.includes(x))) assert.ok(existsSync(join(WEB, p)), p);
   // a landing não carrega a plataforma: nenhum desses scripts entra direto no index.html
   const html = read('index.html');
   for (const p of ['js/live.js', 'js/platform.js', 'js/engine.js', 'js/vendor/lightweight-charts.js']) assert.ok(!html.includes(`src="${p}`), `index.html carrega ${p} direto`);
