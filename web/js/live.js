@@ -467,15 +467,18 @@
 
   // Sensibilidade à regra de saída: relatório, não teste. Roda o mesmo motor sob duas regras alternativas declaradas; não gera veredito
   // e não entra na contagem de testes. Calcula só quando o botão é tocado (cada regra é uma análise completa).
-  const SENS_REGRAS = [{ mode: 'atr', tgt: 1, stp: 1, hold: 12 }, { mode: 'atr', tgt: 3, stp: 1, hold: 20 }];
+  const SENS_RULES = [{ mode: 'atr', tgt: 1, stp: 1, hold: 12 }, { mode: 'atr', tgt: 3, stp: 1, hold: 20 }];
   // Quadro da sensibilidade (usado aqui e no Sandbox). rows: [{ cfg, base, x (setup), atual }]
+  const sameRule = (a, b) => a.mode === b.mode && a.tgt === b.tgt && a.stp === b.stp && a.hold === b.hold;
   function sensHTML(rows) {
     const sgn = (r) => (isFinite(r.x.alphaPP) && r.x.n > 0 ? Math.sign(r.x.alphaPP) : 0);
     const same = rows.every((r) => sgn(r) !== 0 && sgn(r) === sgn(rows[0]));
-    const few = rows.some((r) => r.x.n < 10);
+    const few = rows.some((r) => !(r.x.nEff >= 10)); // mesmo corte de evidência do motor: N efetivo
+    const noise = rows.some((r) => isFinite(r.x.ci[0]) && r.x.ci[0] <= r.base && r.base <= r.x.ci[1]); // intervalo de acerto contém o acaso
+    const mixed = rows.some((r) => r.cfg.mode !== rows[0].cfg.mode); // regra atual em % ao lado de alternativas em ATR
     return '<div class="table-scroll"><table class="wf"><thead><tr><th>Regra de saída</th><th>N</th><th>Taxa de acerto</th><th>Acaso (taxa-base)</th><th>Contra o acaso</th></tr></thead><tbody>' +
       rows.map((r) => '<tr><td>' + esc(cfgText(r.cfg)) + (r.atual ? ' <span class="num-dim">(regra atual)</span>' : '') + '</td><td>' + r.x.n + '</td><td>' + fmtPct(r.x.winRate, 1) + '</td><td>' + fmtPct(r.base, 1) + '</td><td>' + (isFinite(r.x.alphaPP) ? (r.x.alphaPP >= 0 ? '+' : '−') + fmtN(Math.abs(r.x.alphaPP), 1) + ' pp' : '—') + '</td></tr>').join('') +
-      '</tbody></table></div><p class="note"><b style="color:var(--ink)">' + (same ? 'O sinal contra o acaso é o mesmo nas ' + rows.length + ' regras. Sinal igual não é prova de efeito: o tamanho e o veredito é que contam.' : 'O sinal contra o acaso muda com a regra: a leitura é sensível à regra de saída.') + '</b>' + (few ? ' Com menos de 10 gatilhos em alguma regra, a leitura é frágil.' : '') +
+      '</tbody></table></div><p class="note"><b style="color:var(--ink)">' + (same ? 'O sinal contra o acaso é o mesmo nas ' + rows.length + ' regras' + (noise ? ', mas em alguma delas o intervalo de acerto contém o acaso: dentro do ruído, sem leitura de efeito.' : ' e o intervalo de acerto exclui o acaso em todas.') : 'O sinal contra o acaso muda com a regra: a leitura é sensível à regra de saída.') + '</b>' + (few ? ' Com N efetivo abaixo de 10 em alguma regra, a leitura é frágil.' : '') + (mixed ? ' A regra atual está em % e as alternativas em ATR: as unidades diferem, compare com cautela.' : '') +
       ' Este quadro não gera veredito nem entra na contagem de testes; o veredito acima vale para a regra atual. Alvo e stop são parâmetros do teste, não orientação.</p>';
   }
   function wireSens(s) {
@@ -484,9 +487,22 @@
       btn.disabled = true; out.textContent = 'Calculando…';
       setTimeout(() => { // deixa o navegador pintar "Calculando…" antes do cálculo
         try {
-          const regras = [state.cfg].concat(SENS_REGRAS.filter((r) => JSON.stringify(r) !== JSON.stringify(state.cfg)));
-          const rows = regras.map((cfg, i) => { const B = analysisFor(state.sym, state.tf, cfg, state.win); return { cfg, base: B.base.rate, x: B.setups.find((y) => y.id === s.id), atual: i === 0 }; });
-          out.innerHTML = sensHTML(rows);
+          // Análise direta, fora do cache de análises (máx. 4): as regras alternativas não expulsam o que o usuário já tinha.
+          const rules = [state.cfg].concat(SENS_RULES.filter((r) => !sameRule(r, state.cfg)));
+          const { en, d } = seriesFor(state.sym, state.tf, state.win), rows = [];
+          const step = (i) => {
+            if (i === rules.length) { out.innerHTML = sensHTML(rows); btn.disabled = false; return; }
+            out.textContent = 'Calculando a regra ' + (i + 1) + ' de ' + rules.length + '…';
+            setTimeout(() => { // uma regra por vez: o navegador respira entre elas
+              try {
+                const B = i === 0 ? state.A : E.analyze(d, rules[i], { sym: state.sym, tf: state.tf, source: en.source, win: state.win || null });
+                rows.push({ cfg: rules[i], base: B.base.rate, x: B.setups.find((y) => y.id === s.id), atual: i === 0 });
+                step(i + 1);
+              } catch (e) { out.textContent = 'Não foi possível calcular a sensibilidade.'; btn.disabled = false; }
+            }, 20);
+          };
+          step(0);
+          return;
         } catch (e) { out.textContent = 'Não foi possível calcular a sensibilidade.'; }
         btn.disabled = false;
       }, 30);
@@ -1550,7 +1566,7 @@
   window.ArgosLive = {
     init, onShow, openCase, run: () => run(true, true), state,
     check: { scan: scanTerms, reportMd: () => reportToMarkdown(buildReport(state.A)), switchTo, shareUrl },
-    util: { E, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, dbSeries, refreshLive, cfgText, analysisFor, SENS_REGRAS, sensHTML, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
+    util: { E, SERVER_LLM, fmtN, fmtPct, fmtSPct, fmtP, fmtInt, fmtDate, fmtDay, esc, PAIR, TF_LABEL, pl, spanText, entry, dbSeries, refreshLive, cfgText, analysisFor, SENS_RULES, sameRule, sensHTML, scanTerms, copyText, regimeWhy, nowBrt, isoDay, refreshLive }
   };
 })();
 

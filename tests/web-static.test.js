@@ -67,9 +67,11 @@ test('carregador da plataforma (ADR 0011): todo script que ele pede existe, e as
   assert.deepEqual(series, Object.keys(snapshot.series).sort());
   // data/*.js e alguns js/ são gerados no build (tools/build-web.mjs, listados no .gitignore) e não existem num checkout limpo (CI): ficam de fora.
   // O resto de js/ é fonte e tem de existir.
-  const gerados = readFileSync(join(WEB, '..', '.gitignore'), 'utf8').split('\n').map((l) => l.trim()).filter((l) => l.startsWith('web/js/')).map((l) => l.slice('web/'.length));
-  assert.ok(gerados.includes('js/engine.js'), 'o .gitignore lista js/engine.js como gerado');
-  for (const p of paths.filter((x) => x.startsWith('js/') && !gerados.includes(x))) assert.ok(existsSync(join(WEB, p)), p);
+  const generated = readFileSync(join(WEB, '..', '.gitignore'), 'utf8').split('\n').map((l) => l.trim()).filter((l) => l.startsWith('web/js/')).map((l) => l.slice('web/'.length));
+  assert.ok(generated.includes('js/engine.js'), 'o .gitignore lista js/engine.js como gerado');
+  const buildSrc = readFileSync(join(WEB, '..', 'tools', 'build-web.mjs'), 'utf8');
+  for (const p of paths.filter((x) => x.startsWith('js/') && generated.includes(x))) assert.ok(buildSrc.includes(p.slice('js/'.length)), `${p}: gerado, mas tools/build-web.mjs não o produz`);
+  for (const p of paths.filter((x) => x.startsWith('js/') && !generated.includes(x))) assert.ok(existsSync(join(WEB, p)), p);
   // a landing não carrega a plataforma: nenhum desses scripts entra direto no index.html
   const html = read('index.html');
   for (const p of ['js/live.js', 'js/platform.js', 'js/engine.js', 'js/vendor/lightweight-charts.js']) assert.ok(!html.includes(`src="${p}`), `index.html carrega ${p} direto`);

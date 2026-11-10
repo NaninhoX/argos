@@ -1007,4 +1007,4 @@
 .sens summary{cursor:pointer;font-weight:600;color:var(--ink)}
 .sens .btn{margin-top:4px}
 .sens .note{margin:8px 0}
-.sens #lvSensOut{margin-top:10px}
+.sens [role="status"]{margin-top:10px}

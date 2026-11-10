@@ -292,8 +292,8 @@
       btn.disabled = true; box.textContent = 'Calculando…';
       setTimeout(() => {
         try {
-          const regras = [x.cfg].concat(U.SENS_REGRAS.filter((r) => JSON.stringify(r) !== JSON.stringify(x.cfg)));
-          const rows = regras.map((cfg, i) => { const R = i === 0 ? { setup: s, base: { rate: s.base } } : E.analyzeSpec(x.d, Object.assign({}, cfg), x.spec, { sym: x.sym, tf: x.tf }); return { cfg, base: R.base.rate, x: R.setup, atual: i === 0 }; });
+          const rules = [x.cfg].concat(U.SENS_RULES.filter((r) => !U.sameRule(r, x.cfg)));
+          const rows = rules.map((cfg, i) => { const R = i === 0 ? { setup: s, base: { rate: s.base } } : E.analyzeSpec(x.d, Object.assign({}, cfg), x.spec, { sym: x.sym, tf: x.tf }); return { cfg, base: R.base.rate, x: R.setup, atual: i === 0 }; });
           box.innerHTML = U.sensHTML(rows);
         } catch (e) { box.textContent = 'Não foi possível calcular a sensibilidade.'; }
         btn.disabled = false;
