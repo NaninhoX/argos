@@ -14,3 +14,8 @@ web/data/study.js
 
 # worktrees dos agentes do Claude Code
 .claude/worktrees/
+
+# backups do banco (dado sensível; ver docs/backup.md)
+argos-backup*
+*.dump
+*.parcial
