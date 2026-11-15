@@ -39,9 +39,9 @@
   border-bottom: 1px solid var(--hm-line-soft);
 }
 .hm-head-t { min-width: 0; flex: 1 1 360px; }
-.hm-title { margin: 0 0 4px; font-family: var(--hm-serif); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: var(--hm-ink); }
-.hm-sub { margin: 0; max-width: 80ch; font-size: 12px; line-height: 1.55; color: var(--hm-dim); }
-.hm-meta { max-width: 100%; padding: 5px 9px; border: 1px solid var(--hm-line); border-radius: 6px; font-size: 11px; line-height: 1.4; color: var(--hm-dim); }
+.hm-title { margin: 0 0 4px; font-family: var(--hm-serif); font-size: 1.1875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--hm-ink); }
+.hm-sub { margin: 0; max-width: 80ch; font-size: 0.75rem; line-height: 1.55; color: var(--hm-dim); }
+.hm-meta { max-width: 100%; padding: 5px 9px; border: 1px solid var(--hm-line); border-radius: 6px; font-size: 0.6875rem; line-height: 1.4; color: var(--hm-dim); }
 
 /* ---------------- tabela ---------------- */
 .hm-scroll { overflow-x: auto; padding: 10px 10px 4px; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
@@ -67,19 +67,19 @@
   width: 200px;
   padding: 8px 10px 8px 4px;
   vertical-align: bottom;
-  font-size: 9.5px;
+  font-size: 0.59375rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hm-dim);
 }
 .hm-rowh { padding: 3px 10px 3px 4px; font-weight: 400; box-shadow: 1px 0 0 var(--hm-line-soft); }
-.hm-sname { display: block; font-size: 12px; line-height: 1.3; color: var(--hm-ink); }
-.hm-sgrp { display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.3; color: var(--hm-dim); }
+.hm-sname { display: block; font-size: 0.75rem; line-height: 1.3; color: var(--hm-ink); }
+.hm-sgrp { display: block; margin-top: 2px; font-size: 0.65625rem; line-height: 1.3; color: var(--hm-dim); }
 
 .hm-colh { padding: 8px 6px; vertical-align: bottom; text-align: center; font-weight: 500; }
-.hm-rg { display: block; font-size: 12px; line-height: 1.3; color: var(--hm-ink); }
-.hm-base { display: block; margin-top: 3px; font-size: 10px; line-height: 1.3; color: var(--hm-dim); }
+.hm-rg { display: block; font-size: 0.75rem; line-height: 1.3; color: var(--hm-ink); }
+.hm-base { display: block; margin-top: 3px; font-size: 0.625rem; line-height: 1.3; color: var(--hm-dim); }
 .hm-tag {
   display: inline-block;
   margin-top: 4px;
@@ -87,7 +87,7 @@
   border: 1px solid rgba(176, 141, 62, 0.55);
   border-radius: 3px;
   background: var(--hm-gold-dim);
-  font-size: 10px;
+  font-size: 0.625rem;
   letter-spacing: 0.04em;
   color: var(--hm-gold-bright);
 }
@@ -124,10 +124,10 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 @media (hover: hover) { .hm-cell:hover { filter: brightness(1.18); } }
 .hm-cell:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--hm-gold-bright); outline-offset: -2px; }
 
-.hm-v { font-size: 14px; font-weight: 600; }
-.hm-v-soft { font-size: 11px; font-weight: 400; color: var(--hm-dim); }
-.hm-n { font-size: 10.5px; font-weight: 400; }
-.hm-d { font-size: 10px; font-weight: 500; }
+.hm-v { font-size: 0.875rem; font-weight: 600; }
+.hm-v-soft { font-size: 0.6875rem; font-weight: 400; color: var(--hm-dim); }
+.hm-n { font-size: 0.65625rem; font-weight: 400; }
+.hm-d { font-size: 0.625rem; font-weight: 500; }
 
 /* IC exclui a taxa-base: cor cheia, com friso claro */
 .hm-cell.cheia { border-color: color-mix(in srgb, var(--ink) 36%, transparent); }
@@ -145,19 +145,19 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 /* ---------------- legenda e nota ---------------- */
 .hm-legend { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 28px; padding: 10px 16px 6px; border-top: 1px solid var(--hm-line-soft); }
 .hm-scale { flex: 0 1 340px; min-width: min(240px, 100%); }
-.hm-scale-t { display: block; margin-bottom: 6px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-dim); }
-.hm-scale-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 10.5px; color: var(--hm-dim); }
+.hm-scale-t { display: block; margin-bottom: 6px; font-size: 0.625rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-dim); }
+.hm-scale-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 0.65625rem; color: var(--hm-dim); }
 .hm-scale-l, .hm-scale-r { flex: 0 0 auto; white-space: nowrap; }
 .hm-bar { flex: 1 1 auto; min-width: 80px; height: 12px; border: 1px solid var(--hm-line); border-radius: 3px; }
-.hm-scale-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 10px; color: var(--hm-dim); }
-.hm-keys { flex: 1 1 320px; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 11px; line-height: 1.45; color: var(--hm-dim); }
+.hm-scale-cap { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 0.625rem; color: var(--hm-dim); }
+.hm-keys { flex: 1 1 320px; display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 0.6875rem; line-height: 1.45; color: var(--hm-dim); }
 .hm-key { display: flex; align-items: flex-start; gap: 8px; }
 .hm-sw { flex: 0 0 auto; width: 22px; height: 14px; margin-top: 1px; border: 1px solid transparent; border-radius: 3px; }
 .hm-sw.cheia { border-color: color-mix(in srgb, var(--ink) 36%, transparent); }
 .hm-sw.esmaecida { border: 1px dashed color-mix(in srgb, var(--ink-dim) 60%, transparent); }
 .hm-sw.insuficiente { border-color: var(--hm-line); background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-dim) 24%, transparent) 0, color-mix(in srgb, var(--ink-dim) 24%, transparent) 2px, transparent 2px, transparent 7px); }
 .hm-sw.vazia { border: 1px dotted var(--hm-line); }
-.hm-note { margin: 0; max-width: 110ch; padding: 8px 16px 14px; font-size: 11px; line-height: 1.6; color: var(--hm-dim); }
+.hm-note { margin: 0; max-width: 110ch; padding: 8px 16px 14px; font-size: 0.6875rem; line-height: 1.6; color: var(--hm-dim); }
 
 /* ---------------- celular: rolagem só dentro do cartão ---------------- */
 @media (max-width: 720px) {
@@ -166,7 +166,7 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
   .hm-table { min-width: 640px; }
   .hm-corner { width: 128px; }
   .hm-rowh { padding-right: 6px; }
-  .hm-sname { font-size: 11.5px; }
+  .hm-sname { font-size: 0.71875rem; }
   .hm-cell { min-height: 70px; }
   .hm-legend { padding: 10px 14px 6px; }
   .hm-note { padding: 8px 14px 14px; }
@@ -209,7 +209,7 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
   box-shadow: 0 8px 24px color-mix(in srgb, var(--shadow-c) 45%, transparent);
   color: var(--hm-ink);
   font-family: var(--hm-mono);
-  font-size: 11.5px;
+  font-size: 0.71875rem;
   line-height: 1.4;
   pointer-events: none;
   opacity: 0;
@@ -220,11 +220,11 @@ tbody tr:last-child .hm-td.hm-now { border-radius: 0 0 6px 6px; }
 html.motion-off .hm-tip { transition: none; }
 @media (prefers-reduced-motion: reduce) { .hm-tip { transition: none; } }
 
-.hm-tip-t { margin: 0 0 8px; font-family: var(--hm-serif); font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--hm-ink); }
+.hm-tip-t { margin: 0 0 8px; font-family: var(--hm-serif); font-size: 0.875rem; font-weight: 600; line-height: 1.3; color: var(--hm-ink); }
 .hm-tip-g { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0 0 8px; }
 .hm-tip-g dt { margin: 0; white-space: nowrap; color: var(--hm-dim); }
 .hm-tip-g dd { margin: 0; min-width: 0; text-align: right; color: var(--hm-ink); font-variant-numeric: tabular-nums; }
-.hm-tip-n { margin: 0; font-size: 10.5px; line-height: 1.5; color: var(--ink-faint); }
+.hm-tip-n { margin: 0; font-size: 0.65625rem; line-height: 1.5; color: var(--ink-faint); }
 
 /* Celular: a coluna fixa dos setups é mais estreita e opaca, e a rolagem começa na borda do cartão (sem faixa onde as células
    passavam por trás da coluna fixa). */
@@ -234,5 +234,5 @@ html.motion-off .hm-tip { transition: none; }
   .hm-rowh { padding: 3px 8px 3px 10px; background: var(--bg-panel); box-shadow: 8px 0 8px -6px color-mix(in srgb, var(--shadow-c) 55%, transparent); }
   .hm-corner { background: var(--bg-panel); }
   .hm-table { min-width: 600px; }
-  .hm-sname { font-size: 11.5px; }
+  .hm-sname { font-size: 0.71875rem; }
 }

@@ -113,7 +113,7 @@
   }
   .meta-nav button {
     flex: 1; max-width: 140px;
-    font-family: var(--sans); font-size: 11px;
+    font-family: var(--sans); font-size: 0.6875rem;
     padding: 10px 8px; border-radius: 6px;
     border: 1px solid var(--navy-line); background: var(--bg-elevated); color: var(--ink-dim);
     transition: all 0.15s;

@@ -5,7 +5,7 @@
 :root { --rail-w: 216px; }
 
 /* ---------------- caminho de navegação no topo da plataforma ---------------- */
-.dashboard-page .crumb { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-faint); margin-left: 20px; margin-right: auto; }
+.dashboard-page .crumb { display: none; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--ink-faint); margin-left: 20px; margin-right: auto; }
 .dashboard-page .crumb .sep { color: var(--ink-ghost); }
 .dashboard-page .crumb .now { color: var(--ink); font-weight: 600; }
 
@@ -23,12 +23,12 @@
   }
   .dashboard-page nav.tabs::before {
     content: "Plataforma"; display: block; padding: 4px 12px 8px;
-    font-size: 12px; font-weight: 600; color: var(--ink-faint);
+    font-size: 0.75rem; font-weight: 600; color: var(--ink-faint);
   }
   .dashboard-page nav.tabs a {
     position: relative; display: flex; align-items: center; gap: 8px;
     min-height: 36px; padding: 0 12px 0 16px; border-radius: 4px;
-    font-size: 14px; letter-spacing: 0; color: var(--ink-dim);
+    font-size: 0.875rem; letter-spacing: 0; color: var(--ink-dim);
   }
   @media (hover: hover) { .dashboard-page nav.tabs a:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); } }
   .dashboard-page nav.tabs a.active {
@@ -43,14 +43,14 @@
 
 /* ---------------- comandos da tabela dos 72 testes ---------------- */
 #page-landing .mx-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-top: 10px; }
-#page-landing .mx-filter { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-faint); }
+#page-landing .mx-filter { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: var(--ink-faint); }
 #page-landing .mx-filter select {
-  min-height: 36px; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink);
+  min-height: 36px; padding: 0 10px; font: inherit; font-size: 0.875rem; color: var(--ink);
   background: var(--bg-panel); border: 1px solid var(--control-line); border-radius: 4px;
 }
-#page-landing .mx-count { font-size: 13px; color: var(--ink-dim); align-self: center; margin-left: auto; }
+#page-landing .mx-count { font-size: 0.8125rem; color: var(--ink-dim); align-self: center; margin-left: auto; }
 #page-landing .mx-export {
-  min-height: 36px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600;
+  min-height: 36px; padding: 0 14px; font: inherit; font-size: 0.875rem; font-weight: 600;
   color: var(--action-ink); background: var(--action-bg); border: 1px solid var(--action-bg); border-radius: 4px;
 }
 @media (hover: hover) { #page-landing .mx-export:hover { background: var(--action-hover); border-color: var(--action-hover); } }
