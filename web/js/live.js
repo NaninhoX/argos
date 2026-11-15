@@ -1023,30 +1023,6 @@
   }
 
   // ------------------------------------------------------------ Argos AI
-  function toolContext(A) {
-    const T = A.tech, r = T.regime, rs = A.rstats, cur = rs.current, dur = rs.durations[r.regime] || {};
-    return {
-      ativo: PAIR(state.sym), tempo_grafico: TF_LABEL[state.tf], fonte: 'Binance Spot (' + (entry(state.sym, state.tf).source === 'live' ? 'ao vivo' : 'snapshot real') + ')',
-      janela: { inicio: fmtDay(A.d.t[A.warm]), fim: fmtDate(A.d.t[A.d.n - 1]), candles: A.d.n },
-      ultimo_candle: { fechamento: +T.close.toFixed(2), variacao_24h_pct: +(T.change24 * 100).toFixed(2), variacao_7d_pct: +(T.change7d * 100).toFixed(2) },
-      indicadores: { rsi14: +T.rsi.toFixed(1), zona_rsi: T.rsiZone, macd_acima_do_sinal: T.macdAbove, candles_desde_cruzamento_macd: T.macdBarsSinceCross, histograma_macd_expandindo: T.histExpanding, adx14: +T.adx.toFixed(1), di_mais: +T.diPlus.toFixed(1), di_menos: +T.diMinus.toFixed(1), ema20: +T.ema20.toFixed(2), ema50: +T.ema50.toFixed(2), mm200: +T.sma200.toFixed(2), distancia_mm200_pct: +(T.distMa200 * 100).toFixed(2), candles_do_mesmo_lado_da_mm200: T.barsVsMa200, volume_desvios_vs_media30: +T.volZ.toFixed(2), posicao_no_canal_20_pct: +(T.rangePos * 100).toFixed(0) },
-      regime: { codigo: r.regime, nome: E.REGIMES[r.regime].label, confianca_pct: +(r.confidence * 100).toFixed(0), criterio: regimeWhy(r), chow_p: +r.chowP.toFixed(4), duracao_atual_candles: cur ? cur.end - cur.start + 1 : 0, duracao_media_candles: dur.mean ? +dur.mean.toFixed(1) : null, transicoes_diretas_a_partir_deste_regime: rs.transitions[r.regime] || {}, destinos_depois_da_zona_intermediaria: Object.fromEntries(regimeDestinations(rs.runs, r.regime).list), participacao_na_janela_pct: Object.fromEntries(Object.entries(rs.share).map(([k, v]) => [k, +(v * 100).toFixed(1)])) },
-      risco: { atr14: +T.atr.toFixed(2), atr_pct_do_preco: +(T.atrPct * 100).toFixed(2), cvar5_1candle_pct: +(T.cvar1bar * 100).toFixed(2), maior_queda_500_candles_pct: +(T.maxDD * 100).toFixed(1), volatilidade_realizada_percentil: +T.rvPct.toFixed(0) },
-      niveis_referencia_tecnica_nao_sao_alvos: { mm200: +T.sma200.toFixed(2), ema20: +T.ema20.toFixed(2), bollinger_superior: +T.bbUpper.toFixed(2), bollinger_inferior: +T.bbLower.toFixed(2), maxima_20: +T.hh20.toFixed(2), minima_20: +T.ll20.toFixed(2) },
-      calibracao: A.calib.n >= 30 ? { metodo: 'prequencial: probabilidade emitida antes de cada gatilho vs. desfecho', previsoes: A.calib.n, brier: +A.calib.brier.toFixed(4), brier_referencia_taxa_base: +A.calib.brierRef.toFixed(4), ganho_sobre_referencia_bss_pct: +(A.calib.bss * 100).toFixed(2), erro_calibracao_ece_pp: +(A.calib.ece * 100).toFixed(2), leitura: A.calib.status.t, criterios: 'ECE < 3 p.p. bem calibrada; 3–6 atenção; > 6 descalibrada. BSS > +1% acrescenta informação; entre −1% e +1% empate; < −1% pior que a referência.' } : { disponivel: false, motivo: 'menos de 30 previsões fora da amostra nesta janela' },
-      regra_de_saida: cfgText(state.cfg) + ' (vitória = alvo antes do stop dentro do horizonte; alvo e stop no mesmo candle = perda)'
-    };
-  }
-  function toolBank(A) {
-    return A.setups.map((s) => ({ id: s.id, nome: s.nome, definicao: s.def, gatilho_nos_ultimos_3_candles: s.activeNow, candles_desde_ultimo_gatilho: s.barsSinceLast, n_com_desfecho: s.n, n_efetivo: s.nEff, taxa_acerto_pct: +(s.winRate * 100).toFixed(1), ic95_pct: [+(s.ci[0] * 100).toFixed(1), +(s.ci[1] * 100).toFixed(1)], metodo_ic: s.method, taxa_base_aleatoria_pct: +(s.base * 100).toFixed(1), diferenca_pp: +s.alphaPP.toFixed(1), p_bruto_bicaudal: +s.pTwo.toFixed(4), p_ajustado_bh: +s.q.toFixed(4), testes_na_familia: s.family, veredito: s.verdict.label, walk_forward_consistente: s.wf.available ? s.wf.consistent : null }));
-  }
-  function toolDetail(A, id) {
-    const s = A.setups.find((x) => x.id === String(id).trim().toUpperCase());
-    if (!s) throw new Error('setup_id desconhecido. Use um destes: ' + A.setups.map((x) => x.id).join(', '));
-    return { id: s.id, nome: s.nome, definicao: s.def, veredito: s.verdict.label, cvar5_por_gatilho_pct: +(s.cvar * 100).toFixed(2), excursao_adversa_mediana_pct: +(s.maeMedian * 100).toFixed(2), resultado_medio_pos_custo_pct: +(s.meanNet * 100).toFixed(3), encerrados_por_prazo: s.timeouts,
-      por_regime: Object.fromEntries(Object.entries(s.byRegime).map(([k, v]) => [k, { n: v.n, taxa_acerto_pct: +((v.w / v.n) * 100).toFixed(1) }])),
-      walk_forward: s.wf.available ? { janelas: s.wf.walks.map((w) => ({ periodo_teste: fmtDay(A.d.t[w.from]) + ' a ' + fmtDay(A.d.t[w.to]), treino_n: w.trainN, treino_pct: +(w.trainWR * 100).toFixed(1), teste_n: w.testN, teste_pct: +(w.testWR * 100).toFixed(1), queda_pp: +w.dropPP.toFixed(1), queda_acima_de_15pp: w.overfit })), brier_fora_da_amostra: +s.wf.brier.toFixed(3), brier_referencia: +s.wf.brierRef.toFixed(3) } : { disponivel: false, motivo: s.wf.reason } };
-  }
   const PROMPT_RULES = [
     'Regras invioláveis (Política de Compliance da Stratum):',
     '- Nunca diga ao leitor o que fazer com o dinheiro dele: nada de comprar, vender, entrar, sair, aumentar, reduzir, zerar, alvo sugerido, stop sugerido ou tamanho de posição.', // compliance-ignore: regra do prompt que proíbe estes termos
@@ -1069,23 +1045,10 @@
     'Termine com a linha: *Rascunho gerado pelo Argos AI — requer revisão humana antes de qualquer envio a cliente.*',
     'Entre 450 e 700 palavras no total.'
   ].join('\n');
-  function buildPrompt(A, withTools) {
+  function buildPrompt() {
     const intro = 'Você é o Argos AI, a camada de linguagem da Stratum Research & Analytics (pesquisa e análise estatística de criptoativos). O motor estatístico Argos Sentinel já calculou tudo o que você precisa sobre ' + PAIR(state.sym) + ' no tempo gráfico ' + TF_LABEL[state.tf] + '. Sua tarefa: redigir o Relatório Estratégico desse recorte.';
-    if (withTools) return intro + '\n\nComo trabalhar:\n1. Chame obter_leitura_tecnica e consultar_banco_de_setups.\n2. Chame detalhar_setup para cada setup com gatilho nos últimos 3 candles (no máximo 2). Se nenhum disparou, detalhe o de menor p-valor.\n3. Escreva o relatório. Se quiser, passe o texto em verificar_vocabulario antes de responder.\n\n' + PROMPT_RULES + '\n\n' + PROMPT_FORMAT;
-    const act = A.setups.filter((s) => s.activeNow).slice(0, 2);
-    return intro + '\n\nDados do motor (JSON):\n' + JSON.stringify({ leitura_tecnica: toolContext(A), banco_de_setups: toolBank(A), detalhes: act.map((s) => toolDetail(A, s.id)) }) + '\n\n' + PROMPT_RULES + '\n\n' + PROMPT_FORMAT;
-  }
-  function buildTools(A) {
-    return [
-      { name: 'obter_leitura_tecnica', description: 'Retorna a leitura técnica atual calculada pelo motor Argos Sentinel: preço, indicadores (RSI, MACD, ADX, médias), regime de mercado com critério e histórico de transições, métricas de risco, níveis de referência técnica e calibração.', inputSchema: { type: 'object', properties: {} },
-        execute: () => { logAi('consultou a leitura técnica (' + PAIR(state.sym) + ' · ' + TF_LABEL[state.tf] + ')'); return toolContext(A); } },
-      { name: 'consultar_banco_de_setups', description: 'Retorna os 8 setups do banco de estratégias testados agora contra o histórico carregado: gatilho recente, N, N efetivo, taxa de acerto com IC 95%, taxa-base de entradas aleatórias, p-valor do teste de permutação e veredito.', inputSchema: { type: 'object', properties: {} },
-        execute: () => { logAi('consultou o banco de estratégias (8 setups)'); return toolBank(A); } },
-      { name: 'detalhar_setup', description: 'Detalha um setup: walk-forward por janela, taxa de acerto por regime, CVaR 5% por gatilho, excursão adversa e resultado médio após custo. Use o id retornado por consultar_banco_de_setups.', inputSchema: { type: 'object', properties: { setup_id: { type: 'string', description: 'Id do setup, por exemplo RSI_OVERSOLD' } }, required: ['setup_id'] },
-        execute: (inp) => { const r = toolDetail(A, inp && inp.setup_id); logAi('detalhou o setup ' + r.nome); return r; } },
-      { name: 'verificar_vocabulario', description: 'Verifica um texto contra o vocabulário proibido da Política de Compliance (instrução de compra/venda, promessa de retorno, urgência). Retorna os termos sinalizados.', inputSchema: { type: 'object', properties: { texto: { type: 'string' } }, required: ['texto'] },
-        execute: (inp) => { const f = scanTerms(String((inp && inp.texto) || '')); logAi('verificou o vocabulário do rascunho: ' + (f.length ? f.length + ' termo(s)' : 'limpo')); return { termos_sinalizados: f.map((x) => x.term), aprovado: !f.length }; } }
-    ];
+    // Só o caminho do servidor: o prompt não leva número do motor; o servidor executa as ferramentas (lib/ai/tools.js).
+    return intro + '\n\nComo trabalhar:\n1. Chame obter_leitura_tecnica e consultar_banco_de_setups.\n2. Chame detalhar_setup para cada setup com gatilho nos últimos 3 candles (no máximo 2). Se nenhum disparou, detalhe o de menor p-valor.\n3. Escreva o relatório. Se quiser, passe o texto em verificar_vocabulario antes de responder.\n\n' + PROMPT_RULES + '\n\n' + PROMPT_FORMAT;
   }
   const AI_ERR = {
     rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Tente de novo em alguns minutos.',
@@ -1164,10 +1127,8 @@
       const { msg, finish, meta } = await call(messages, context, opts.signal, (t) => opts.onText && opts.onText({ text: t }));
       return { text: msg.content, truncated: finish === 'length', modelTierApplied: 'Argos AI (servidor)', serverData: meta };
     };
-    samp.limits = async () => ({ tools: true, serverTools: true });
     return samp;
   }
-  const HIDE_CODES = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
   async function runAi() {
     if (!state.samp || state.ai.running) return;
     const A = state.A;
@@ -1177,14 +1138,10 @@
     logAi('Pensando… o Argos AI está planejando as consultas ao motor.', '…');
     renderAiReport(false);
     let code = null; const hadCode = !!getCode();
-    let lim = null; try { lim = await state.samp.limits(); } catch (e) { lim = null; }
-    const useTools = !!(lim && lim.tools);
-    if (!useTools) logAi('Esta visualização não executa ferramentas: os dados do motor seguem no próprio pedido.', 'i');
     try {
       const opts = { signal: state.ai.ctl.signal, modelTier: 'default', onText: ({ text }) => { if (!state.ai.text) logAi('escrevendo', '✎'); state.ai.text = text; if (state.tab === 'ai') renderAiReport(false); } };
-      if (useTools && lim.serverTools) logAi('O servidor consulta o motor (leitura técnica, banco de setups e detalhe dos setups) e confere cada número do texto.', 'i');
-      else if (useTools) opts.tools = buildTools(A); else opts.cache = false;
-      const res = await state.samp(buildPrompt(A, useTools), opts);
+      logAi('O servidor consulta o motor (leitura técnica, banco de setups e detalhe dos setups) e confere cada número do texto.', 'i');
+      const res = await state.samp(buildPrompt(), opts);
       state.ai.text = res.text; state.ai.prov = res.serverData || null; state.ai.done = true; state.ai.running = false;
       // O servidor consulta a própria série: se o último candle ou o tamanho diferem do que a tela mostra, avisa.
       if (res.serverData) {
@@ -1198,7 +1155,6 @@
       if (e && e.text) state.ai.text = e.text;
       state.ai.running = false;
       if (code !== 'cancelled') { console.warn('[argos-ai] falha:', code); logAi(AI_ERR[code] || AI_ERR.upstream_error, '!'); } else logAi('Interrompido a pedido.', '■');
-      if (HIDE_CODES.indexOf(code) >= 0) { state.samp = null; $('lvAskAi').hidden = true; $('lvAiNote').hidden = false; $('lvAiNote').textContent = (AI_ERR[code] || '') + ' O relatório do motor segue completo na aba ao lado.'; }
     } finally {
       state.ai.running = false; $('lvAskAi').disabled = false; $('lvStopAi').hidden = true;
       if (state.tab === 'ai') { if (state.ai.text) renderAiReport(true); else selectTab('ai'); }
