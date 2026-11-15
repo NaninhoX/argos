@@ -31,7 +31,8 @@ test('analyze pelo banco: série ausente no banco cai para snapshot e diz por qu
   const r = await handleAnalyze({ query: { symbol: 'SOLUSDT', tf: '1d', live: '0', hold: '9' }, deps: { loadSeries: defaultSeriesLoader({}, db) } });
   assert.equal(r.status, 200);
   assert.equal(r.body.data.source, 'snapshot');
-  assert.match(r.body.data.dbError, /sem candles no banco/);
+  assert.equal(r.body.data.dbError, 'banco_indisponivel'); // código fixo; o detalhe vai só ao log
+  assert.ok(!JSON.stringify(r.body).includes('sem candles no banco'));
   await db.close();
 });
 

@@ -2,6 +2,7 @@
 import { handleArgosAi } from '../lib/handlers/argos-ai.js';
 import { scanText, withDisclaimer } from '../lib/compliance.js';
 import { resolveDb } from '../lib/db.js';
+import { observa } from '../lib/observa.js';
 import { insertToolAudit } from '../lib/repo/audit.js';
 
 // Uma requisição é a conversa inteira: até 6 rodadas de ferramentas mais 2 tentativas de texto no provedor, cada
@@ -27,7 +28,7 @@ export function dbAudit(env, resolve = resolveDb) {
 
 /** Monta a função com dependências trocáveis (os testes injetam `fetchImpl`, `env` e `audit`). */
 export function createHandler({ env = process.env, ...deps } = {}) {
-  return async function handler(req, res) {
+  return observa('/api/argos-ai', async function handler(req, res) {
     res.setHeader('cache-control', 'no-store');
     if (req.method !== 'POST') {
       res.setHeader('allow', 'POST');
@@ -50,7 +51,7 @@ export function createHandler({ env = process.env, ...deps } = {}) {
       return res.status(200).end(out.sse);
     }
     return res.status(out.status).json(out.body);
-  };
+  });
 }
 
 export default createHandler();

@@ -13,6 +13,12 @@ Postgres em produção no Neon (`@neondatabase/serverless`); testes no PGlite (`
 | Operação | `query_log`, `tool_audit`, `schema_migrations` | Sem dado pessoal. |
 | Agentes e calibração | `agent_runs`, `revisao_humana`, `plano_calibracao` | `reviewer` guarda identificador interno, nunca e-mail. |
 
+### Política de `query_log`
+
+- `ip_hash` é HMAC-SHA256 (`HMAC(chave, 'AAAA-MM|ip')`, mês UTC, 32 hex), com a chave na variável `ARGOS_IP_HASH_KEY` da Vercel, **a ser criada por Michel** (valor aleatório longo, nunca no repositório). Sem a chave, `ip_hash` fica nulo: não se grava IP nem hash sem sal. O hash muda todo mês, então não liga o mesmo visitante entre meses.
+- Retenção de 90 dias: com 1% de chance por gravação, a função apaga `query_log` com `at` mais antigo que 90 dias (`RETENCAO_DIAS` em `lib/query-log.js`), sob o mesmo limite de 500 ms; falha da limpeza é ignorada.
+- `query_log` não vê os acertos da CDN: `/api/analyze` fica 60 s na CDN, e essas respostas não chegam à função. `cache_hit` mede só o cache da instância.
+
 Previsões pendentes de desfecho: `previsoes p left join desfechos d on d.previsao_id = p.id where d.previsao_id is null`.
 
 ## Por que append-only
