@@ -408,3 +408,140 @@ test('revisão do Opus: mensagem system do cliente é rebaixada a user', async (
   assert.deepEqual(sent.map((m) => m.role), ['system', 'user', 'user']);
   assert.equal(sent[0].content, SERVER_POLICY);
 });
+
+// ---- S5: limite de uso endurecido (chave HMAC, memória como reserva, acessoRef no evento) ----
+const HKEY = 'chave-hmac-de-teste-0123456789';
+const SOMA = { limit: 2, windowMs: 60_000 };
+
+async function bancoComLimite() {
+  const { createTestDb } = await import('../lib/db.js');
+  const { migrate } = await import('../tools/migrate.mjs');
+  const db = await createTestDb();
+  await migrate(db, { log: () => {} });
+  return db;
+}
+/** Chama o handler SEM rateStore injetado: o limite passa pelo caminho handler -> banco (ou memória padrão). */
+const semStore = (db, env, ip, extra = {}) => handleArgosAi({ body: BODY, ip, env, deps: { fetchImpl: fakeFetch(reply({ content: GOOD })), toolRunner: stubRunner(), rateLimit: SOMA, now: () => 5_000_000, db, ...extra } });
+
+test('limite: 429 vem da tabela limite_taxa pelo caminho handler -> banco, e nenhuma chave é SHA-256 do IP', async () => {
+  const db = await bancoComLimite();
+  try {
+    const env = { ...ENV, ARGOS_IP_HASH_KEY: HKEY };
+    const ip = '203.0.113.50';
+    assert.notEqual((await semStore(db, env, ip)).status, 429);
+    assert.notEqual((await semStore(db, env, ip)).status, 429);
+    const bloqueado = await semStore(db, env, ip);
+    assert.equal(bloqueado.status, 429);
+    assert.equal(bloqueado.body.code, 'rate_limited');
+    assert.ok(bloqueado.headers['retry-after']);
+    const linhas = (await db.query('select chave, contagem from limite_taxa')).rows;
+    assert.equal(linhas.length, 1);
+    assert.equal(Number(linhas[0].contagem), 3, 'a contagem está no banco');
+    const { createHash } = await import('node:crypto');
+    const puro = createHash('sha256').update(ip).digest('hex');
+    for (const l of linhas) {
+      assert.ok(!l.chave.includes(puro.slice(0, 32)), 'a chave não é o SHA-256 do IP');
+      assert.ok(!l.chave.includes(ip), 'a chave não leva o IP');
+      assert.match(l.chave, /^argos-ai:[0-9a-f]{32}$/);
+    }
+    assert.notEqual((await semStore(db, env, '203.0.113.51')).status, 429, 'outro IP, outra chave');
+  } finally { await db.close(); }
+});
+
+test('limite: sem ARGOS_IP_HASH_KEY (ausente ou vazia) nada vai ao banco e a memória continua limitando', async () => {
+  const db = await bancoComLimite();
+  try {
+    for (const env of [ENV, { ...ENV, ARGOS_IP_HASH_KEY: '' }]) {
+      // a memória padrão é compartilhada entre chamadas: um IP novo por rodada
+      const ipRodada = '198.51.100.77-' + (env.ARGOS_IP_HASH_KEY === '' ? 'vazia' : 'ausente');
+      const c = () => handleArgosAi({ body: BODY, ip: ipRodada, env, deps: { fetchImpl: fakeFetch(reply({ content: GOOD })), toolRunner: stubRunner(), rateLimit: SOMA, now: () => 5_000_000, db } });
+      assert.notEqual((await c()).status, 429);
+      assert.notEqual((await c()).status, 429);
+      assert.equal((await c()).status, 429, 'passou do limite sem chave: memória limita');
+    }
+    assert.equal((await db.query('select count(*)::int as n from limite_taxa')).rows[0].n, 0, 'sem chave, o banco não recebe chave de limite');
+  } finally { await db.close(); }
+});
+
+test('limite: banco que lança cai para a memória e ainda limita (nunca libera sem limite)', async () => {
+  const quebrado = { query: async () => { throw new Error('banco fora'); } };
+  const env = { ...ENV, ARGOS_IP_HASH_KEY: HKEY };
+  const call = () => semStore(quebrado, env, '192.0.2.99');
+  assert.notEqual((await call()).status, 429);
+  assert.notEqual((await call()).status, 429);
+  const r = await call();
+  assert.equal(r.status, 429);
+  assert.equal(r.body.code, 'rate_limited');
+});
+
+test('limite: banco lento estoura o prazo, a resposta sai e a memória ainda limita sem chamar o provedor antes da autenticação', async () => {
+  // só a consulta do limite trava; as demais (acessos) respondem vazio
+  const parado = { query: (sql) => (/limite_taxa/.test(sql) ? new Promise(() => {}) : Promise.resolve({ rows: [] })) };
+  const env = { ...ENV, ARGOS_IP_HASH_KEY: HKEY, ARGOS_ACCESS_CODE: 'codigo-certo-123' };
+  const f = fakeFetch(reply({ content: GOOD }));
+  const call = () => handleArgosAi({ body: BODY, ip: '192.0.2.123', code: 'errado', env, deps: { fetchImpl: f, toolRunner: stubRunner(), rateLimit: SOMA, now: () => 7_000_000, db: parado, limitePrazoMs: 30 } });
+  const t0 = Date.now();
+  assert.equal((await call()).status, 401);
+  assert.equal((await call()).status, 401);
+  const r = await call();
+  assert.equal(r.status, 429, 'além do teto, a memória limita');
+  assert.equal(r.body.code, 'rate_limited');
+  assert.ok(Date.now() - t0 < 2000, 'o banco parado não segura a resposta');
+  assert.equal(f.calls.length, 0, 'o provedor não foi chamado');
+});
+
+test('S5: banco fora ao conferir código de cliente falha fechado com 503 "unavailable" (não diz que falta configuração) e não chama o provedor', async () => {
+  const quebrado = { query: async () => { throw new Error('banco fora'); } };
+  const env = { ...ENV, ARGOS_ACCESS_CODE: 'codigo-certo-123' };
+  const f = fakeFetch(reply({ content: GOOD }));
+  const r = await handleArgosAi({ body: BODY, ip: '192.0.2.200', code: 'codigo-de-cliente', env, deps: { fetchImpl: f, toolRunner: stubRunner(), rateLimit: SOMA, now: () => 8_000_000, db: quebrado } });
+  assert.equal(r.status, 503);
+  assert.equal(r.body.code, 'unavailable');
+  assert.ok(!/configurado/.test(JSON.stringify(r.body)), 'a mensagem não alega falta de configuração');
+  assert.equal(f.calls.length, 0, 'o provedor não foi chamado');
+  // o código geral continua abrindo mesmo com o banco fora
+  const ok = await handleArgosAi({ body: BODY, ip: '192.0.2.201', code: 'codigo-certo-123', env, deps: { fetchImpl: fakeFetch(reply({ content: GOOD })), toolRunner: stubRunner(), rateLimit: SOMA, now: () => 8_000_000, db: quebrado } });
+  assert.notEqual(ok.status, 503);
+  assert.notEqual(ok.status, 401);
+});
+
+test('limite: roda antes da autenticação e antes do provedor', async () => {
+  const f = fakeFetch(reply({ content: GOOD }));
+  const env = { ...ENV, ARGOS_ACCESS_CODE: 'codigo-certo-123' };
+  const deps = { fetchImpl: f, toolRunner: stubRunner(), rateLimit: { limit: 1, windowMs: 60_000 }, now: () => 6_000_000, rateStore: new Map() };
+  const call = (code) => handleArgosAi({ body: BODY, ip: '192.0.2.5', code, env, deps });
+  assert.equal((await call('errado')).status, 401); // consome o único token
+  const r = await call('errado');
+  assert.equal(r.status, 429, 'sem código válido, o limite responde primeiro');
+  assert.equal(f.calls.length, 0, 'o provedor não foi chamado');
+});
+
+test('evento response: leva acessoRef e a contagem de ferramentas, sem código, IP, prompt nem texto gerado', async () => {
+  const codigo = 'codigo-segredo-ZZ-98765';
+  const env = { ...ENV, ARGOS_ACCESS_CODE: codigo };
+  const out = await run(flow(GOOD), { code: codigo, env, ip: '203.0.113.200' });
+  assert.equal(out.status, 200);
+  const last = out.events.at(-1);
+  assert.equal(last.type, 'response');
+  assert.equal(last.acessoRef, 'geral');
+  assert.equal(last.toolCalls, 2);
+  const serial = JSON.stringify(last);
+  for (const proibido of [codigo, '203.0.113.200', 'Redija o relatório', GOOD.slice(0, 40), KEY]) assert.equal(serial.includes(proibido), false, 'o evento não leva ' + proibido.slice(0, 12));
+  // sem autenticação: ref nulo, zero ferramentas
+  const neg = await run(flow(GOOD), { code: 'errado', env });
+  assert.equal(neg.status, 401);
+  assert.equal(neg.events.at(-1).acessoRef, null);
+  assert.equal(neg.events.at(-1).toolCalls, 0);
+});
+
+test('hashDoIpParaLimite: HMAC sem mês, estável, nulo sem chave ou sem IP, e diferente do ip_hash do query_log', async () => {
+  const { hashDoIpParaLimite, hashDoIp } = await import('../lib/query-log.js');
+  const a = hashDoIpParaLimite('203.0.113.9', HKEY);
+  assert.match(a, /^[0-9a-f]{32}$/);
+  assert.equal(a, hashDoIpParaLimite('203.0.113.9', HKEY));
+  assert.notEqual(a, hashDoIpParaLimite('203.0.113.9', HKEY + 'x'));
+  assert.notEqual(a, hashDoIp('203.0.113.9', HKEY, new Date('2026-11-15T00:00:00Z')));
+  assert.equal(hashDoIpParaLimite('203.0.113.9', ''), null);
+  assert.equal(hashDoIpParaLimite('203.0.113.9', undefined), null);
+  assert.equal(hashDoIpParaLimite('', HKEY), null);
+});

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 // Adaptador da Vercel (api/argos-ai.js) exercitado por uma réplica do cliente legado, com o provedor simulado.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import defaultHandler, { createHandler, config, dbAudit } from '../api/argos-ai.js';
+import defaultHandler, { createHandler, config, dbAudit, logAudit, paramsDaResposta } from '../api/argos-ai.js';
 import { DISCLAIMER_PADRAO } from '../lib/compliance.js';
 import { TOOL_DEFS } from '../lib/ai/tools.js';
 
@@ -226,4 +226,162 @@ test('api: chamadas de ferramenta vão para tool_audit só com hash, sem texto g
   assert.match(rows[0].session_id, /^[0-9a-f-]{36}$/);
   assert.equal(JSON.stringify(rows).includes('Texto sem números'), false);
   await db.close();
+});
+
+// ---- query_log: uma linha por requisição do Argos AI (route '/api/argos-ai') ----
+const ENV_DB = { ...ENV, DATABASE_URL: 'pglite://memory', ARGOS_IP_HASH_KEY: 'chave-de-teste-do-hmac' };
+const IP_CRU = '203.0.113.77';
+const PROMPT = 'PROMPT-SECRETO-do-cliente-xyz';
+const CODIGO = 'codigo-errado-SEGREDO-123';
+const CODIGO_CERTO = 'codigo-certo-ABC-987';
+
+async function bancoLimpo(env = ENV_DB) {
+  const { resolveDb } = await import('../lib/db.js');
+  const db = await resolveDb(env);
+  await db.query('delete from query_log');
+  await db.query('delete from tool_audit');
+  return db;
+}
+const logs = async (db) => (await db.query('select * from query_log order by id')).rows;
+
+test('api: cada requisição deixa uma linha em query_log, ligada ao tool_audit pelo requestId', async () => {
+  const db = await bancoLimpo();
+  const provider = fakeFetch(
+    reply({ content: '', tool_calls: [toolCall('call_1', 'detalhar_setup', { setup_id: 'RSI_OVERSOLD' })] }, 'tool_calls'),
+    reply({ content: 'A taxa de acerto é de 61,5%.' }), // número sem origem: rejeitada, pede nova tentativa
+    reply({ content: 'Texto sem números.' })
+  );
+  const handler = createHandler({ env: ENV_DB, fetchImpl: provider, rateStore: new Map(), toolRunner: stubRunner() });
+  const res = await invoke(handler, { headers: { 'X-Forwarded-For': IP_CRU }, body: body({ messages: [{ role: 'user', content: PROMPT }] }) });
+  assert.equal(res.statusCode, 200);
+  const rows = await logs(db);
+  assert.equal(rows.length, 1);
+  const r = rows[0];
+  assert.equal(r.route, '/api/argos-ai');
+  assert.equal(r.status, 200);
+  assert.equal(Number.isInteger(r.latency_ms) && r.latency_ms >= 0, true);
+  assert.equal(r.cache_hit, null);
+  assert.equal(r.engine_version, null);
+  const { hashDoIp } = await import('../lib/query-log.js');
+  assert.match(r.ip_hash, /^[0-9a-f]{32}$/);
+  assert.equal(r.ip_hash, hashDoIp(IP_CRU, ENV_DB.ARGOS_IP_HASH_KEY));
+  assert.deepEqual(Object.keys(r.params).sort(), ['acessoRef', 'codigo', 'rejeicoes', 'requestId', 'tentativas', 'toolCalls']);
+  assert.equal(r.params.acessoRef, 'aberto');
+  assert.equal(r.params.toolCalls, 1);
+  assert.equal(r.params.tentativas, 2);
+  assert.equal(r.params.codigo, null); // sucesso: o corpo da resposta não traz `code`
+  assert.deepEqual(r.params.rejeicoes, { tentativas: 1, numerosSemOrigem: 1, termosSinalizados: 0 });
+  const audit = (await db.query('select session_id from tool_audit')).rows;
+  assert.equal(audit.length, 1);
+  assert.equal(audit[0].session_id, r.params.requestId);
+});
+
+test('api: query_log não recebe texto gerado, prompt, código de acesso, IP nem texto de rejeição', async () => {
+  const db = await bancoLimpo();
+  const GERADO = 'Texto gerado pelo modelo ZZGERADOZZ';
+  const env = { ...ENV_DB, ARGOS_ACCESS_CODE: CODIGO_CERTO };
+  const headers = { 'X-Forwarded-For': IP_CRU, 'x-argos-code': CODIGO_CERTO };
+  const msgs = body({ messages: [{ role: 'user', content: PROMPT }] });
+  const ruim = createHandler({ env, fetchImpl: fakeFetch(reply({ content: 'Dado: 61,5% e compre agora ZZREJEITADOZZ.' }), reply({ content: 'Outra tentativa 77,7% compre agora.' })), rateStore: new Map(), toolRunner: stubRunner() });
+  assert.equal((await invoke(ruim, { headers, body: msgs })).statusCode, 502);
+  const boa = createHandler({ env, fetchImpl: fakeFetch(reply({ content: GERADO })), rateStore: new Map(), toolRunner: stubRunner() });
+  assert.equal((await invoke(boa, { headers, body: msgs })).statusCode, 200);
+  assert.equal((await invoke(boa, { headers: { ...headers, 'x-argos-code': CODIGO }, body: msgs })).statusCode, 401);
+  const rows = await logs(db);
+  assert.equal(rows.length, 3);
+  const tudo = JSON.stringify(rows);
+  const { createHash } = await import('node:crypto');
+  const sha = (s) => createHash('sha256').update(s).digest('hex');
+  for (const proibido of [GERADO, 'ZZGERADOZZ', 'ZZREJEITADOZZ', '61,5', '77,7', 'compre', PROMPT, CODIGO_CERTO, CODIGO, IP_CRU, sha(CODIGO_CERTO), sha(CODIGO), KEY]) {
+    assert.equal(tudo.includes(proibido), false, 'vazou: ' + proibido);
+  }
+  assert.equal(rows[0].status, 502);
+  assert.equal(rows[0].params.codigo, 'refused');
+  assert.equal(rows[0].params.acessoRef, 'geral');
+  assert.equal(rows[0].params.rejeicoes.tentativas, 2);
+  assert.equal(rows[0].params.rejeicoes.numerosSemOrigem, 2);
+  assert.equal(rows[0].params.rejeicoes.termosSinalizados >= 2, true);
+});
+
+test('api: rota recusada (401 e 429) também deixa linha, sem dado do cliente', async () => {
+  const db = await bancoLimpo();
+  const env = { ...ENV_DB, ARGOS_ACCESS_CODE: CODIGO_CERTO };
+  const msgs = body({ messages: [{ role: 'user', content: PROMPT }] });
+  const locked = createHandler({ env, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' })), rateStore: new Map(), toolRunner: stubRunner() });
+  assert.equal((await invoke(locked, { headers: { 'X-Forwarded-For': IP_CRU, 'x-argos-code': CODIGO }, body: msgs })).statusCode, 401);
+  const limited = createHandler({ env, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' })), rateStore: new Map(), rateLimit: { limit: 1, windowMs: 60_000 }, toolRunner: stubRunner() });
+  const h = { 'X-Forwarded-For': IP_CRU, 'x-argos-code': CODIGO_CERTO };
+  assert.equal((await invoke(limited, { headers: h, body: body() })).statusCode, 200);
+  assert.equal((await invoke(limited, { headers: h, body: msgs })).statusCode, 429);
+  const rows = await logs(db);
+  assert.deepEqual(rows.map((r) => r.status), [401, 200, 429]);
+  assert.deepEqual(rows.map((r) => r.params.codigo), ['unauthorized', null, 'rate_limited']);
+  assert.equal(rows[0].params.acessoRef, null);
+  assert.equal(rows[2].params.acessoRef, null);
+  assert.equal(rows[0].params.tentativas, 0);
+  const tudo = JSON.stringify(rows);
+  for (const proibido of [CODIGO, CODIGO_CERTO, PROMPT, IP_CRU]) assert.equal(tudo.includes(proibido), false);
+  assert.match(rows[0].ip_hash, /^[0-9a-f]{32}$/);
+});
+
+test('api: sem ARGOS_IP_HASH_KEY o ip_hash fica nulo; sem DATABASE_URL nada é gravado', async () => {
+  const envSemChave = { ...ENV_DB };
+  delete envSemChave.ARGOS_IP_HASH_KEY;
+  const db = await bancoLimpo(envSemChave);
+  const handler = createHandler({ env: envSemChave, fetchImpl: fakeFetch(reply({ content: 'Texto sem números.' })), rateStore: new Map(), toolRunner: stubRunner() });
+  assert.equal((await invoke(handler, { headers: { 'X-Forwarded-For': IP_CRU }, body: body() })).statusCode, 200);
+  const rows = await logs(db);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].ip_hash, null);
+
+  let chamado = 0;
+  const semBanco = dbAudit({ ARGOS_IP_HASH_KEY: 'k' }, async () => { chamado++; return db; }, { ip: IP_CRU });
+  await semBanco({ type: 'response', requestId: '00000000-0000-4000-8000-000000000000', status: 200, durationMs: 5 });
+  assert.equal(chamado, 0);
+  assert.equal((await logs(db)).length, 1);
+});
+
+test('api: banco que lança na auditoria não derruba a resposta', async () => {
+  const quebrado = { async query() { throw new Error('banco fora'); } };
+  for (const resolve of [async () => quebrado, async () => { throw new Error('sem conexão'); }]) {
+    const handler = createHandler({ env: ENV, fetchImpl: fakeFetch(reply({ content: '', tool_calls: [toolCall('call_1', 'detalhar_setup', { setup_id: 'RSI_OVERSOLD' })] }, 'tool_calls'), reply({ content: 'Texto sem números.' })), rateStore: new Map(), toolRunner: stubRunner(), audit: dbAudit({ DATABASE_URL: 'x' }, resolve, { ip: IP_CRU }) });
+    const res = await invoke(handler, { body: body() });
+    assert.equal(res.statusCode, 200);
+    assert.match(JSON.parse(res.body).choices[0].message.content, /^Texto sem números\./);
+  }
+});
+
+/** Captura o que a função manda ao console.log durante `fn` (o log da função da Vercel). */
+async function capturaLog(fn) {
+  const original = console.log;
+  const linhas = [];
+  console.log = (...a) => { linhas.push(a.join(' ')); };
+  try { await fn(); } finally { console.log = original; }
+  return linhas;
+}
+
+test('api: o log da função leva só contagens das rejeições, sem número cru nem termo sinalizado', async () => {
+  // ponta a ponta: sem `audit` injetado vale o logAudit padrão
+  const env = { ...ENV, ARGOS_ACCESS_CODE: CODIGO_CERTO };
+  const ruim = createHandler({ env, fetchImpl: fakeFetch(reply({ content: 'Dado: 61,5% e compre agora ZZREJEITADOZZ.' }), reply({ content: 'Outra tentativa 77,7% compre agora.' })), rateStore: new Map(), toolRunner: stubRunner() });
+  const linhas = await capturaLog(async () => {
+    assert.equal((await invoke(ruim, { headers: { 'x-argos-code': CODIGO_CERTO }, body: body() })).statusCode, 502);
+  });
+  const tudo = linhas.join('\n');
+  assert.ok(linhas.some((l) => l.includes('"argos_ai"')), 'o log da auditoria existe');
+  for (const proibido of ['61,5', '77,7', 'compre', 'ZZREJEITADOZZ', 'unknownNumbers', 'flaggedTerms']) {
+    assert.equal(tudo.includes(proibido), false, 'vazou no log: ' + proibido);
+  }
+  const resp = linhas.map((l) => JSON.parse(l).argos_ai).find((e) => e.type === 'response');
+  assert.equal(resp.rejections.tentativas, 2);
+  assert.equal(resp.rejections.numerosSemOrigem, 2);
+  assert.ok(resp.rejections.termosSinalizados >= 2);
+
+  // o evento completo segue intacto para quem consome (auditoria no banco, paramsDaResposta)
+  const evento = { type: 'response', status: 502, code: 'refused', attempts: 2, rejections: [{ unknownNumbers: ['61,5'], flaggedTerms: ['compre'] }, { unknownNumbers: ['77,7', '1,0'], flaggedTerms: ['compre agora'] }] };
+  const copia = JSON.stringify(evento);
+  const l2 = await capturaLog(() => logAudit(evento));
+  assert.equal(JSON.stringify(evento), copia, 'logAudit não altera o evento');
+  assert.deepEqual(JSON.parse(l2[0]).argos_ai.rejections, { tentativas: 2, numerosSemOrigem: 3, termosSinalizados: 2 });
+  assert.deepEqual(paramsDaResposta(evento).rejeicoes, { tentativas: 2, numerosSemOrigem: 3, termosSinalizados: 2 });
 });
