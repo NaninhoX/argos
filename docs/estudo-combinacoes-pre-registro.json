@@ -1,0 +1,1039 @@
+{
+  "estudo": "combinacoes-1",
+  "dataRegistro": "2026-11-17",
+  "estado": "REGISTRADO em 17/11/2026, aprovado por Michel; nenhum resultado de combinação foi calculado antes deste registro",
+  "carimbo": "SHA-256 desta ficha (JSON canonizado por lib/canonical.js) registrado em docs/estudo-combinacoes-pre-registro.md e no commit do Git que a contém; carimbo independente por OpenTimestamps: pendente",
+  "motor": "argos-engine 1.1.0",
+  "motorAlterado": false,
+  "motorExigido": "argos-engine 1.2.0 (MINOR aditiva, decisão de Michel; tipo de gatilho composto)",
+  "pergunta": "Exigir que dois ou três setups do motor apareçam juntos, numa janela de 4 candles (o atual e os 3 anteriores), com período refratário de 12 candles, produz taxa de acerto (alvo antes do stop) acima da taxa-base de entradas aleatórias nas nove séries do estudo v1.1?",
+  "hipoteseNula": "A combinação não supera a taxa-base de entradas aleatórias com a mesma regra de saída (teste de permutação do motor, 100.000 sorteios, semente 42, mulberry32). Com 3.000 sorteios o menor p possível seria 2/3001 = 6,7e-4 e, na família de 756, uma célula sozinha só alcançaria q = 0,504 (seriam necessárias 11 células no piso); com 100.000 o piso é 2e-5 e uma célula isolada chega a q de cerca de 0,015. Exige o parâmetro novo iters em evaluateSetup (padrão 3.000, para manter a paridade 72/72). A comparação com os componentes (condição iv) não depende do número de sorteios: usa o alphaPP (diferença para a taxa-base), cálculo determinístico.",
+  "hipoteseDePesquisa": "Combinar setups melhora: ao menos uma combinação tem vantagem estatística sobre o acaso depois de corrigidos os múltiplos testes.",
+  "criterioDeFalsificacao": "Uma célula só conta a favor de \"combinar melhora\" se cumprir TODAS: (i) veredito \"Vantagem estatística presente\" na família de 756, medido pelo q (p ajustado pela correção de Benjamini-Hochberg, que limita a proporção esperada de falsos positivos entre muitos testes), o que exclui \"sensível a subperíodos\"; (ii) o limite inferior do intervalo da taxa de acerto fica acima da taxa-base; (iii) walk-forward (teste em blocos sucessivos do tempo) disponível (pelo menos 20 gatilhos com desfecho) e consistente; (iv) a diferença para a taxa-base (alphaPP) da combinação é MAIOR que a de cada componente isolado na mesma série, com cada componente isolado REAVALIADO na mesma série, com o mesmo período refratário de 12 candles e a mesma regra de saída (cálculo determinístico, sem teste de permutação); os valores publicados do v1.1 aparecem ao lado só como contexto; alphaPP não depende do número de sorteios. Se nenhuma célula cumprir (i) a (iv), a ideia é dada como não sustentada nesta forma (janela de 4 candles, refratário de 12, estas séries e esta saída); efeitos menores que o efeito mínimo detectável não ficam excluídos. A condição (iv) existe porque, no v1.1, o único veredito \"Vantagem estatística presente\" foi de +5,7 p.p. (ETHUSDT 4h BREAKOUT_20), e SOLUSDT 1d BREAKOUT_20 teve q < 0,05 com +17,4 p.p., mas \"sensível a subperíodos\": qualquer combinação com um desses componentes herdaria a vantagem sem ganho por combinar. Para virar candidata ao Estágio 2 exige-se ainda alphaPP > 0 da mesma combinação no mesmo tempo gráfico em pelo menos um dos outros dois ativos, com N efetivo (nEff do motor: gatilhos com desfecho corrigidos pela autocorrelação dos retornos, Durbin-Watson; nunca maior que o número de gatilhos com desfecho) >= 10 (sinal descritivo, porque BTC, ETH e SOL são correlacionados). O resultado negativo é publicado com o mesmo destaque do positivo.",
+  "setupsComponentes": [
+    "RSI_OVERSOLD",
+    "MACD_CROSS",
+    "GOLDEN_CROSS",
+    "BB_LOWER",
+    "BREAKOUT_20",
+    "EMA_PULLBACK",
+    "BULL_ENGULFING",
+    "HAMMER"
+  ],
+  "semanticaDeConfluencia": {
+    "regra": "A combinação tem gatilho no candle i se todos os componentes tiveram gatilho em algum dos candles i-3 a i (inclusive i), isto é, janela de 4 candles (o atual e os 3 anteriores), e pelo menos um componente dispara exatamente no candle i. Os gatilhos dos componentes antes do índice 200 são zerados antes de aplicar a confluência.",
+    "janela": 3,
+    "janelaUnidade": "janela = número de candles ANTERIORES (3); janela total de 4 candles, com o atual",
+    "periodoRefratario": {
+      "candles": 12,
+      "regra": "Um gatilho da combinação no candle i só conta se i menos o índice do último gatilho CONTADO da mesma combinação na mesma série for >= 12 (igual ao prazo da saída). O primeiro gatilho da série sempre conta.",
+      "motivo": "Sem o refratário, gatilhos colados no tempo (cerca de 16% dos gatilhos, 4.461 de 27.883, ficam a até 3 candles do anterior, e o refratário remove 5.770 deles, 20,7%) têm desfechos sobrepostos e o teste de permutação, que sorteia candles como independentes, fica otimista. Com o refratário os desfechos não se sobrepõem."
+    },
+    "independencia": "O teste de permutação trata os candles como independentes entre si; regimes e ativos correlacionados deixam o p possivelmente otimista.",
+    "ordemDosComponentes": "não importa",
+    "unidadeDaJanela": "candles do próprio tempo gráfico da série",
+    "aquecimento": 200,
+    "naoTestados": [
+      "gatilho só no mesmo candle (janela 0)",
+      "outras janelas",
+      "outros períodos refratários",
+      "OU entre setups",
+      "votos (pelo menos k de n)"
+    ],
+    "nota": "Qualquer item não testado é outro estudo, com outro registro."
+  },
+  "combinacoes": [
+    {
+      "id": "P01",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS"
+      ],
+      "gatilhosSomados9Series": 747
+    },
+    {
+      "id": "P02",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS"
+      ],
+      "gatilhosSomados9Series": 6
+    },
+    {
+      "id": "P03",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 995
+    },
+    {
+      "id": "P04",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 31
+    },
+    {
+      "id": "P05",
+      "setups": [
+        "RSI_OVERSOLD",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "P06",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 1032
+    },
+    {
+      "id": "P07",
+      "setups": [
+        "RSI_OVERSOLD",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 276
+    },
+    {
+      "id": "P08",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS"
+      ],
+      "gatilhosSomados9Series": 118
+    },
+    {
+      "id": "P09",
+      "setups": [
+        "MACD_CROSS",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 531
+    },
+    {
+      "id": "P10",
+      "setups": [
+        "MACD_CROSS",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 1690
+    },
+    {
+      "id": "P11",
+      "setups": [
+        "MACD_CROSS",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 335
+    },
+    {
+      "id": "P12",
+      "setups": [
+        "MACD_CROSS",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 3740
+    },
+    {
+      "id": "P13",
+      "setups": [
+        "MACD_CROSS",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 426
+    },
+    {
+      "id": "P14",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 58
+    },
+    {
+      "id": "P15",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 184
+    },
+    {
+      "id": "P16",
+      "setups": [
+        "GOLDEN_CROSS",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 99
+    },
+    {
+      "id": "P17",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 306
+    },
+    {
+      "id": "P18",
+      "setups": [
+        "GOLDEN_CROSS",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 14
+    },
+    {
+      "id": "P19",
+      "setups": [
+        "BB_LOWER",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 102
+    },
+    {
+      "id": "P20",
+      "setups": [
+        "BB_LOWER",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 151
+    },
+    {
+      "id": "P21",
+      "setups": [
+        "BB_LOWER",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 1669
+    },
+    {
+      "id": "P22",
+      "setups": [
+        "BB_LOWER",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 598
+    },
+    {
+      "id": "P23",
+      "setups": [
+        "BREAKOUT_20",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 488
+    },
+    {
+      "id": "P24",
+      "setups": [
+        "BREAKOUT_20",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 2685
+    },
+    {
+      "id": "P25",
+      "setups": [
+        "BREAKOUT_20",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 58
+    },
+    {
+      "id": "P26",
+      "setups": [
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 1027
+    },
+    {
+      "id": "P27",
+      "setups": [
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 42
+    },
+    {
+      "id": "P28",
+      "setups": [
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 807
+    },
+    {
+      "id": "T01",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "GOLDEN_CROSS"
+      ],
+      "gatilhosSomados9Series": 1
+    },
+    {
+      "id": "T02",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 87
+    },
+    {
+      "id": "T03",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 29
+    },
+    {
+      "id": "T04",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 0
+    },
+    {
+      "id": "T05",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 387
+    },
+    {
+      "id": "T06",
+      "setups": [
+        "RSI_OVERSOLD",
+        "MACD_CROSS",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 63
+    },
+    {
+      "id": "T07",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 1
+    },
+    {
+      "id": "T08",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 1
+    },
+    {
+      "id": "T09",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 0
+    },
+    {
+      "id": "T10",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 5
+    },
+    {
+      "id": "T11",
+      "setups": [
+        "RSI_OVERSOLD",
+        "GOLDEN_CROSS",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T12",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BB_LOWER",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 8
+    },
+    {
+      "id": "T13",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BB_LOWER",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T14",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BB_LOWER",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 358
+    },
+    {
+      "id": "T15",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BB_LOWER",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 111
+    },
+    {
+      "id": "T16",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BREAKOUT_20",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 0
+    },
+    {
+      "id": "T17",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BREAKOUT_20",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 21
+    },
+    {
+      "id": "T18",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BREAKOUT_20",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 3
+    },
+    {
+      "id": "T19",
+      "setups": [
+        "RSI_OVERSOLD",
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 1
+    },
+    {
+      "id": "T20",
+      "setups": [
+        "RSI_OVERSOLD",
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 0
+    },
+    {
+      "id": "T21",
+      "setups": [
+        "RSI_OVERSOLD",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 134
+    },
+    {
+      "id": "T22",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS",
+        "BB_LOWER"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T23",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 57
+    },
+    {
+      "id": "T24",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 13
+    },
+    {
+      "id": "T25",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 58
+    },
+    {
+      "id": "T26",
+      "setups": [
+        "MACD_CROSS",
+        "GOLDEN_CROSS",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T27",
+      "setups": [
+        "MACD_CROSS",
+        "BB_LOWER",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 55
+    },
+    {
+      "id": "T28",
+      "setups": [
+        "MACD_CROSS",
+        "BB_LOWER",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 6
+    },
+    {
+      "id": "T29",
+      "setups": [
+        "MACD_CROSS",
+        "BB_LOWER",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 218
+    },
+    {
+      "id": "T30",
+      "setups": [
+        "MACD_CROSS",
+        "BB_LOWER",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 38
+    },
+    {
+      "id": "T31",
+      "setups": [
+        "MACD_CROSS",
+        "BREAKOUT_20",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 158
+    },
+    {
+      "id": "T32",
+      "setups": [
+        "MACD_CROSS",
+        "BREAKOUT_20",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 952
+    },
+    {
+      "id": "T33",
+      "setups": [
+        "MACD_CROSS",
+        "BREAKOUT_20",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 30
+    },
+    {
+      "id": "T34",
+      "setups": [
+        "MACD_CROSS",
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 156
+    },
+    {
+      "id": "T35",
+      "setups": [
+        "MACD_CROSS",
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T36",
+      "setups": [
+        "MACD_CROSS",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 218
+    },
+    {
+      "id": "T37",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BB_LOWER",
+        "BREAKOUT_20"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T38",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BB_LOWER",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 4
+    },
+    {
+      "id": "T39",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BB_LOWER",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 13
+    },
+    {
+      "id": "T40",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BB_LOWER",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 4
+    },
+    {
+      "id": "T41",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BREAKOUT_20",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 20
+    },
+    {
+      "id": "T42",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BREAKOUT_20",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 87
+    },
+    {
+      "id": "T43",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BREAKOUT_20",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 1
+    },
+    {
+      "id": "T44",
+      "setups": [
+        "GOLDEN_CROSS",
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 39
+    },
+    {
+      "id": "T45",
+      "setups": [
+        "GOLDEN_CROSS",
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 0
+    },
+    {
+      "id": "T46",
+      "setups": [
+        "GOLDEN_CROSS",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 8
+    },
+    {
+      "id": "T47",
+      "setups": [
+        "BB_LOWER",
+        "BREAKOUT_20",
+        "EMA_PULLBACK"
+      ],
+      "gatilhosSomados9Series": 9
+    },
+    {
+      "id": "T48",
+      "setups": [
+        "BB_LOWER",
+        "BREAKOUT_20",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 42
+    },
+    {
+      "id": "T49",
+      "setups": [
+        "BB_LOWER",
+        "BREAKOUT_20",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 2
+    },
+    {
+      "id": "T50",
+      "setups": [
+        "BB_LOWER",
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 34
+    },
+    {
+      "id": "T51",
+      "setups": [
+        "BB_LOWER",
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 5
+    },
+    {
+      "id": "T52",
+      "setups": [
+        "BB_LOWER",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 154
+    },
+    {
+      "id": "T53",
+      "setups": [
+        "BREAKOUT_20",
+        "EMA_PULLBACK",
+        "BULL_ENGULFING"
+      ],
+      "gatilhosSomados9Series": 247
+    },
+    {
+      "id": "T54",
+      "setups": [
+        "BREAKOUT_20",
+        "EMA_PULLBACK",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 3
+    },
+    {
+      "id": "T55",
+      "setups": [
+        "BREAKOUT_20",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 33
+    },
+    {
+      "id": "T56",
+      "setups": [
+        "EMA_PULLBACK",
+        "BULL_ENGULFING",
+        "HAMMER"
+      ],
+      "gatilhosSomados9Series": 10
+    }
+  ],
+  "dados": {
+    "fonte": "4h e 1d: data/snapshot-v1.1.json; 1h: data/history/*_1h.json.gz (jan/2022 ao corte), como em tests/study-v1.1.test.js. Origem: Binance Spot API pública, coletada em 2026-09-27",
+    "corte": "2026-09-26",
+    "corteUtc": "2026-09-26T23:59:59Z",
+    "hashDaSerie": "seriesHash = SHA-256 do JSON canônico de [dt, t, o, h, l, c, v] (lib/analysis-summary.js)",
+    "series": [
+      {
+        "ativo": "BTCUSDT",
+        "tempoGrafico": "1h",
+        "fonte": "data/history/BTCUSDT_1h.json.gz",
+        "candles": 41519,
+        "primeiro": "2022-01-01T00:00Z",
+        "ultimo": "2026-09-26T23:00Z",
+        "seriesHash": "8e4cb5d8b4542962bb5dd3c98ba40cb336b1e476131be7ec0b56ac87eccaf1af"
+      },
+      {
+        "ativo": "BTCUSDT",
+        "tempoGrafico": "4h",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 19951,
+        "primeiro": "2017-08-17T04:00Z",
+        "ultimo": "2026-09-26T20:00Z",
+        "seriesHash": "478c029631d32b3c04206fbe683e88f178f194a9be19dfb0ee8dc7b3cb40f051"
+      },
+      {
+        "ativo": "BTCUSDT",
+        "tempoGrafico": "1d",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 3328,
+        "primeiro": "2017-08-17T00:00Z",
+        "ultimo": "2026-09-26T00:00Z",
+        "seriesHash": "81c1aec5ac1be17a0145507df10aa6d3abeb737d9e85ba1a30e81fe9ab0b1096"
+      },
+      {
+        "ativo": "ETHUSDT",
+        "tempoGrafico": "1h",
+        "fonte": "data/history/ETHUSDT_1h.json.gz",
+        "candles": 41519,
+        "primeiro": "2022-01-01T00:00Z",
+        "ultimo": "2026-09-26T23:00Z",
+        "seriesHash": "341bd2069c4284ccb91c6b8061a9c2fe753036cdb824ed34a41939155efd388c"
+      },
+      {
+        "ativo": "ETHUSDT",
+        "tempoGrafico": "4h",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 19951,
+        "primeiro": "2017-08-17T04:00Z",
+        "ultimo": "2026-09-26T20:00Z",
+        "seriesHash": "12aca5f11a6fbb23bd54423fcc520303a3d06be1e2015c5c24ed3a79ef0a9728"
+      },
+      {
+        "ativo": "ETHUSDT",
+        "tempoGrafico": "1d",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 3328,
+        "primeiro": "2017-08-17T00:00Z",
+        "ultimo": "2026-09-26T00:00Z",
+        "seriesHash": "1397933a078c23a8d686abcf9f7a49e41b37bd1d0c779f4f9322f94cb38a6271"
+      },
+      {
+        "ativo": "SOLUSDT",
+        "tempoGrafico": "1h",
+        "fonte": "data/history/SOLUSDT_1h.json.gz",
+        "candles": 41519,
+        "primeiro": "2022-01-01T00:00Z",
+        "ultimo": "2026-09-26T23:00Z",
+        "seriesHash": "6c8f15a99830f7918a492e14c5546a6ccf88ac9a0058944c54a5feb1493989ce"
+      },
+      {
+        "ativo": "SOLUSDT",
+        "tempoGrafico": "4h",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 13427,
+        "primeiro": "2020-08-11T04:00Z",
+        "ultimo": "2026-09-26T20:00Z",
+        "seriesHash": "6eca353facf61405cf406cd41bd121a4c1c095e63abf43205f1e123165213e05"
+      },
+      {
+        "ativo": "SOLUSDT",
+        "tempoGrafico": "1d",
+        "fonte": "data/snapshot-v1.1.json",
+        "candles": 2238,
+        "primeiro": "2020-08-11T00:00Z",
+        "ultimo": "2026-09-26T00:00Z",
+        "seriesHash": "ee6eb552d926c59263699c9b4e79019020439a2da409c9e7c61154a74844d56f"
+      }
+    ]
+  },
+  "regraDeSaidaPadrao": {
+    "modo": "atr",
+    "alvo": 2,
+    "stop": 1,
+    "candles": 12,
+    "atr": "ATR(14), média de Wilder",
+    "empateNoMesmoCandle": "perda",
+    "aquecimento": 200,
+    "sorteios": 100000,
+    "semente": 42,
+    "gerador": "mulberry32",
+    "nota": "Alvo e stop são parâmetros do teste, nunca orientação."
+  },
+  "variacoes": {
+    "combinacoes": 84,
+    "pares": 28,
+    "trios": 56,
+    "series": 9,
+    "celulas": 756,
+    "descartadas": 0,
+    "esperadoPeloAcasoSemCorrecao": "no máximo cerca de 25 células com p <= 5% (5% das 491 células com pelo menos um gatilho); na prática menos, porque células com poucos gatilhos não alcançam p <= 5%"
+  },
+  "familias": {
+    "oficial": {
+      "tamanho": 756,
+      "composicao": "84 combinações × 9 séries; todas as células entram com o p do teste de permutação; as de zero gatilhos entram com p = 1; células com N efetivo < 10 recebem \"evidência insuficiente\" qualquer que seja o q",
+      "metodo": "Benjamini-Hochberg (correção que limita a proporção esperada de falsos positivos entre muitos testes; o q é o p ajustado por ela)",
+      "justificativa": "A oficial é 756 sem as 72 (o v1.2 escolheu somar as 72): a pergunta é outra, as combinações são hipóteses novas, e a oficial mais conservadora entre as defensáveis para a pergunta nova já é grande. As outras ficam como sensibilidade."
+    },
+    "sensibilidade": [
+      {
+        "tamanho": 828,
+        "composicao": "756 + 72 do estudo v1.1",
+        "papel": "apenas reportada, nunca misturada com a oficial"
+      },
+      {
+        "tamanho": 891,
+        "composicao": "756 + 135 do estudo v1.2 (63 novas + 72 do v1.1)",
+        "papel": "apenas reportada, nunca misturada com a oficial",
+        "condicao": "condicional: reportada só se o v1.2 tiver sido executado antes; caso contrário omitida, e o relatório diz isso"
+      }
+    ],
+    "celulasAnteriores": "As células do v1.1 e do v1.2 ficam como publicadas (v1.1) ou como forem publicadas (v1.2) nas suas famílias.",
+    "regraDeRotulo": "Todo p ajustado vem com a família: \"q = 0,xxx, família 756, combinações\"."
+  },
+  "vereditos": "Os cinco do motor (verdictOf): evidência insuficiente (nEff < 10) · sem vantagem demonstrável (q >= 0,05) · abaixo do acaso · vantagem presente, sensível a subperíodos (bloco de teste mais de 15 p.p. abaixo do treino) · vantagem estatística presente. Intervalo de Wilson; Beta-binomial se N efetivo < 25.",
+  "comparacaoComComponentes": "Por combinação e série, alphaPP da combinação lado a lado com o de cada componente isolado, reavaliado na mesma série, com o mesmo período refratário de 12 candles e a mesma regra de saída (cálculo determinístico, sem teste de permutação); os valores publicados do v1.1 aparecem só como contexto. alphaPP (diferença para a taxa-base) não depende do número de sorteios. É a condição (iv) do critério de falsificação; não gera veredito próprio e não entra na família de correção.",
+  "poderEEfeitoMinimo": {
+    "celulas": {
+      "pares": 252,
+      "trios": 504,
+      "total": 756
+    },
+    "formato": "contagens exatas de gatilhos brutos com janela de 4 candles e refratário de 12; não são resultado de acerto; as contagens são de gatilhos brutos, limite superior do N efetivo",
+    "gatilhosPares": {
+      "zero": 25,
+      "pelomenos1": 227,
+      "pelomenos3": 200,
+      "pelomenos4": 190,
+      "pelomenos10": "147 (58,3%)",
+      "pelomenos20": 121,
+      "pelomenos30": "103 (40,9%)",
+      "pelomenos100": "53 (21,0%)",
+      "pelomenos300": 16,
+      "soma": 18217
+    },
+    "gatilhosTrios": {
+      "zero": 240,
+      "pelomenos1": 264,
+      "pelomenos3": 165,
+      "pelomenos4": 140,
+      "pelomenos10": "90 (17,9%)",
+      "pelomenos20": 55,
+      "pelomenos30": "38 (7,5%)",
+      "pelomenos100": 4,
+      "pelomenos300": 0,
+      "soma": 3896
+    },
+    "gatilhosTotal756": {
+      "zero": "265 (p = 1 fixo)",
+      "pelomenos1": 491,
+      "pelomenos3": 365,
+      "pelomenos4": 330,
+      "pelomenos10": 237,
+      "pelomenos20": "176 (as que podem cumprir o walk-forward)",
+      "pelomenos30": 141,
+      "pelomenos100": 57,
+      "pelomenos300": 16,
+      "soma": 22113
+    },
+    "minimoParaChegarA5pct": "com 2 ou menos gatilhos o p bicaudal não chega a 5%; com 3 chega se todos acertarem em 8 das 9 séries (em BTCUSDT 1d no limite, 0,0498, e depende do sorteio; em ETHUSDT 1d não chega); com menos de 10 gatilhos o veredito é sempre \"evidência insuficiente\", e esse p só pesa na ordenação de Benjamini-Hochberg; 365 das 756 células têm 3 ou mais gatilhos",
+    "porAcaso": "no máximo cerca de 25 células (5% das 491 com pelo menos 1 gatilho); menos na prática",
+    "somasPorSerieJanela4Refratario12": {
+      "formato": "[pares, trios]",
+      "BTCUSDT_1h": [
+        4155,
+        912
+      ],
+      "BTCUSDT_4h": [
+        1962,
+        442
+      ],
+      "BTCUSDT_1d": [
+        290,
+        71
+      ],
+      "ETHUSDT_1h": [
+        4252,
+        926
+      ],
+      "ETHUSDT_4h": [
+        1820,
+        329
+      ],
+      "ETHUSDT_1d": [
+        249,
+        36
+      ],
+      "SOLUSDT_1h": [
+        3999,
+        866
+      ],
+      "SOLUSDT_4h": [
+        1317,
+        282
+      ],
+      "SOLUSDT_1d": [
+        173,
+        32
+      ],
+      "total": [
+        18217,
+        3896
+      ]
+    },
+    "efeitoMinimoDetectavel": "Base medida no v1.1 entre 25% e 30%: efeito mínimo de cerca de 13 p.p. com 100 gatilhos efetivos e 6,5 p.p. com 400, sem correção; com a correção de 756 testes, cerca de 22 e 11 p.p. (melhor caso, uma célula só; conferido pelo validador). Poder 80%, nível 5%. Ter muitos gatilhos baixa o efeito mínimo: 53 células de pares e 4 de trios (57 no total) chegam a 100 gatilhos brutos e só 16 (todas de pares) passam de 300; nas demais o efeito mínimo passa de 13 p.p. (sem correção; com a correção de 756 testes, passa de 22 p.p.). O único veredito \"Vantagem estatística presente\" do v1.1 foi de +5,7 p.p. (ETHUSDT 4h BREAKOUT_20); SOLUSDT 1d BREAKOUT_20 teve q < 0,05 com +17,4 p.p., mas \"sensível a subperíodos\". Efeitos do tamanho de +5,7 p.p. não são detectáveis em nenhuma célula: mesmo no melhor caso, o menor efeito detectável com a correção de 756 testes é de cerca de 6 p.p. com 50% de poder e 7,4 p.p. com 80% (P12 em 1h, mais de 800 gatilhos).",
+    "expectativa": "42% das células de pares e 82% das de trios têm menos de 10 gatilhos brutos e caem necessariamente em evidência insuficiente (o N efetivo nunca passa da contagem bruta). Das 237 células com 10 ou mais gatilhos brutos (147 pares, 58%; 90 trios), uma parte ainda pode cair em evidência insuficiente pelo N efetivo, que só se conhece na execução. Isso não prova que a combinação não funciona; prova que o histórico não tem dados para dizer. A condição (iii) exige 20 ou mais gatilhos com desfecho: só 176 das 756 células podem cumprir o critério. No melhor caso (uma célula só, 50% de poder, binomial exata com a base de cada série, q<0,05 na família de 756), 14 detectam efeito de até 10 p.p., 39 até 15 p.p. e 62 até 20 p.p. (com 80% de poder, só 6 células detectam até 10 p.p.). Um efeito do tamanho do único veredito \"Vantagem estatística presente\" do v1.1 (+5,7 p.p.) é indetectável. Este estudo é, por isso, um detector de efeitos grandes (10 p.p. ou mais) em um conjunto pequeno de células, principalmente pares de 1h e 4h; não prova ausência de efeitos menores.",
+    "nota": "Só gatilhos foram contados; nenhuma taxa de acerto de combinação foi calculada."
+  },
+  "estagio2": "Estágio 2: novo pré-registro carimbado; só contam candles posteriores ao carimbo desse novo registro. Dados posteriores a 26/09/2026 não bastam como prospectivos (já existem cerca de 7 semanas de candles). Regra do skill de desenho de estudos: a ficha só vale como pré-registro antes de qualquer candle posterior ao corte; este estudo também foi registrado depois do corte (17/11/2026 contra 26/09/2026), com o mesmo argumento do v1.2, portanto o resultado é retrospectivo, não prospectivo. Registrar combinações no Termômetro exige alterar o job (lib/jobs/termometro.js, que hoje só registra os 8 setups de analyze com 10 ou mais desfechos) e o motor: decisão de Michel. Opcional: o trecho de 27/09/2026 até a data do carimbo deste estudo pode ser fixado com seriesHash como amostra fora da amostra NÃO prospectiva.",
+  "limitesDeclarados": [
+    "Os 72 resultados individuais do v1.1 já foram vistos; a lista de combinações foi fixada (todas as 84) antes de calcular qualquer taxa de acerto de combinação; o estudo nas 9 séries é confirmatório só em parte.",
+    "Só foram contados gatilhos das combinações (poder); nenhum acerto foi calculado.",
+    "As 9 séries são 3 ativos cripto muito correlacionados em 3 tempos gráficos, não 9 amostras independentes.",
+    "Custos não testados: o motor só embute 0,1% em meanNet.",
+    "Sem gap de abertura no cripto 24h; resultados não se transferem a ações nem Forex.",
+    "Os dados históricos já existem (inclusive cerca de 7 semanas posteriores ao corte): o registro assegura que regras e parâmetros foram fixados antes do primeiro cálculo de taxa de acerto das combinações, não que o autor desconheça o histórico do mercado.",
+    "O teste de permutação trata os candles como independentes entre si; regimes e ativos correlacionados deixam o p possivelmente otimista, mesmo com o refratário de 12 candles.",
+    "Só uma semântica de confluência, um refratário e uma regra de saída."
+  ],
+  "implementacao": {
+    "feita": false,
+    "versaoDoMotor": "argos-engine 1.2.0 (MINOR, aditiva, decisão de Michel)",
+    "interfaceProposta": "{ type: 'confluence', members: [ids dos 8 setups do v1.1], window: 3, refractory: 12, iters: 100000 }",
+    "members": "2 ou 3 ids (ou 1 id, o componente isolado, usado na comparação da condição iv), restritos aos 8 ids do v1.1, mesmo que o v1.2 acrescente setups; window = número de candles anteriores (3, janela de 4 com o atual)",
+    "naoColocarEmSpecTypes": "confluence não entra em SPEC_TYPES: tests/pine-reader.test.js:463 exige que os tipos do leitor de Pine sejam iguais a Object.keys(SPEC_TYPES), e mudar esse teste seria ajustar teste. Usar ramo próprio em analyzeSpec antes de triggersFromSpec, ou função exportada nova confluenceTriggers(d, ind, members, window, refractory).",
+    "gatilhosDosMembros": "usar os gatilhos de detectSetups(d, ind) (exportada, idêntica ao 1.1.0); zerar os gatilhos dos membros antes do índice 200 e só depois aplicar a confluência e o refratário",
+    "iters": "parâmetro iters em evaluateSetup, padrão 3000: paridade 72/72 e estudo v1.1 intactos; analyze() não muda",
+    "mudancaDeVersao": "VERSION 1.2.0 quebra cerca de 11 asserts que fixam 'argos-engine 1.1.0' (tests/analyze-handler.test.js, previsao.test.js, proof-handlers.test.js, proof-verify, backup, db-*, termometro-status); atualizá-los é mudança deliberada de versão, não ajuste de regressão, e exige CHANGELOG, npm run build:web (web/js/engine.js é gerado) e nota de que a versão gravada em previsões e no Termômetro muda; decisão de Michel; pode ir junto do v1.2, com família separada",
+    "condicoes": "tests/legacy-parity.test.js (72/72) e tests/study-v1.1.test.js verdes",
+    "familiaBH": "o script aplica applyFamily (Benjamini-Hochberg) à lista das 756 células; as de zero gatilhos saem com pTwo = 1 pelo próprio permutationTest",
+    "scriptDoEstudo": "só leitura sobre engine/, escrito depois da aprovação da ficha e rodado uma única vez"
+  },
+  "traducao": {
+    "alphaPP": "quantos pontos percentuais a taxa de acerto da combinação fica acima ou abaixo do acaso (entradas aleatórias com a mesma regra)",
+    "confluencia": "os setups aparecem juntos dentro de uma janela de 4 candles (o atual e os 3 anteriores), e pelo menos um deles aparece no candle atual",
+    "refratario": "depois de um gatilho contado, os 11 candles seguintes não geram novo gatilho da mesma combinação (distância mínima de 12 candles), para os desfechos não se sobreporem",
+    "walk-forward": "teste em blocos sucessivos do tempo: o resultado de um bloco é comparado com o dos blocos anteriores",
+    "Benjamini-Hochberg": "correção para muitos testes ao mesmo tempo, que limita a proporção esperada de falsos positivos",
+    "N efetivo": "N efetivo (nEff do motor: gatilhos com desfecho corrigidos pela autocorrelação dos retornos, Durbin-Watson; nunca maior que o número de gatilhos com desfecho)",
+    "q": "o p (probabilidade de, só pelo acaso, sair um resultado tão extremo quanto o observado) ajustado pela correção de Benjamini-Hochberg"
+  },
+  "disclosure": "Os 72 resultados individuais do v1.1 já foram vistos. Só foram contados gatilhos das combinações, nenhum acerto. As 9 séries são 3 ativos correlacionados. Custos não testados. Sem gap de abertura no cripto 24h. Os dados históricos já existem (inclusive cerca de 7 semanas posteriores ao corte). O teste de permutação trata os candles como independentes entre si, e o p pode ser otimista.",
+  "travas": "Publicar resultado exige parecer sobre CNPI. Reprodução pública exige licença dos dados.",
+  "custo": "Cerca de 4 a 6 h de Michel. Ordem de grandeza medida pelo validador com as séries atuais: permutação de 100.000 sorteios em cerca de 2,6 ms por gatilho (cerca de 22.000 gatilhos: de 1 a 2 minutos só nos sorteios) e analyzeSpec de 1 a 2 s por série de 1h (41.519 candles); estimativa total de poucos minutos, a medir na execução."
+}
