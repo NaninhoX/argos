@@ -1,6 +1,6 @@
 # Termômetro: registro prospectivo
 
-> Atualização de 18/11/2026: o texto abaixo nasceu para a cadência diária. Desde 16/10 o 1h também roda por candle pelo GitHub Actions (`6,26 * * * *`, `docs/termometro-por-candle.md`); o 4h segue desligado. As frases sobre "um disparo por dia" descrevem o cron diário da Vercel, que continua existindo.
+> Atualização de 18/11/2026: o texto abaixo nasceu para a cadência diária. Desde 16/10 o 1h também roda por candle pelo GitHub Actions (desde 19/10 em `6,26 * * * *`, duas vezes por hora, `docs/termometro-por-candle.md`); o 4h segue desligado. As frases sobre "um disparo por dia" descrevem o cron diário da Vercel, que continua existindo.
 
 O Termômetro é a base da calibração pública: o motor registra, **antes** do resultado, a probabilidade que ele emite para cada gatilho em aberto, e depois grava o desfecho. Nada aqui calcula número novo. `p`, `r`, `n` e `w` vêm de `openPredictions` (`lib/prospective.js`, a mesma conta da calibração do motor, conferida por `tests/prospective.test.js`) e o desfecho vem de `A.outs`.
 
