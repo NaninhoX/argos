@@ -1,6 +1,7 @@
 // POST /api/previsoes e GET /api/proof (handlers puros) de ponta a ponta no PGlite, com o job de ancoragem e carimbo falso.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { VERSION } from '../engine/index.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -89,7 +90,7 @@ test('POST: registra, devolve o texto canônico exato e o hash confere (201)', a
   assert.equal(row.origin_ref, null);
   assert.equal(row.emitted_at.toISOString(), b.emittedAt);
   assert.equal(row.setup_id, 'BULL_ENGULFING');
-  assert.equal(row.engine_version, 'argos-engine 1.1.0');
+  assert.equal(row.engine_version, VERSION);
   assert.equal(canonicalize(row.payload), b.canonical);
   assert.equal(await count(db), 1);
 });
@@ -118,7 +119,7 @@ test('POST: o cliente não consegue injetar número (campos extras do corpo são
   assert.equal(row.payload.setup.winRate, engineWin);
   assert.equal(row.origin, 'demo');
   assert.equal(row.origin_ref, null);
-  assert.equal(row.payload.engine, 'argos-engine 1.1.0');
+  assert.equal(row.payload.engine, VERSION);
   assert.ok(!r.body.canonical.includes('0.99'));
 });
 
@@ -295,7 +296,7 @@ test('GET /api/proof por id e por hash: antes e depois da ancoragem', async () =
     const b = r.body;
     assert.deepEqual(b.previsao, {
       id: created.id, hash: created.hash, emittedAt: '2026-10-12T15:04:05.123Z', dataCut: summary.data.to, origin: 'demo',
-      engine: 'argos-engine 1.1.0', setupId: 'BULL_ENGULFING', symbol: 'BTCUSDT', timeframe: '4h',
+      engine: VERSION, setupId: 'BULL_ENGULFING', symbol: 'BTCUSDT', timeframe: '4h',
       verdict: summary.setups.find((s) => s.id === 'BULL_ENGULFING').verdict.key, supersedes: null
     });
     assert.equal(b.canonical, created.canonical, 'texto canônico refeito a partir do payload do banco');

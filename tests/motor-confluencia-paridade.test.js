@@ -116,13 +116,13 @@ test('confluenceTriggers · não altera os gatilhos recebidos; membro único e j
 });
 
 // ---------------------------------------------------------------- (d)
-const SCRATCH_COMBOS = 'C:/Users/ramon/AppData/Local/Temp/claude/b4c8ee347e133976/af689699-29bc-4dee-9e0f-3acf2946a261/scratchpad/combos.json';
-const temRef = fs.existsSync(SCRATCH_COMBOS);
+// Referência versionada em tests/fixtures (antes apontava para um arquivo fora do repositório e o teste era pulado em silêncio).
+const REF_COMBOS = new URL('./fixtures/combos-gatilhos-ref.json', import.meta.url);
 const contagem = (arr) => arr.reduce((s, x) => s + (x ? 1 : 0), 0);
 
 test('contagem de gatilhos · P01, P12, T32 em BTCUSDT_1d e ETHUSDT_4h = script de contagem de referência',
-  { ...SLOW, skip: temRef ? false : 'requer o combos.json de referência do scratchpad' }, () => {
-    const ref = JSON.parse(fs.readFileSync(SCRATCH_COMBOS, 'utf8'));
+  SLOW, () => {
+    const ref = JSON.parse(fs.readFileSync(REF_COMBOS, 'utf8'));
     const igual = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
     for (const key of ['BTCUSDT_1d', 'ETHUSDT_4h']) {
       const d = serie(key);
@@ -163,4 +163,43 @@ test('ficha · 84 combinações (28 pares + 56 trios) com ids P01..P28 e T01..T5
   assert.equal(ficha.combinacoes.length, 84);
   assert.deepEqual(ficha.combinacoes.slice(0, 28).map((c) => c.id), Array.from({ length: 28 }, (_, i) => 'P' + String(i + 1).padStart(2, '0')));
   assert.deepEqual(ficha.combinacoes.slice(28).map((c) => c.id), Array.from({ length: 56 }, (_, i) => 'T' + String(i + 1).padStart(2, '0')));
+});
+
+// ---------------------------------------------------------------- (e) engine 1.2.0 igual à cópia experimental na confluência
+test('engine 1.2.0 igual à cópia experimental na confluência · superfície', () => {
+  assert.equal(engine.VERSION, 'argos-engine 1.2.0');
+  for (const nome of ['confluenceTriggers', 'confluenceContext', 'analyzeConfluence']) {
+    assert.equal(typeof engine[nome], 'function', `export ${nome}`);
+    assert.equal(engine.default[nome], engine[nome], `default.${nome}`);
+  }
+  assert.equal(engine.evaluateSetup, undefined, 'evaluateSetup não é exportado');
+  assert.equal(Object.prototype.hasOwnProperty.call(engine.SPEC_TYPES, 'confluence'), false, 'confluence não é tipo de SPEC_TYPES');
+});
+
+test('engine 1.2.0 igual à cópia experimental na confluência · gatilhos das 84 combinações', SLOW, () => {
+  for (const key of ['BTCUSDT_1d', 'ETHUSDT_4h']) {
+    const d = serie(key);
+    const ctx = engine.confluenceContext(d, CFG);
+    const ctxExp = exp.confluenceContext(d, CFG);
+    assert.equal(hashCanonical(ctx.trig, { nonFinite: 'tag' }), hashCanonical(ctxExp.trig, { nonFinite: 'tag' }), `${key} trig`);
+    for (const comb of ficha.combinacoes) {
+      assert.deepEqual(engine.confluenceTriggers(ctx.trig, comb.setups, 3, 12, 200), exp.confluenceTriggers(ctxExp.trig, comb.setups, 3, 12, 200), `${key} ${comb.id}`);
+    }
+  }
+});
+
+test('engine 1.2.0 igual à cópia experimental na confluência · analyzeConfluence (par, trio e componente isolado)', SLOW, () => {
+  const d = serie('BTCUSDT_1d');
+  const ctx = engine.confluenceContext(d, CFG);
+  const ctxExp = exp.confluenceContext(d, CFG);
+  for (const id of ['P01', 'P12', 'T32']) {
+    const m = ficha.combinacoes.find((c) => c.id === id).setups;
+    const a = engine.analyzeConfluence(d, CFG, m, { window: 3, refractory: 12, iters: 500, ctx });
+    const b = exp.analyzeConfluence(d, CFG, m, { window: 3, refractory: 12, iters: 500, ctx: ctxExp });
+    assert.equal(hashCanonical(a, { nonFinite: 'tag' }), hashCanonical(b, { nonFinite: 'tag' }), id);
+  }
+  // iters não muda o padrão de analyze(): 3000 sorteios
+  const A = engine.analyze(d, { ...CFG }, { sym: 'BTCUSDT', tf: '1d' });
+  const r = engine.analyzeConfluence(d, CFG, [A.setups[0].id], { window: 0, refractory: 0, iters: 3000, ctx });
+  assert.deepStrictEqual(r.pTwo, A.setups[0].pTwo);
 });

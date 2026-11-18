@@ -531,7 +531,7 @@ function verdictOf(st) {
   return { key: 'EDGE', label: 'Vantagem estatística presente', tone: 'good' };
 }
 
-function evaluateSetup(id, d, ind, reg, trigArr, outs, base, cfg) {
+function evaluateSetup(id, d, ind, reg, trigArr, outs, base, cfg, iters = 3000) { // ADIÇÃO 1.2.0: iters (padrão 3000 = motor 1.1.0)
   const trig = []; for (let i = 0; i < d.n; i++) if (trigArr[i]) trig.push(i);
   const closed = trig.filter((i) => outs[i]);
   const wins = closed.filter((i) => outs[i].type === 'WIN').length;
@@ -541,7 +541,7 @@ function evaluateSetup(id, d, ind, reg, trigArr, outs, base, cfg) {
   const wr = n ? wins / n : NaN;
   const small = eff.nEff < 25;
   const ci = n ? (small ? (() => { const b = bayesWR(wins, n); return [b.lo, b.hi]; })() : wilson(wins, n)) : [NaN, NaN];
-  const perm = permutationTest(outs, base.idx, n, wins, 3000, 42);
+  const perm = permutationTest(outs, base.idx, n, wins, iters, 42);
   const netRets = rets.map((r) => r - 0.001);
   const byReg = {};
   closed.forEach((i) => { const r = reg[i].regime; byReg[r] = byReg[r] || { n: 0, w: 0 }; byReg[r].n++; if (outs[i].type === 'WIN') byReg[r].w++; });
@@ -657,14 +657,79 @@ function analyzeSpec(d, cfg, spec, meta) {
   return { meta, cfg, d, ind, reg, outs, base, setup: s, calib: calibSummary(preds, d.t), preds, tech: technicalRead(d, ind, reg), ms, warm };
 }
 
-export const VERSION = 'argos-engine 1.1.0';
+
+// ------------------------------------------------ confluência (ADIÇÃO 1.2.0)
+/**
+ * Gatilho de uma combinação de setups (semântica do pré-registro "combinacoes-1").
+ * Há gatilho no candle i se TODOS os membros têm gatilho em algum candle de
+ * i - windowPrev a i (inclusive) E pelo menos um membro dispara exatamente em i,
+ * E i - (índice do último gatilho CONTADO) >= refractory. O primeiro gatilho
+ * sempre conta; refractory 0 = sem período refratário. Gatilhos dos membros
+ * antes do índice `warm` são tratados como falsos (sem alterar o objeto recebido).
+ * @param {Record<string, boolean[]>} trig gatilhos de detectSetups (id -> array booleano)
+ * @param {string[]} members ids dos setups (1, 2 ou 3); a ordem não importa
+ * @param {number} windowPrev candles ANTERIORES na janela (3 = janela de 4 com o atual)
+ * @param {number} refractory período refratário em candles (12; 0 = nenhum)
+ * @param {number} warm aquecimento em candles (200)
+ * @returns {boolean[]} gatilho da combinação por candle
+ */
+function confluenceTriggers(trig, members, windowPrev, refractory, warm) {
+  if (!members.length) throw new Error('confluência sem membros');
+  const arrs = members.map((id) => {
+    if (!trig[id]) throw new Error('setup desconhecido: ' + id);
+    return trig[id];
+  });
+  const n = arrs[0].length, out = new Array(n).fill(false);
+  const last = arrs.map(() => -Infinity); // índice do último gatilho (>= warm) de cada membro
+  let lastCounted = -Infinity;
+  for (let i = 0; i < n; i++) {
+    let now = false, all = true;
+    for (let m = 0; m < arrs.length; m++) {
+      if (i >= warm && arrs[m][i]) { last[m] = i; now = true; }
+      if (!(i - last[m] <= windowPrev)) all = false;
+    }
+    if (!(now && all)) continue;
+    if (i - lastCounted >= refractory) { out[i] = true; lastCounted = i; }
+  }
+  return out;
+}
+
+/**
+ * Contexto de uma série para o estudo de combinações: calculado uma vez por série.
+ * @param {object} d série decodificada
+ * @param {{mode:string,tgt:number,stp:number,hold:number}} cfg regra de saída
+ * @returns {{ind: object, reg: object[], outs: object[], trig: Record<string, boolean[]>, base: object}}
+ */
+function confluenceContext(d, cfg) {
+  const ind = computeIndicators(d), reg = regimeSeries(d, ind), outs = outcomesAll(d, ind, cfg);
+  return { ind, reg, outs, trig: detectSetups(d, ind), base: baseRate(outs, 200) };
+}
+
+/**
+ * Avalia uma combinação (ou um componente isolado, com 1 id) numa série. O veredito
+ * devolvido ainda NÃO tem família: quem chama aplica applyFamily sobre a lista de células.
+ * @param {object} d série decodificada
+ * @param {{mode:string,tgt:number,stp:number,hold:number}} cfg regra de saída
+ * @param {string[]} members 1, 2 ou 3 ids de setups
+ * @param {{window?: number, refractory?: number, iters?: number, ctx?: object}} [opts] janela (anteriores), refratário, sorteios e, opcionalmente, o contexto
+ * @param {{ind: object, reg: object[], outs: object[], trig: object, base: object}} [ctx] contexto pré-computado (alternativa a opts.ctx)
+ * @returns {object} o mesmo formato de um setup de analyze()
+ */
+function analyzeConfluence(d, cfg, members, { window = 3, refractory = 12, iters = 100000, ctx: ctxOpt } = {}, ctx) {
+  const c = ctxOpt || ctx || confluenceContext(d, cfg);
+  const arr = confluenceTriggers(c.trig, members, window, refractory, 200);
+  return evaluateSetup('CONF:' + members.join('+'), d, c.ind, c.reg, arr, c.outs, c.base, cfg, iters);
+}
+
+export const VERSION = 'argos-engine 1.2.0';
 
 export {
-  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean
+  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean,
+  confluenceTriggers, confluenceContext, analyzeConfluence
 };
 
 /** Mesmo objeto que a demo expunha em window.ArgosEngine. */
 const ArgosEngine = {
-  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean, VERSION
+  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean, VERSION, confluenceTriggers, confluenceContext, analyzeConfluence
 };
 export default ArgosEngine;

@@ -1,6 +1,7 @@
 // Registro canônico de previsão (lib/previsao.js): hash estável, linha de `previsoes`, ida e volta pelo jsonb e manifesto do dia.
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { VERSION } from '../engine/index.js';
 import { handleAnalyze } from '../lib/handlers/analyze.js';
 import { snapshotSeries } from '../lib/data/series.js';
 import { canonicalize, sha256Hex } from '../lib/canonical.js';
@@ -30,7 +31,7 @@ test('buildPrevisao: registro argos.previsao/1 só com saída do motor', () => {
   const p = buildPrevisao({ summary, setupId: 'BULL_ENGULFING', emittedAt: new Date(EMITTED) });
   const r = p.record;
   assert.equal(r.schema, 'argos.previsao/1');
-  assert.equal(r.engine, 'argos-engine 1.1.0');
+  assert.equal(r.engine, VERSION);
   assert.equal(r.origin, 'demo');
   assert.equal(r.originRef, null);
   assert.equal(r.emittedAt, EMITTED);
@@ -100,7 +101,7 @@ test('buildPrevisao: linha de previsoes (prob, bar_time só com gatilho ativo, c
   assert.equal(a.emitted_at, EMITTED);
   assert.equal(a.origin, 'demo');
   assert.equal(a.origin_ref, null);
-  assert.equal(a.engine_version, 'argos-engine 1.1.0');
+  assert.equal(a.engine_version, VERSION);
   assert.equal(a.payload.schema, 'argos.previsao/1');
   assert.match(a.hash, /^[0-9a-f]{64}$/);
 

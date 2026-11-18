@@ -6,7 +6,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
-Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
+Nenhuma mudança na lógica estatística nas entradas desta seção. O motor está na versão 1.2.0 (seção abaixo), aditiva.
 
 ### Alterado
 
@@ -85,6 +85,31 @@ Nenhuma mudança na lógica estatística: o motor continua na versão 1.1.0.
 
 - O Argos AI ainda não gerou relatório real em produção (a conta do provedor está sem crédito); o ciclo completo foi testado com provedor simulado.
 - A guarda numérica não confere o papel do número na frase.
+
+## [1.2.0] - 2026-11-18
+
+MINOR aditiva do motor: promove para `engine/` a confluência de setups e o parâmetro de sorteios que viviam na cópia experimental `tools/experimental/motor-confluencia.mjs`. Nenhuma regra estatística existente muda: `analyze()` e `analyzeSpec()` devolvem os mesmos números do 1.1.0 (conferido nas 9 séries do snapshot e nas 3 de 1h do histórico, com 3 regras de saída).
+
+### Adicionado
+
+- `evaluateSetup` (interno, não exportado) ganha o parâmetro final `iters` (padrão 3000, como no 1.1.0) e `permutationTest` recebe esse valor no lugar do 3000 fixo.
+- `confluenceTriggers(trig, members, windowPrev, refractory, warm)`, `confluenceContext(d, cfg)` e `analyzeConfluence(d, cfg, members, opts, ctx)`: gatilho de uma combinação de 1, 2 ou 3 setups (todos os membros com gatilho dentro da janela e pelo menos um exatamente no candle atual, com período refratário contado desde o último gatilho contado, e aquecimento), contexto de uma série calculado uma vez e avaliação da combinação com o mesmo formato de um setup de `analyze()`. Exportados no bloco `export` e no objeto `ArgosEngine` (`default`); `confluence` não entra em `SPEC_TYPES` (não é tipo de regra lida do Pine).
+- Migração `003_engine_1_2_0.sql`: registra `argos-engine 1.2.0` em `engine_versions` (só insert, idempotente). Sem ela, todo registro novo do Termômetro e de `POST /api/previsoes` falharia por chave estrangeira.
+- `tests/fixtures/combos-gatilhos-ref.json`: contagens de gatilhos de referência (só contagem, nenhuma taxa) para o teste (d) de `tests/motor-confluencia-paridade.test.js`, que antes apontava para um arquivo fora do repositório e era pulado em silêncio. O mesmo arquivo ganhou o bloco que confere `engine` 1.2.0 contra a cópia experimental na confluência.
+
+### Alterado
+
+- `VERSION` passa de `argos-engine 1.1.0` para `argos-engine 1.2.0`. Consequências:
+  - O `resultHash` de TODA análise muda, porque o resumo da análise inclui `engine: VERSION` (`lib/analysis-summary.js`) e o hash é calculado sobre ele; os números são idênticos.
+  - Previsões novas e o Termômetro passam a gravar `argos-engine 1.2.0`. Registros antigos seguem verificáveis: o payload guardado leva a versão antiga e a linha `1.1.0` continua em `engine_versions`.
+  - A calibração interna passa a misturar registros das duas versões, sem efeito numérico.
+- Testes que conferiam a versão: `tests/analyze-handler.test.js`, `tests/previsao.test.js` e `tests/proof-handlers.test.js` (saídas do motor e do handler) passam a comparar com `VERSION` importado; os que só montam fixture de banco continuam com `1.1.0` de propósito (provam que registro antigo segue válido). `tests/db-migrate.test.js` passa a esperar as duas versões. `tests/legacy-parity.test.js` (superfície): em vez de chaves idênticas e `VERSION` igual, exige que toda chave do motor legado continue no motor, que sobrem exatamente os 3 nomes novos, `legacy.VERSION` igual a `argos-engine 1.1.0` e `engine.VERSION` igual a `argos-engine 1.2.0`; as 72 comparações e a análise das 9 séries ficam intactas. Mudança deliberada de versão, não ajuste de regressão.
+
+### Notas
+
+- A assinatura implementada `confluenceTriggers(trig, members, windowPrev, refractory, warm)` difere da interface proposta na ficha do estudo de combinações (`confluenceTriggers(d, ind, members, window, refractory)`); a ficha marca a interface como proposta e a semântica é a mesma.
+- `tools/experimental/motor-confluencia.mjs` foi mantida como procedência da execução única do estudo (o relatório do estudo grava esse arquivo); seu conteúdo foi promovido para `engine/`.
+- A ficha do v1.2 (sete setups de indicador) nomeia a versão 1.2.0 por previsão. O 1.2.0 entregue traz só a confluência e os sorteios; os setups do v1.2 mudariam o resultado de `analyze()` (mais setups) e ficam para a versão 1.3.0, sem efeito sobre as regras registradas na ficha.
 
 ## [1.1.0] - 2026-09-27
 

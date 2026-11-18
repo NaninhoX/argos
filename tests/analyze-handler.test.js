@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { VERSION } from '../engine/index.js';
 import { handleAnalyze, parseAnalyzeInput } from '../lib/handlers/analyze.js';
 import { handleHealth } from '../lib/handlers/health.js';
 import { loadSeries, snapshotSeries } from '../lib/data/series.js';
@@ -12,7 +13,7 @@ test('analyze: BTCUSDT 4h reproduz o caso de referência do estudo (RSI Oversold
   const r = await handleAnalyze({ query: { symbol: 'BTCUSDT', tf: '4h' }, deps: offline });
   assert.equal(r.status, 200);
   const b = r.body;
-  assert.equal(b.engine, 'argos-engine 1.1.0');
+  assert.equal(b.engine, VERSION);
   assert.deepEqual(b.input.cfg, { mode: 'atr', tgt: 2, stp: 1, hold: 12 });
   const rsi = b.setups.find((s) => s.id === 'RSI_OVERSOLD');
   assert.equal(rsi.n, 290);
@@ -87,7 +88,7 @@ test('série: rede fora cai para o snapshot e avisa; candle ainda aberto nunca e
 test('health: informa versão e presença de configuração, sem valores', () => {
   const r = handleHealth({ env: { DEEPSEEK_API_KEY: 'sk-segredo', ARGOS_LLM_MODEL: 'modelo-teste', DATABASE_URL: 'postgres://u:senha@h/db' }, now: 0 });
   assert.equal(r.status, 200);
-  assert.equal(r.body.engine, 'argos-engine 1.1.0');
+  assert.equal(r.body.engine, VERSION);
   assert.equal(r.body.llm, 'configurado');
   assert.equal(r.body.database, 'configurado');
   assert.equal(JSON.stringify(r.body).includes('segredo'), false);

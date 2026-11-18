@@ -31,8 +31,9 @@ test('migração aplica o esquema completo e semeia a versão do motor', async (
     assert.deepEqual(res.skipped, []);
     const names = await tableNames(db);
     for (const t of TABLES) assert.ok(names.includes(t), `tabela ausente: ${t}`);
-    const ev = await db.query('select version, commit_sha from engine_versions');
-    assert.deepEqual(ev.rows, [{ version: 'argos-engine 1.1.0', commit_sha: null }]);
+    const ev = await db.query('select version, commit_sha from engine_versions order by version');
+    // 001 semeia a 1.1.0 (registros antigos seguem válidos); 003 acrescenta a 1.2.0 (o Termômetro e POST /api/previsoes gravam VERSION)
+    assert.deepEqual(ev.rows, [{ version: 'argos-engine 1.1.0', commit_sha: null }, { version: 'argos-engine 1.2.0', commit_sha: null }]);
     const sm = await db.query('select version from schema_migrations');
     assert.deepEqual(sm.rows.map((x) => x.version).sort(), MIGRATIONS);
   } finally {
@@ -50,7 +51,7 @@ test('reaplicar não faz nada e não dá erro', async () => {
     const sm = await db.query('select count(*)::int as n from schema_migrations');
     assert.equal(sm.rows[0].n, MIGRATIONS.length);
     const ev = await db.query('select count(*)::int as n from engine_versions');
-    assert.equal(ev.rows[0].n, 1);
+    assert.equal(ev.rows[0].n, 2); // 1.1.0 (001) e 1.2.0 (003)
   } finally {
     await db.close();
   }

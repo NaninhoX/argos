@@ -14,8 +14,12 @@ const strip = (A) => { const { ms, ...rest } = A; return rest; };
 const keys = Object.keys(snapshot.series);
 
 test('paridade: superfície pública igual à do motor legado', () => {
-  assert.deepEqual(Object.keys(engine.default).sort(), Object.keys(legacy).sort());
-  assert.equal(engine.VERSION, legacy.VERSION);
+  // 1.2.0 é aditiva: toda chave do legado continua no motor e sobram exatamente os 3 nomes da confluência.
+  const chavesLegado = Object.keys(legacy), chavesMotor = Object.keys(engine.default);
+  for (const k of chavesLegado) assert.ok(chavesMotor.includes(k), `chave do legado ausente no motor: ${k}`);
+  assert.deepEqual(chavesMotor.filter((k) => !chavesLegado.includes(k)).sort(), ['analyzeConfluence', 'confluenceContext', 'confluenceTriggers']);
+  assert.equal(legacy.VERSION, 'argos-engine 1.1.0');
+  assert.equal(engine.VERSION, 'argos-engine 1.2.0');
   assert.equal(h(engine.SETUPS), h(legacy.SETUPS));
   assert.equal(h(engine.REGIMES), h(legacy.REGIMES));
 });
