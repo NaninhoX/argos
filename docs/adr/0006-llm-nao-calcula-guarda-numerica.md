@@ -17,3 +17,5 @@ O LLM não calcula. Ele recebe apenas JSON produzido pelo motor. Uma guarda num�
 - Limite conhecido até o S5: as ferramentas rodam no navegador, então quem tem o código de acesso pode fabricar um resultado de ferramenta. A correção é rodar as ferramentas no servidor, sobre `/api/analyze`.
 - O texto fica mais seco, e uma resposta pode ser recusada pela guarda e refeita.
 - Se o LLM estiver fora do ar, o sistema devolve só o resultado numérico, sem texto; nunca um número aproximado.
+
+**Nota de 18/11/2026:** o limite "até o S5" foi resolvido. Desde o S5 as ferramentas rodam no servidor (`lib/ai/tools.js`, usado por `lib/handlers/argos-ai.js`), sobre os dados do próprio servidor, e o pedido do cliente que traga `tools` é recusado (`lib/handlers/argos-ai.js:72`). Quem tem o código de acesso já não consegue fabricar um resultado de ferramenta.

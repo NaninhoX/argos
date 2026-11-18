@@ -16,3 +16,5 @@ Os agentes formam um pipeline determinístico, com portão humano antes do envio
 - Todo material enviado passa por revisão humana, registrada.
 - O veto de Risco é reprodutível, porque vem de regra em código e não de julgamento do modelo.
 - Ganhar autonomia depende de evidência acumulada, conforme o plano de sprints; não é decisão deste ADR.
+
+**Nota de 18/11/2026:** o veto de Risco por regra em código descrito acima não está implementado. A busca em `lib/`, `api/`, `tools/` e `web/js/` não acha regra de veto (só texto sobre o agente de Risco em `web/js/live.js`, no pipeline da tela, marcado como "Protótipo"). A decisão continua valendo como princípio e como condição para dar poder de veto a qualquer agente; a guarda numérica do ADR 0006 existe em código (`lib/ai/numeric-guard.js`); o portão humano, neste repositório, é o processo (aprovação de Michel antes de publicar ou enviar), não uma regra em código.

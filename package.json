@@ -5,7 +5,7 @@
   "description": "Argos Sentinel: motor estatístico e serviços da Stratum Research",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22 <25"
   },
   "scripts": {
     "test": "node --test",
