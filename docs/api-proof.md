@@ -31,7 +31,7 @@ O cliente nunca envia números. Ele envia a pergunta (ativo, tempo gráfico, reg
 }
 ```
 
-- `summary` é o corpo de `handleAnalyze` (`lib/analysis-summary.js`). `data` é `summary.data` sem `source`, `liveError` e `dbError` (a origem dos candles não entra no hash).
+- `summary` é o corpo de `handleAnalyze` (`lib/handlers/analyze.js`, montado por `summarize` em `lib/analysis-summary.js`). `data` é `summary.data` sem `source`, `liveError` e `dbError` (a origem dos candles não entra no hash).
 - `canonical = canonicalize(registro)` (`lib/canonical.js`, modo padrão: número não finito lança erro). `hash = sha256Hex(canonical)`.
 - `emittedAt` é o relógio do servidor no momento do registro. A prova de data é a âncora, não este campo.
 
@@ -53,7 +53,7 @@ Linha em `previsoes`:
 
 ## 2. `POST /api/previsoes`
 
-Corpo JSON: `{ "symbol", "tf", "cfg"?: { "mode", "tgt", "stp", "hold" }, "windowDays"?, "setupId", "live"? }` (mesma validação de `/api/analyze`, mais `setupId` obrigatório e existente em `summary.setups`). Se `ARGOS_ACCESS_CODE` existir no ambiente, exige o cabeçalho `x-argos-code` (comparação em tempo constante).
+Corpo JSON: `{ "symbol", "tf", "cfg"?: { "mode", "tgt", "stp", "hold" }, "windowDays"?, "setupId", "live"? }` (mesma validação de `/api/analyze`, mais `setupId` obrigatório e existente em `summary.setups`). Exige o cabeçalho `x-argos-code` com o código geral (`ARGOS_ACCESS_CODE`) ou um código de cliente da tabela `acessos` (`lib/acesso.js`, comparação em tempo constante). Fora de produção, sem nenhum código configurado, a rota fica aberta; em produção, sem código, responde 503 `not_configured`.
 
 Mesma pergunta sobre os mesmos dados não gera registro novo: se já existe previsão com o mesmo `origin`, `setup_id`, `symbol`, `timeframe`, `data_cut`, `params` e `payload->>'resultHash'`, devolve a existente.
 
@@ -71,7 +71,7 @@ Respostas:
 }
 ```
 
-- `400 requisicao_invalida`, `401 nao_autorizado`, `405 metodo_nao_permitido`, `503 banco_ausente` (sem `DATABASE_URL`), `503 dados_indisponiveis`. Erros no formato `{ "error": { "code", "message" } }`.
+- `400 requisicao_invalida`, `401 nao_autorizado`, `405 metodo_nao_permitido`, `503 banco_ausente` (sem `DATABASE_URL`), `503 dados_indisponiveis`, `503 not_configured` (produção sem código de acesso ou banco indisponível na checagem de acesso) e `500 erro_interno`. Erros no formato `{ "error": { "code", "message" } }`.
 
 ## 3. `GET /api/proof`
 
@@ -127,7 +127,7 @@ O handler puro devolve `{ status, headers, body }`; `body` pode ser objeto, stri
 
 Relatório: `{ "days": [ { "day", "nLeaves", "root", "status", "calendars": [], "error"? } ], "orphans": [], "errors": 0 }`; `207` se houve erro, `200` se não.
 
-`confirmada` (recibo completo, com o bloco do Bitcoin) fica para depois da demo: o recibo `ancorada` já é verificável e completável por cliente externo (`ots upgrade`).
+`confirmada` (recibo completo, com o bloco do Bitcoin) é gravada pelo cron de ancoragem, que tenta completar o recibo (`upgradeOts` em `api/cron/anchor.js`, `lib/jobs/anchor-day.js`); o recibo `ancorada` já é verificável e completável por cliente externo (`ots upgrade`). A primeira confirmação em produção não foi conferida.
 
 ## 6. `lib/ots.js`
 

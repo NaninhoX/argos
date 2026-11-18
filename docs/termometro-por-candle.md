@@ -9,7 +9,7 @@ Hoje o Termômetro dispara uma vez por dia (00h05 UTC) e só enxerga o último c
 - `GET /api/cron/candles?tf=1h` (ou `4h`, ou `1h,4h`) ingere os candles novos **só desse tempo gráfico** e roda o Termômetro **só nele**. Sem `tf`, tudo continua como antes (os três tempos), inclusive o cron diário da Vercel.
 - `GET /api/cron/termometro?tf=...` roda só o Termômetro, com o mesmo filtro.
 - `tf` inválido responde 400, e só depois da autorização (sem o segredo, 401). Mesma proteção: `Authorization: Bearer <CRON_SECRET>`.
-- Quem chama é o GitHub Actions (`.github/workflows/termometro-por-candle.yml`): o plano gratuito da Vercel só aceita cron diário. O agendamento fica **desligado por padrão** (só disparo manual) até o segredo existir.
+- Quem chama é o GitHub Actions (`.github/workflows/termometro-por-candle.yml`): o plano gratuito da Vercel só aceita cron diário. O agendamento do 1h está **ligado desde 16/10/2026** (`6,26 * * * *`); o do 4h segue desligado (bloco comentado no workflow). Sem o segredo `CRON_SECRET` nada roda.
 - As regras de rigor do Termômetro não mudam (`docs/termometro.md`): só o gatilho do último candle fechado, só com série do banco e em dia (menos de um candle de atraso), idempotente por gatilho. O atraso do GitHub (poucos minutos) cabe na tolerância de um candle; se passar, o job recusa a série (`serie_atrasada`) em vez de registrar, e o painel de saúde mostra.
 
 ## Passo a passo para ligar (quem executa é o Michel; ninguém além dele mexe em segredo)
@@ -17,7 +17,7 @@ Hoje o Termômetro dispara uma vez por dia (00h05 UTC) e só enxerga o último c
 1. No GitHub, repositório `NaninhoX/argos`: Settings, Secrets and variables, Actions, **New repository secret**: nome `CRON_SECRET`, valor igual ao `CRON_SECRET` da Vercel. Opcional: variável `ARGOS_BASE_URL` (padrão `https://argossentinel.vercel.app`).
 2. Actions, **Termômetro por candle**, Run workflow, `tf = 1h`. Esperado: job verde, `HTTP 200`.
 3. Conferir no painel (`GET /api/termometro/status`, com o código de acesso) que o disparo manual deixou o candle novo no banco e que o `status` está `ok`.
-3b. **Só então, ao ligar o agendamento**, definir na Vercel `ARGOS_POR_CANDLE=1h` (acrescente `4h` quando ligar o do 4h), `ARGOS_INGEST_MAX_AGE_H=3` e `ARGOS_REGISTRO_MAX_AGE_H=12` (e, opcional, `TERMOMETRO_ATRASO_MAX_MIN=30`) e descomentar o bloco `schedule` do 1h (um commit). Acompanhar 24 h. Definir essas variáveis antes de haver agendamento deixaria o painel em alerta. Se desligar todo disparo por candle depois (GitHub e cron-job.org, ver `docs/cron-externo.md`), **remova as variáveis**, senão o alerta fica aceso para sempre; trocar de agendador não é desligar.
+3b. **Só então, ao ligar o agendamento**, definir na Vercel `ARGOS_POR_CANDLE=1h` (acrescente `4h` quando ligar o do 4h), `ARGOS_INGEST_MAX_AGE_H=3` e `ARGOS_REGISTRO_MAX_AGE_H=12` (e, opcional, `TERMOMETRO_ATRASO_MAX_MIN=30`) e descomentar o bloco `schedule` do 1h (um commit; já feito em 16/10). Acompanhar 24 h. Definir essas variáveis antes de haver agendamento deixaria o painel em alerta. Se desligar todo disparo por candle depois (GitHub e cron-job.org, ver `docs/cron-externo.md`), **remova as variáveis**, senão o alerta fica aceso para sempre; trocar de agendador não é desligar.
 4. Depois de 24 h limpas, descomentar o do 4h.
 5. Se algo estranho aparecer, **desligar**: Actions, Termômetro por candle, `...`, Disable workflow (ou comentar o `schedule` de novo). O cron diário da Vercel continua.
 

@@ -1,5 +1,7 @@
 # Plano da próxima sessão: CSS separado e motion design (v1-13/10)
 
+> **Documento histórico (13/10/2026), já executado.** Não descreve o estado atual: o CSS já saiu do `index.html`, as regras de movimento vigentes estão em `CLAUDE.md` (seção Front) e `tests/motion.test.js` (que também admite `stroke-dashoffset` e um contador de 700 ms), a regra "sem push" foi substituída pelo push automático autorizado em 15/10, e as contagens de testes e linhas abaixo estão superadas.
+
 Escrito em 13/10/2026 para ser executado na sessão seguinte. Decisões de Michel que valem aqui:
 
 - Separar o CSS do `index.html`.

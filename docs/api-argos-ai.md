@@ -1,6 +1,6 @@
 # `POST /api/argos-ai`
 
-Conversa completa do Argos AI numa chamada. O navegador monta o prompt e diz o recorte (`context`); o **servidor executa as ferramentas** (`lib/ai/tools.js`) sobre o motor e a série que ele mesmo carrega, guarda a chave do provedor de LLM, limita a taxa e verifica o texto final. Mudança do S5 (15/10/2026): antes o navegador executava as ferramentas e enviava os resultados, e quem tinha o código de acesso podia forjar um resultado com números inventados que a guarda numérica aceitaria. Agora o servidor recusa `tools`, mensagens `tool`, `tool_calls` e `tool_call_id` vindos do cliente.
+Conversa completa do Argos AI numa chamada. O navegador monta o prompt e diz o recorte (`context`); o **servidor executa as ferramentas** (`lib/ai/tools.js`) sobre o motor e a série que ele mesmo carrega, guarda a chave do provedor de LLM, limita a taxa e verifica o texto final. Mudança do S5 (adiantada em 15/11/2026): antes o navegador executava as ferramentas e enviava os resultados, e quem tinha o código de acesso podia forjar um resultado com números inventados que a guarda numérica aceitaria. Agora o servidor recusa `tools`, mensagens `tool`, `tool_calls` e `tool_call_id` vindos do cliente.
 
 ## Requisição
 
@@ -80,7 +80,7 @@ Em qualquer erro, nenhum texto de LLM é devolvido; o relatório do motor não d
 
 ## Limite de taxa
 
-30 requisições por minuto por IP (janela fixa), conferido antes do código de acesso e de qualquer chamada ao provedor. Um relatório consome de 3 a 5 requisições.
+30 requisições por minuto por IP (janela fixa), conferido antes do código de acesso e de qualquer chamada ao provedor. Um relatório consome uma requisição (o servidor executa as ferramentas dentro da mesma chamada).
 
 - **Com banco e com `ARGOS_IP_HASH_KEY`:** contador na tabela `limite_taxa` (`consumirLimite`, `lib/acesso.js`), comum a todas as instâncias. A chave é `argos-ai:` mais `hashDoIpParaLimite` (`lib/query-log.js`): HMAC-SHA256 do IP com o prefixo `limite|`, sem o mês, 32 hex. O IP nunca é gravado nem vira hash sem sal.
 - **Sem a variável:** o limite cai para a memória da instância e **deixa de ser compartilhado entre instâncias**: em função serverless cada instância tem a própria contagem, então serve de freio, não de cota. Custo aceito de propósito; criar `ARGOS_IP_HASH_KEY` na Vercel é de Michel e volta a ser prioridade.
@@ -105,4 +105,4 @@ Estado: pronto em código; ainda não lido em produção.
 
 ## Teste real
 
-Opcional e com custo, contra o deploy: `ARGOS_ACCESS_CODE=… node tools/teste-relatorio-real.mjs` (3 recortes; confere HTTP 200, seções, disclaimer, ferramentas e hash da série; imprime o texto para Michel ler). Exige crédito na conta do provedor; até lá nenhum relatório real foi gerado. `node tools/llm-smoke.mjs` é anterior à S5: ainda envia `tools` e resultados de ferramenta no corpo, que o servidor agora recusa com 400, então não serve como teste real.
+Opcional e com custo, contra o deploy: `ARGOS_ACCESS_CODE=… node tools/teste-relatorio-real.mjs` (3 recortes; confere HTTP 200, seções, disclaimer, ferramentas e hash da série; imprime o texto para Michel ler). Exige crédito na conta do provedor; até lá nenhum relatório real foi gerado. O antigo `tools/llm-smoke.mjs` foi removido em 18/11/2026: era anterior à S5, enviava `tools` e resultados de ferramenta no corpo (o servidor recusa com 400) e `teste-relatorio-real.mjs` o substitui.

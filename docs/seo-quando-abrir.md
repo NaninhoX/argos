@@ -33,4 +33,4 @@ Decisão de Michel. Antes de abrir: Termômetro com desfechos publicáveis, pare
 
 Não publique `robots.txt` com `Disallow: /` enquanto o `noindex` for a proteção: o buscador precisa conseguir ler a página para obedecer o `noindex`.
 
-`saude.html` e `verificar.html` já têm `noindex` na própria página.
+`saude.html` já tem `noindex` na própria página. **`verificar.html` ainda não tem** (conferido em 18/11/2026: a meta `robots` só existe em `index.html` e `saude.html`); decidir com Michel se recebe `noindex` antes de qualquer divulgação do link.

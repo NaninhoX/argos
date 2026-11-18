@@ -11,6 +11,7 @@ Postgres em produção no Neon (`@neondatabase/serverless`); testes no PGlite (`
 | Ancoragem | `provas_merkle`, `previsao_prova` | Raiz diária e recibo OpenTimestamps (`status` avança). Prova de cada folha. |
 | Reprodutibilidade | `engine_versions`, `resultados_matriz` | Toda previsão e todo resultado apontam a versão do motor que os gerou. |
 | Operação | `query_log`, `tool_audit`, `schema_migrations` | Sem dado pessoal. |
+| Acesso e limite (migração 002) | `acessos`, `acessos_uso`, `limite_taxa` | Códigos de cliente (só o SHA-256), uso por cliente e rota, e o limite de chamadas do Argos AI (chave HMAC do IP). |
 | Agentes e calibração | `agent_runs`, `revisao_humana`, `plano_calibracao` | `reviewer` guarda identificador interno, nunca e-mail. |
 
 ### Política de `query_log`

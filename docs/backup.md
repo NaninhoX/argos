@@ -47,7 +47,7 @@ Requisitos: Node 22 ou mais (WebSocket global, exigido por `db.transaction` no N
 
 - **Contagem e conteúdo por tabela.** O hash de cada tabela é o hash canônico (`lib/canonical.js`) das colunas e das linhas, ordenadas; as linhas são o texto que o Postgres devolve (double no formato mais curto que reproduz o valor, `timestamptz` em UTC com microssegundos, `jsonb` normalizado, `bytea` em hexadecimal). Vale para todas as tabelas; `previsoes` e `provas_merkle` são relatadas à parte.
 - **`previsoes` não é alterada.** A restauração só faz `INSERT` nela (nunca `UPDATE`, `DELETE` ou `TRUNCATE`), com o `id`, o `hash` e os carimbos de tempo do backup; o gatilho `forbid_mutation` continua ativo no destino. Correções (`supersedes`) entram depois da linha que corrigem.
-- **Destino limpo.** Se qualquer tabela de dados do destino tiver linha, a restauração para antes de inserir. As únicas tabelas substituídas são `schema_migrations` e `engine_versions`, que a própria migração já semeia.
+- **Destino limpo.** Se qualquer tabela de dados do destino tiver linha, a restauração para antes de inserir. As únicas tabelas substituídas são `schema_migrations` (criada pelo `tools/migrate.mjs` e pela migração 001) e `engine_versions` (semeada pela migração 001).
 - **Cobertura.** O backup descobre as tabelas em `db/migrations/*.sql` e recusa se o banco tiver tabela que as migrações não descrevem (ficaria de fora sem aviso) ou se faltar uma delas.
 
 ## Limites

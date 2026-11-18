@@ -26,7 +26,7 @@ Notas:
 | Código | O que quer dizer | O que fazer |
 |---|---|---|
 | 200 | Tudo certo: candles atualizados e nenhuma recusa no Termômetro. No disparo das :26, `registered: 0` é normal quando o das :06 já registrou. | Nada. |
-| 207 | Rodou, mas algo foi recusado: registro tardio (mais de 30 min após o fechamento), série atrasada, série fora do banco, erro, ou série pulada pelo tempo. | Abra `/api/termometro/status` e leia `alerts`. Um 207 no disparo das :06 não é perda se o das :26 deu 200 e registrou o candle. |
+| 207 | Rodou, mas algo foi recusado: registro tardio (mais de 30 min após o fechamento), série atrasada, série fora do banco, candle ainda aberto, erro, ou série pulada pelo tempo. | Abra `/api/termometro/status` e leia `alerts`. Um 207 no disparo das :06 não é perda se o das :26 deu 200 e registrou o candle. |
 | 401 | O cabeçalho `Authorization` falta ou tem outro valor. | Confira o cabeçalho no cron-job.org e o valor de `CRON_SECRET` na Vercel. |
 
 Outros códigos que não devem aparecer com estas URLs: 400 (horário `tf` inválido) e 503 (banco não configurado).
@@ -73,4 +73,4 @@ Este monitor não vê se o Termômetro parou. Isso é o painel de status, na se�
 
 ## Como conferir que funcionou
 
-Abra `https://argossentinel.vercel.app/saude.html`, digite o código de acesso e toque em Consultar; ou chame `GET /api/termometro/status` com o cabeçalho `x-argos-code` (valor de `ARGOS_ACCESS_CODE`). Se `status` vier `ok`, não há alerta; se vier `atencao`, leia a lista `alerts`, e confira `lastRegisteredAt` e `candles` (atraso em candles por série).
+Abra `https://argossentinel.vercel.app/saude.html`, digite o código de acesso e toque em Consultar; ou chame `GET /api/termometro/status` com o cabeçalho `x-argos-code` (o código geral `ARGOS_ACCESS_CODE` ou um código de cliente). Se `status` vier `ok`, não há alerta; se vier `atencao`, leia a lista `alerts`, e confira `lastRegisteredAt` e `candles` (atraso em candles por série).
