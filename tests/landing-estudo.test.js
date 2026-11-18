@@ -36,7 +36,10 @@ const SERIE_PARA_SYM = { BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT' };
 
 // Nome em português de cada setup, lido de SETUPS em engine/index.js (regex, sem importar o motor).
 const nomeDeSetup = new Map();
-for (const m of motor.matchAll(/\{ id: '([A-Z0-9_]+)', nome: '([^']+)'/g)) {
+// Só o bloco `const SETUPS = [ ... ];`: listas novas no motor (como SETUPS_V12, do estudo v1.2) não entram nesta leitura.
+const blocoSetups = motor.match(/const SETUPS = \[([\s\S]*?)\n\];/);
+if (!blocoSetups) throw new Error('bloco SETUPS não encontrado em engine/index.js');
+for (const m of blocoSetups[1].matchAll(/\{ id: '([A-Z0-9_]+)', nome: '([^']+)'/g)) {
   nomeDeSetup.set(m[1], m[2]);
 }
 
