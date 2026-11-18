@@ -7,6 +7,8 @@
    Módulo puro: sem rede, sem banco. Entra a série de candles e a regra de
    saída; sai o objeto de análise. Portado sem alteração de lógica do HTML
    da demo v1.1 (legacy/), por tools/port-engine.mjs.
+   Adições aditivas (1.2.0: confluência e iters; 1.3.0: os 7 setups do estudo
+   v1.2, em funções próprias) estão marcadas "ADIÇÃO" e descritas no CHANGELOG.
    ===================================================================== */
 
 
@@ -721,15 +723,122 @@ function analyzeConfluence(d, cfg, members, { window = 3, refractory = 12, iters
   return evaluateSetup('CONF:' + members.join('+'), d, c.ind, c.reg, arr, c.outs, c.base, cfg, iters);
 }
 
-export const VERSION = 'argos-engine 1.2.0';
+// ------------------------------------- setups do estudo v1.2 (ADIÇÃO 1.3.0)
+// Os 7 gatilhos fixados na ficha docs/estudo-v1.2-pre-registro.json (SHA-256 no .md). Tudo aditivo e
+// separado: computeIndicators, detectSetups, SETUPS e analyze() NÃO mudam (continuam com os 8 setups).
+// Diferença de forma em relação à ficha: ela fala em arrays ema9, ema21 e hh55 "em computeIndicators";
+// aqui eles saem de computeIndicatorsV12, para que o retorno de computeIndicators (e o resultado de
+// toda análise) fique idêntico ao 1.2.0. A semântica dos gatilhos é a da ficha.
+// Objetos em várias linhas de propósito: tests/landing-estudo.test.js lê os nomes de SETUPS por regex de uma linha, e a landing só mostra os 8 setups do v1.1.
+const SETUPS_V12 = [
+  {
+    id: 'EMA_9_21', nome: 'Cruzamento de EMA 9 e 21',
+    grupo: 'Tendência',
+    def: 'EMA(9) cruza acima da EMA(21): ema9[i-1] <= ema21[i-1] e ema9[i] > ema21[i].'
+  },
+  {
+    id: 'MACD_ZERO', nome: 'MACD cruza a linha zero',
+    grupo: 'Momento',
+    def: 'Linha MACD(12,26,9) cruza acima de zero: macd[i-1] <= 0 e macd[i] > 0.'
+  },
+  {
+    id: 'RSI_50', nome: 'RSI cruza acima de 50',
+    grupo: 'Momento',
+    def: 'RSI(14) cruza para cima de 50: rsi[i-1] < 50 e rsi[i] >= 50 (mesma convenção do RSI Oversold).'
+  },
+  {
+    id: 'CLOSE_SMA200', nome: 'Preço cruza acima da média de 200',
+    grupo: 'Tendência',
+    def: 'Fechamento cruza acima da SMA(200): c[i-1] <= sma200[i-1] e c[i] > sma200[i].'
+  },
+  {
+    id: 'ADX_DI', nome: 'ADX acima de 25 com DI+ cruzando DI-',
+    grupo: 'Tendência',
+    def: 'ADX(14) > 25 e DI+ cruza acima de DI-: diPlus[i-1] <= diMinus[i-1], diPlus[i] > diMinus[i] e adx[i] > 25.'
+  },
+  {
+    id: 'BB_UPPER', nome: 'Fechamento acima da Bollinger superior',
+    grupo: 'Momento',
+    def: 'Fechamento acima da banda superior de Bollinger(20, 2), primeiro candle da sequência (espelho do BB_LOWER).'
+  },
+  {
+    id: 'BREAKOUT_55', nome: 'Rompimento de 55 candles',
+    grupo: 'Tendência',
+    def: 'Fechamento acima da máxima dos 55 candles anteriores, primeiro candle do rompimento (mesma construção do BREAKOUT_20).'
+  }
+];
+
+/**
+ * Indicadores extras do estudo v1.2: EMA(9), EMA(21) (semente por SMA, como as demais EMAs do motor) e a máxima
+ * de 55 candles (das máximas, como hh20). Função separada para não alterar o retorno de computeIndicators.
+ * @param {object} d série decodificada
+ * @param {object} [ind] retorno de computeIndicators (reservado; não é usado)
+ * @returns {{ema9: number[], ema21: number[], hh55: number[]}}
+ */
+function computeIndicatorsV12(d, ind) {
+  return { ema9: ema(d.c, 9), ema21: ema(d.c, 21), hh55: highest(d.h, 55) };
+}
+
+/**
+ * Gatilhos dos 7 setups do estudo v1.2: primeiro candle em que a condição passa a valer (convenção do v1.1).
+ * Mesmo formato de detectSetups (id -> boolean[] por candle) e, como ele, sem aquecimento: quem chama zera
+ * os candles antes do índice 200 (analyzeSetupsV12 faz isso).
+ * @param {object} d série decodificada
+ * @param {object} ind retorno de computeIndicators(d)
+ * @param {{ema9: number[], ema21: number[], hh55: number[]}} [v12] retorno de computeIndicatorsV12 (calculado aqui se faltar)
+ * @returns {Record<string, boolean[]>}
+ */
+function detectSetupsV12(d, ind, v12) {
+  const n = d.n, S = {}, x = v12 || computeIndicatorsV12(d, ind);
+  SETUPS_V12.forEach((s) => (S[s.id] = new Array(n).fill(false)));
+  for (let i = 1; i < n; i++) {
+    if (x.ema9[i - 1] <= x.ema21[i - 1] && x.ema9[i] > x.ema21[i]) S.EMA_9_21[i] = true;
+    if (ind.macd.line[i - 1] <= 0 && ind.macd.line[i] > 0) S.MACD_ZERO[i] = true;
+    if (ind.rsi[i - 1] < 50 && ind.rsi[i] >= 50) S.RSI_50[i] = true;
+    if (d.c[i - 1] <= ind.sma200[i - 1] && d.c[i] > ind.sma200[i]) S.CLOSE_SMA200[i] = true;
+    if (ind.diPlus[i - 1] <= ind.diMinus[i - 1] && ind.diPlus[i] > ind.diMinus[i] && ind.adx[i] > 25) S.ADX_DI[i] = true;
+    if (d.c[i] > ind.bb.upper[i] && !(d.c[i - 1] > ind.bb.upper[i - 1])) S.BB_UPPER[i] = true;
+    if (i >= 56) {
+      const prevHigh = x.hh55[i - 1], prevPrevHigh = x.hh55[i - 2];
+      if (d.c[i] > prevHigh && !(d.c[i - 1] > prevPrevHigh)) S.BREAKOUT_55[i] = true;
+    }
+  }
+  return S;
+}
+
+/**
+ * Avalia os 7 setups do estudo v1.2 numa série, com a mesma regra de saída, a mesma taxa-base e o mesmo
+ * aquecimento (200 candles) de analyze(). Cada linha tem o formato de uma linha de analyze().setups
+ * (n, nEff, winRate, ci, method, base, pTwo, wf etc.), mais id, nome, grupo e def.
+ * NÃO aplica correção de família: o veredito de cada linha sai provisório (q = NaN, family = 1) e quem chama
+ * faz applyFamily sobre a lista que escolher. A ficha do estudo v1.2 usa a família 135 (63 células novas +
+ * 72 do v1.1; oficial) e a família 63 (só as novas; sensibilidade).
+ * @param {object} d série decodificada
+ * @param {{mode:string,tgt:number,stp:number,hold:number}} cfg regra de saída
+ * @param {{iters?: number, meta?: object}} [opts] sorteios do teste de permutação (padrão 3000) e meta repassada
+ * @returns {{meta: object|undefined, cfg: object, setups: object[], base: object, warm: number, iters: number}}
+ */
+function analyzeSetupsV12(d, cfg, opts = {}) {
+  const { iters = 3000, meta } = opts, warm = 200;
+  const ind = computeIndicators(d), reg = regimeSeries(d, ind), outs = outcomesAll(d, ind, cfg);
+  const trig = detectSetupsV12(d, ind);
+  for (const id in trig) for (let i = 0; i < warm && i < d.n; i++) trig[id][i] = false;
+  const base = baseRate(outs, warm);
+  const setups = SETUPS_V12.map((s) => Object.assign({}, s, evaluateSetup(s.id, d, ind, reg, trig[s.id], outs, base, cfg, iters)));
+  return { meta, cfg, setups, base, warm, iters };
+}
+
+export const VERSION = 'argos-engine 1.3.0';
 
 export {
   decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean,
-  confluenceTriggers, confluenceContext, analyzeConfluence
+  confluenceTriggers, confluenceContext, analyzeConfluence,
+  computeIndicatorsV12, SETUPS_V12, detectSetupsV12, analyzeSetupsV12
 };
 
 /** Mesmo objeto que a demo expunha em window.ArgosEngine. */
 const ArgosEngine = {
-  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean, VERSION, confluenceTriggers, confluenceContext, analyzeConfluence
+  decodeSnapshot, fromBinance, mergeSeries, sliceSeries, computeIndicators, regimeSeries, regimeStats, detectSetups, outcomesAll, analyze, analyzeSpec, triggersFromSpec, SPEC_TYPES, applyFamily, bhAdjust, verdictOf, prequential, calibSummary, calibStatus, wilson, bayesWR, effectiveN, cvar5, fSurvival, ibeta, REGIMES, SETUPS, median, mean, VERSION, confluenceTriggers, confluenceContext, analyzeConfluence,
+  computeIndicatorsV12, SETUPS_V12, detectSetupsV12, analyzeSetupsV12
 };
 export default ArgosEngine;

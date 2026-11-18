@@ -6,7 +6,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
-Nenhuma mudança na lógica estatística nas entradas desta seção. O motor está na versão 1.2.0 (seção abaixo), aditiva.
+Nenhuma mudança na lógica estatística nas entradas desta seção. O motor está na versão 1.3.0 (seção abaixo), aditiva.
 
 ### Alterado
 
@@ -28,6 +28,7 @@ Nenhuma mudança na lógica estatística nas entradas desta seção. O motor est
 
 ### Adicionado
 
+- `tools/registrar-ficha.mjs` (item 58, 18/11/2026): confere o hash canônico das fichas de pré-registro contra o cabeçalho do `.md` e carimba o digest com OpenTimestamps (só com `--confirmo-rede` e pasta de saída fora do repositório), sem tocar em `engine/`. Testes em `tests/registrar-ficha.test.js` (13, sem rede) e guia em `docs/registrar-ficha.md`. Nenhum carimbo foi feito: rodar `carimbar` é decisão de Michel. O `.sha256` gravado é o hash do JSON canônico, não dos bytes do arquivo.
 - Pré-registro do estudo v1.2 (18/10/2026), só documento: `docs/estudo-v1.2-pre-registro.md` e a ficha canônica `docs/estudo-v1.2-pre-registro.json` (SHA-256 no documento). Sete setups de indicadores populares (EMA 9/21, MACD linha zero, RSI 50, preço×SMA200, ADX/DI, Bollinger superior, Rompimento 55), 63 células novas, família de correção 135, regras fixadas antes de qualquer cálculo. A implementação exige versão MINOR do motor (1.2.0) e fica para depois de 31/10, por decisão de Michel. O motor não foi alterado.
 - Cartão de pré-visualização da landing (18/10): `og:*`, `twitter:*` e `canonical` em `web/index.html` com o alias provisório `argossentinel.vercel.app` (trocar ao ter domínio próprio), imagem `web/img/og-argos.png` (1200×630) e `noindex, nofollow` mantido: o link gera cartão, mas a página fica fora dos buscadores até Michel decidir abrir. Roteiro para abrir (robots.txt, sitemap.xml) em `docs/seo-quando-abrir.md`. Sem mudança no motor.
 - Formulário de contato na landing (17/10), em branch separado até haver endereço: `web/js/contato.js` (validação e montagem do `mailto:`), seção `#contato` com assunto, nome, e-mail, perfil, organização e mensagem (campos de 44 px, fonte de 16 px, erro por campo com resumo, foco no primeiro erro, cópia da mensagem como alternativa). Não envia nada ao servidor nem grava no banco (a regra "nenhum dado pessoal em tabela" se mantém); o destino é `ARGOS_CONFIG.contatoEmail` em `web/js/config.js`. Barra senha, chave, CPF e cartão no texto. `tests/contato.test.js`. Sem mudança no motor.
@@ -85,6 +86,35 @@ Nenhuma mudança na lógica estatística nas entradas desta seção. O motor est
 
 - O Argos AI ainda não gerou relatório real em produção (a conta do provedor está sem crédito); o ciclo completo foi testado com provedor simulado.
 - A guarda numérica não confere o papel do número na frase.
+
+## [1.3.0] - 2026-11-18
+
+MINOR aditiva do motor: traz para `engine/` os 7 setups do estudo v1.2 (ficha `docs/estudo-v1.2-pre-registro.json`, SHA-256 no `.md`), em funções próprias. Nenhuma regra estatística existente muda: `analyze()` e `analyzeSpec()` continuam iguais ao 1.2.0 (conferido nas 9 séries do snapshot, com 3 regras de saída, por hash do objeto inteiro com `ms` zerado). O estudo v1.2 NÃO foi executado: este lançamento só entrega o código e os testes; nenhum desfecho, taxa ou p dos 7 setups foi calculado sobre as séries reais.
+
+### Adicionado
+
+- `SETUPS_V12` (metadados: `id`, `nome`, `grupo`, `def`) com os ids da ficha: `EMA_9_21`, `MACD_ZERO`, `RSI_50`, `CLOSE_SMA200`, `ADX_DI`, `BB_UPPER`, `BREAKOUT_55`.
+- `computeIndicatorsV12(d, ind)`: devolve `{ema9, ema21, hh55}` com as mesmas funções internas do motor (EMA com semente por SMA, máxima das máximas como `hh20`).
+- `detectSetupsV12(d, ind, v12?)`: gatilhos dos 7 setups no formato de `detectSetups` (`{id: boolean[]}`), com a convenção do v1.1 (primeiro candle em que a condição passa a valer; `<=` antes e `>` depois nos cruzamentos; RSI 50 com `<` antes e `>=` depois; ADX estritamente acima de 25; rompimento de 55 só a partir do índice 56, como o de 20 só a partir do 21). Como `detectSetups`, não aplica aquecimento.
+- `analyzeSetupsV12(d, cfg, opts)`: para cada um dos 7 setups devolve a mesma linha de `analyze().setups` (reaproveita `evaluateSetup` com `opts.iters`, padrão 3000), com aquecimento de 200 candles e a mesma taxa-base de `analyze()`. Devolve `{meta, cfg, setups, base, warm, iters}`. Não aplica correção de família: o chamador aplica `applyFamily` sobre a lista que quiser (a ficha usa a família 135 como oficial e a 63 como sensibilidade).
+- Os 4 nomes novos estão no bloco `export` e no objeto `ArgosEngine` (`default`); `evaluateSetup` continua não exportado.
+- Migração `004_engine_1_3_0.sql`: registra `argos-engine 1.3.0` em `engine_versions` (só insert, idempotente). Sem ela, todo registro novo do Termômetro e de `POST /api/previsoes` falharia por chave estrangeira.
+- `tests/setups-v12.test.js`: bordas de cada convenção com índices à mão (`<=` contra `<`, `>=` contra `>`, aquecimento), séries sintéticas de candles montados à mão em que cada gatilho dispara só no candle esperado, `analyzeSetupsV12` em série sintética com poucos sorteios, contagem de gatilhos nas 9 séries reais (sem desfecho) e o hash de `analyze()` e `analyzeSpec()` do 1.2.0 fixado como constante.
+
+### Alterado
+
+- `VERSION` passa de `argos-engine 1.2.0` para `argos-engine 1.3.0`. Consequências, como na 1.2.0:
+  - O `resultHash` de TODA análise muda de novo, porque o resumo da análise inclui `engine: VERSION` (`lib/analysis-summary.js`); os números são idênticos.
+  - Previsões novas e o Termômetro passam a gravar `argos-engine 1.3.0`. Registros antigos seguem verificáveis: o payload guardado leva a versão antiga e as linhas `1.1.0` e `1.2.0` continuam em `engine_versions`.
+- Testes que fixavam a versão ou a lista de exports do motor: `tests/db-migrate.test.js` passa a esperar as três versões (contagem 3); `tests/legacy-parity.test.js` (superfície) exige que toda chave do legado continue no motor e que sobrem exatamente os 3 nomes da 1.2.0 e os 4 da 1.3.0, `legacy.VERSION` igual a `argos-engine 1.1.0` e `engine.VERSION` igual a `argos-engine 1.3.0` (as 72 comparações e a análise das 9 séries ficam intactas); `tests/motor-confluencia-paridade.test.js` (bloco e) confere `VERSION` 1.3.0. Os testes que só montam fixture de banco continuam com `1.1.0` de propósito. Mudança deliberada de versão, não ajuste de regressão.
+
+### Notas
+
+- A ficha registrada do v1.2 (`implementation`) prevê o motor 1.2.0 para estes setups; a 1.2.0 ficou com a confluência (ficha de combinações) e os setups do v1.2 saem na 1.3.0. Os fatos da ficha (setups, parâmetros, séries, família) não mudam. A paridade com o 1.2.0 também foi conferida com o 1h do histórico (`data/history`) e quatro regras de saída.
+- `tests/landing-estudo.test.js` passa a ler os nomes dos setups só do bloco `const SETUPS = [...]` (antes uma regex sobre o arquivo todo, que contaria listas novas); nenhuma expectativa mudou.
+- Diferença de forma em relação à ficha: ela fala em arrays `ema9`, `ema21` e `hh55` "em `computeIndicators`" e em sete gatilhos entre os setups do motor. Aqui eles ficam em `computeIndicatorsV12` e `detectSetupsV12`, de propósito: acrescentar arrays ao retorno de `computeIndicators` ou setups a `detectSetups` mudaria o objeto de `analyze()` e a lista de 8 setups (e, com ela, a família de correção do estudo v1.1 e o hash de toda análise). A semântica de cada gatilho é a da ficha; a ficha não foi editada.
+- O campo `grupo` de `SETUPS_V12` usa a grafia acentuada dos outros setups (`Tendência`); a ficha está em ASCII (`Tendencia`).
+- A execução do estudo v1.2 (63 células novas, família 135 e sensibilidade 63) continua sendo uma decisão e um ato à parte de Michel; roda uma vez só.
 
 ## [1.2.0] - 2026-11-18
 

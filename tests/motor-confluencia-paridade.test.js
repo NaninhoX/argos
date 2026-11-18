@@ -167,7 +167,7 @@ test('ficha · 84 combinações (28 pares + 56 trios) com ids P01..P28 e T01..T5
 
 // ---------------------------------------------------------------- (e) engine 1.2.0 igual à cópia experimental na confluência
 test('engine 1.2.0 igual à cópia experimental na confluência · superfície', () => {
-  assert.equal(engine.VERSION, 'argos-engine 1.2.0');
+  assert.equal(engine.VERSION, 'argos-engine 1.3.0'); // a confluência é da 1.2.0 e segue igual na 1.3.0
   for (const nome of ['confluenceTriggers', 'confluenceContext', 'analyzeConfluence']) {
     assert.equal(typeof engine[nome], 'function', `export ${nome}`);
     assert.equal(engine.default[nome], engine[nome], `default.${nome}`);
