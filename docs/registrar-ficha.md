@@ -24,7 +24,7 @@ O recibo nasce **pendente**. Horas depois, `node tools/ots-stamp.mjs upgrade <no
 - O digest carimbado é o SHA-256 do **JSON canonizado** (`lib/canonical.js`), que **não é** o SHA-256 dos bytes do arquivo `.json`. Por isso `sha256sum` e `ots verify` aplicados direto ao arquivo não conferem; quem verifica precisa do digest (comando `hash`) e de um cliente que verifique por digest.
 - Só a ficha `.json` é carimbada; o `.md` não é.
 - Use sempre `--md` ao carimbar: sem ele, nada confere o digest contra o hash registrado antes de ir à rede.
-- A salvaguarda de pasta usa `dentroDoRepo` de `tools/backup-neon.mjs`, que não reconhece um caminho UNC de loopback (`\localhostC$...`) como dentro do repositório. Limitação conhecida, de risco baixo; use um caminho local comum.
+- A salvaguarda de pasta usa `dentroDoRepo` de `tools/backup-neon.mjs`. Até 19/11/2026 ela não reconhecia um caminho UNC de loopback (`\localhostC$...`) como a mesma pasta local; `desfazUncLocal` corrige isso (localhost, 127.0.0.1 e o nome desta máquina); compartilhamento de OUTRA máquina continua valendo como externo.
 - Códigos de saída: 0 certo; 1 falha, divergência ou recusa de salvaguarda; 2 comando ausente ou desconhecido, ou argumento malformado.
 
 ## O que o carimbo prova e o que não prova

@@ -15,7 +15,7 @@ import { insertDesfecho } from '../lib/repo/desfechos.js';
 import { insertProva, markAnchored } from '../lib/repo/provas.js';
 import { insertQueryLog, insertToolAudit } from '../lib/repo/audit.js';
 import {
-  caminhoSeguro, conferirBackup, dentroDoRepo, exportarBackup, gravarArquivo, lerArquivo,
+  caminhoSeguro, conferirBackup, dentroDoRepo, desfazUncLocal, exportarBackup, gravarArquivo, lerArquivo,
   restaurarBackup, restaurarEmMemoria, tabelasDasMigracoes, TABELAS_PROVA,
 } from '../tools/backup-neon.mjs';
 
@@ -264,4 +264,27 @@ test('recusa caminho dentro do repositório (inclui ..), aceita fora', () => {
   assert.equal(caminhoSeguro(path.join(dir, 'ok.json')), path.join(dir, 'ok.json'));
   assert.throws(() => caminhoSeguro(''), /informe o caminho/);
   assert.deepEqual(TABELAS_PROVA, ['previsoes', 'provas_merkle']);
+});
+
+test('caminho: UNC de loopback (\\\\localhost\\C$\\...) é a mesma pasta local, não "fora do repositório"', () => {
+  // função pura, vale em qualquer sistema
+  assert.equal(desfazUncLocal('\\\\localhost\\C$\\Users\\x\\argos\\a.json', 'MAQUINA'), 'C:\\Users\\x\\argos\\a.json');
+  assert.equal(desfazUncLocal('\\\\127.0.0.1\\d$\\pasta', 'MAQUINA'), 'D:\\pasta');
+  assert.equal(desfazUncLocal('//LocalHost/c$/pasta/b.json', 'MAQUINA'), 'C:\\pasta/b.json');
+  assert.equal(desfazUncLocal('\\\\maquina\\C$\\pasta', 'MAQUINA'), 'C:\\pasta');
+  assert.equal(desfazUncLocal('\\\\C$', 'MAQUINA'), '\\\\C$'); // sem unidade: não é compartilhamento administrativo
+  // compartilhamento de OUTRA máquina continua externo, e caminho comum volta como veio
+  assert.equal(desfazUncLocal('\\\\servidor\\C$\\pasta', 'MAQUINA'), '\\\\servidor\\C$\\pasta');
+  assert.equal(desfazUncLocal('C:\\pasta\\a.json', 'MAQUINA'), 'C:\\pasta\\a.json');
+  assert.equal(desfazUncLocal('/home/x/a.json', 'MAQUINA'), '/home/x/a.json');
+});
+
+test('caminho: no Windows, o UNC de loopback para dentro do repositório é recusado', { skip: process.platform !== 'win32' }, () => {
+  const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const unc = '\\\\localhost\\' + repo[0] + '$' + repo.slice(2) + '\\x.json';
+  assert.equal(dentroDoRepo(unc), true);
+  assert.throws(() => caminhoSeguro(unc), /dentro do repositório/);
+  // o mesmo caminho local, fora do repo (pasta temporária), continua aceito
+  const fora = '\\\\localhost\\' + dir[0] + '$' + dir.slice(2) + '\\ok.json';
+  assert.equal(dentroDoRepo(fora), false);
 });

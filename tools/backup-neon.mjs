@@ -14,6 +14,7 @@
 // (lib/canonical.js) das colunas e das linhas ordenadas. Preços e estatísticas (double) voltam idênticos porque o
 // texto do Postgres é o mais curto que reproduz o valor; jsonb sai na forma normalizada do próprio Postgres.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalize, hashCanonical, sha256Hex } from '../lib/canonical.js';
@@ -33,9 +34,27 @@ const qi = (name) => '"' + String(name).replace(/"/g, '""') + '"';
 
 // ------------------------------------------------------------------ caminho
 
+/**
+ * No Windows, `\\localhost\C$\pasta` (e `\\127.0.0.1\C$\...`, `\\<nome desta máquina>\C$\...`) é a MESMA pasta que
+ * `C:\pasta`, mas `path.relative` a trata como outra raiz e a deixaria passar como "fora do repositório".
+ * Devolve o caminho local equivalente; qualquer outro caminho volta como veio (compartilhamento de outra máquina
+ * continua valendo como externo).
+ * @param {string} p
+ * @param {string} [maquina] nome desta máquina (padrão: o do sistema)
+ * @returns {string}
+ */
+export function desfazUncLocal(p, maquina = os.hostname()) {
+  const m = /^[\\/]{2}([^\\/]+)[\\/]([A-Za-z])\$(?:[\\/](.*))?$/.exec(String(p));
+  if (!m) return p;
+  const host = m[1].toLowerCase();
+  if (host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]' && host !== String(maquina).toLowerCase()) return p;
+  return m[2].toUpperCase() + ':\\' + (m[3] || '');
+}
+
 /** Verdadeiro se `alvo` está na pasta do repositório (ou é ela), resolvendo links simbólicos do que já existe. */
 export function dentroDoRepo(alvo, repoRoot = REPO_ROOT) {
-  const real = (p) => {
+  const real = (p0) => {
+    const p = process.platform === 'win32' ? desfazUncLocal(p0) : p0;
     let atual = path.resolve(p);
     const resto = [];
     while (!fs.existsSync(atual)) {
