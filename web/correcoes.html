@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Item 25 do Roadmap (Log de Correções e Diário de Bordo). Fora do menu e noindex até Michel aprovar o texto (19/11/2026). -->
+<meta name="robots" content="noindex, nofollow">
+<title>Correções e Diário de Bordo | Argos Sentinel</title>
+<meta name="description" content="O que corrigimos no Argos Sentinel, com data, e o que entrou em produção. Correção não some: fica registrada.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/fonts.css">
+<script src="js/tema.js"></script>
+<style>
+  /* Tema copiado de web/verificar.html: Papel por padrão e escuro em [data-theme="dark"] (js/tema.js guarda a escolha). */
+  :root {
+    --bg: #F5F2EA; --bg-elevated: #FFFDF8; --navy: #F8F4EB; --navy-line: #CFC6B2;
+    --gold: #B08D3E; --gold-bright: #7A5D1A; --ink: #1E2A3A; --ink-dim: #4E5A6A; --ink-faint: #5E6B7C;
+    --red: #B5452F; --green: #2E7D5B; --red-text: #9A3A2A; --glow: rgba(30, 42, 58, 0.04);
+    --sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --serif: 'Source Serif 4', Cambria, Georgia, serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    color-scheme: light; box-sizing: border-box;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1420; --bg-elevated: #141E2C; --navy: #1E2A3A; --navy-line: #2A3A4E;
+    --gold-bright: #D4B15C; --ink: #E8E3D8; --ink-dim: #9BA4B2; --ink-faint: #7D8898;
+    --red: #C4544A; --green: #5FA37E; --red-text: #E0857B; --glow: rgba(30, 42, 58, 0.5);
+    color-scheme: dark;
+  }
+  * { box-sizing: inherit; }
+  html, body { margin: 0; padding: 0; background: var(--bg); -webkit-font-smoothing: antialiased; }
+  body {
+    color: var(--ink); font-family: var(--sans); font-size: 1.0625rem; line-height: 1.55;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-image: radial-gradient(ellipse 900px 600px at 85% -10%, rgba(176,141,62,0.07), transparent 60%);
+    background-repeat: no-repeat;
+  }
+  ::selection { background: var(--gold); color: var(--bg); }
+  a { color: var(--gold-bright); overflow-wrap: anywhere; }
+  a:hover { color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+  code { font-family: var(--mono); font-size: 0.88em; overflow-wrap: anywhere; }
+  .wrap { max-width: 860px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+
+  .top { border-bottom: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: 14px; }
+  .brand { display: flex; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none; color: var(--ink); }
+  .brand .divider { color: var(--ink-faint); }
+  .brand .sentinel { color: var(--gold); }
+  .back { font-size: 0.8125rem; color: var(--ink-dim); text-decoration: none; padding: 10px 0; }
+  .back:hover { color: var(--ink); }
+
+  h1 { font-size: 2rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; margin: 36px 0 12px; }
+  .lede { font-size: 1.1875rem; margin: 0 0 12px; padding-left: 14px; border-left: 3px solid var(--gold); max-width: 64ch; }
+  .intro { color: var(--ink-dim); font-size: 0.9375rem; margin: 0 0 8px; max-width: 64ch; }
+
+  .toc { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 20px 0 8px; font-size: 0.9375rem; }
+  .toc a { display: inline-flex; align-items: center; min-height: 44px; }
+
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 10px; margin: 24px 0; padding: 0; list-style: none; }
+  .facts li { border: 1px solid var(--navy-line); border-radius: 4px; padding: 10px 12px; background: var(--bg-elevated); }
+  .facts b { display: block; font-size: 1.25rem; font-weight: 600; }
+  .facts span { font-size: 0.875rem; color: var(--ink-dim); }
+
+  h2 { font-size: 1.375rem; line-height: 1.3; font-weight: 600; margin: 44px 0 6px; scroll-margin-top: 16px; }
+  .h2-note { color: var(--ink-dim); font-size: 0.9375rem; margin: 0 0 16px; max-width: 64ch; }
+
+  .fix { background: var(--bg-elevated); border: 1px solid var(--navy-line); border-left-width: 4px; border-radius: 6px; padding: 16px 18px; margin: 14px 0; }
+  .fix.aberta { border-left-color: var(--gold); }
+  .fix.feita { border-left-color: var(--green); }
+  .fix-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
+  .fix h3 { margin: 0; font-size: 1.0625rem; font-weight: 600; line-height: 1.35; }
+  .meta { font-size: 0.8125rem; color: var(--ink-dim); white-space: nowrap; }
+  .estado { font-weight: 600; }
+  .fix.aberta .estado { color: var(--gold-bright); }
+  .fix.feita .estado { color: var(--green); }
+  .kv { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr); gap: 8px 18px; margin: 0; }
+  .kv dt { font-size: 0.8125rem; color: var(--ink-dim); padding-top: 2px; }
+  .kv dd { margin: 0; min-width: 0; }
+
+  .log { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--navy-line); }
+  .log li { position: relative; padding: 0 0 18px 20px; }
+  .log li::before { content: ''; position: absolute; left: -6px; top: 0.55em; width: 10px; height: 10px; border-radius: 50%; background: var(--bg); border: 2px solid var(--gold); }
+  .log time { display: block; font-size: 0.8125rem; color: var(--ink-dim); }
+  .log strong { font-weight: 600; }
+  .log p { margin: 2px 0 0; max-width: 66ch; }
+
+  .note { color: var(--ink-dim); font-size: 0.875rem; margin-top: 24px; max-width: 66ch; }
+  footer { margin-top: 40px; padding: 24px 0 40px; border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink-dim); font-size: 0.875rem; }
+  footer p { margin: 0 0 14px; overflow-wrap: anywhere; }
+
+  @media (max-width: 600px) {
+    body { font-size: 1rem; }
+    h1 { font-size: 1.75rem; margin-top: 28px; }
+    .lede { font-size: 1.125rem; }
+    .fix { padding: 14px; }
+    .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .kv dt { padding-top: 10px; }
+    .kv dt:first-child { padding-top: 0; }
+  }
+</style>
+<link rel="stylesheet" href="css/brand.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="index.html"><img class="brand-mark" src="img/stratum-simbolo.svg" width="22" height="22" alt=""><span class="argos">ARGOS</span><span class="divider">|</span><span class="sentinel">SENTINEL</span></a>
+    <a class="back" href="index.html">Voltar ao Argos</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Correções e Diário de Bordo</h1>
+  <p class="lede">Quando erramos, registramos aqui: o que dizíamos, o que estava errado e o que muda para quem usa. Correção não some da página.</p>
+  <p class="intro">O Diário de Bordo, mais abaixo, lista o que entrou em produção, com data. Os dois partem do registro técnico do projeto e trazem só o que pode ser conferido no site, no código ou na prova de cada registro.</p>
+
+  <nav class="toc" aria-label="Nesta página">
+    <a href="#correcoes">Log de Correções</a>
+    <a href="#diario">Diário de Bordo</a>
+  </nav>
+
+  <ul class="facts" aria-label="Situação em 19/11/2026">
+    <li><b>argos-engine 1.3.0</b><span>versão do motor em produção</span></li>
+    <li><b>742</b><span>testes automatizados verdes</span></li>
+    <li><b>desde 15/10/2026</b><span>previsões gravadas antes do resultado</span></li>
+    <li><b>4 correções</b><span>registradas nesta página</span></li>
+  </ul>
+
+  <h2 id="correcoes">Log de Correções</h2>
+  <p class="h2-note">Da mais recente para a mais antiga. "Em correção" quer dizer que o problema foi achado e ainda não está resolvido.</p>
+
+  <article class="fix aberta">
+    <div class="fix-head">
+      <h3>Registro por candle de 1h do Termômetro</h3>
+      <span class="meta"><time datetime="2026-11-19">19/11/2026</time> · <span class="estado">Em correção</span></span>
+    </div>
+    <dl class="kv">
+      <dt>O que dizíamos</dt>
+      <dd>Que o registro de 1h rodava duas vezes por hora, desde 19/10.</dd>
+      <dt>O que vimos</dt>
+      <dd>O agendador gratuito que dispara esse registro roda só 3 a 4 vezes por dia, e a maioria das execuções chega mais de 30 minutos depois do fechamento do candle. O servidor recusa esses registros de propósito: uma previsão gravada tarde demais deixa de ser "antes do resultado".</dd>
+      <dt>O que muda</dt>
+      <dd>O registro diário segue normal. O de 1h tem poucas previsões até a troca do agendador. A trava de 30 minutos continua.</dd>
+    </dl>
+  </article>
+
+  <article class="fix feita">
+    <div class="fix-head">
+      <h3>Título do estudo na página inicial</h3>
+      <span class="meta"><time datetime="2026-10-17">17/10/2026</time> · <span class="estado">Corrigida</span></span>
+    </div>
+    <dl class="kv">
+      <dt>O que dizíamos</dt>
+      <dd>"De 72 testes, 2 mostram vantagem."</dd>
+      <dt>O correto</dt>
+      <dd>De 72 testes, 1 mostra vantagem e 1 mostra vantagem sensível a subperíodos: ela aparece em parte do período e some em outra. Chamar as duas de vantagem, sem a ressalva, exagerava o resultado.</dd>
+      <dt>O que muda</dt>
+      <dd>Os números do estudo não mudaram. Mudou a frase que os resume.</dd>
+    </dl>
+  </article>
+
+  <article class="fix feita">
+    <div class="fix-head">
+      <h3>Servidor e navegador liam candles diferentes</h3>
+      <span class="meta"><time datetime="2026-10-15">15/10/2026</time> · <span class="estado">Corrigida</span></span>
+    </div>
+    <dl class="kv">
+      <dt>O problema</dt>
+      <dd>Com a base de candles ligada, o servidor lia 20.062 candles, até 15/10, e o navegador lia 19.951, até 26/09. A mesma pergunta dava resultados com hash diferente, e o aviso "candles diferentes" estava certo: o pedido é que estava errado.</dd>
+      <dt>A correção</dt>
+      <dd>Na opção "Snapshot versionado (reprodutível)", servidor e navegador passam a ler os mesmos candles, e o hash do resultado volta a ser comparável entre os dois.</dd>
+    </dl>
+  </article>
+
+  <article class="fix feita">
+    <div class="fix-head">
+      <h3>Ajustes de método da versão 1.1 do motor</h3>
+      <span class="meta"><time datetime="2026-09-27">27/09/2026</time> · <span class="estado">Corrigida</span></span>
+    </div>
+    <dl class="kv">
+      <dt>Taxa-base</dt>
+      <dd>Passou a vir de 3.000 entradas aleatórias no mesmo período e com a mesma regra de saída. Assim o setup é comparado com o acaso nas mesmas condições de mercado.</dd>
+      <dt>Muitos testes</dt>
+      <dd>Correção de Benjamini-Hochberg, com taxa de falsas descobertas de 5%. Testar dezenas de hipóteses e mostrar a melhor sem essa correção é o erro mais comum em backtest.</dd>
+      <dt>Intervalo</dt>
+      <dd>Intervalo de Wilson. Abaixo de 25 gatilhos efetivos, Beta(1,1) bayesiano.</dd>
+      <dt>Quebra estrutural</dt>
+      <dd>O teste de Chow passou de preço em nível para log-retornos. Preço em nível tende a apontar quebra onde não há.</dd>
+      <dt>Calibração</dt>
+      <dd>BSS contra a taxa-base e ECE, no lugar do Brier absoluto, que muda com a taxa-base e não diz se o motor acrescenta algo.</dd>
+    </dl>
+  </article>
+
+  <h2 id="diario">Diário de Bordo</h2>
+  <p class="h2-note">O que entrou em produção, da entrega mais recente para a mais antiga.</p>
+
+  <ol class="log">
+    <li><time datetime="2026-11-18">18/11/2026</time><strong>Motor 1.3.0</strong><p>Sete setups de indicadores populares entram no motor, em funções próprias. Os resultados das análises que já existiam ficam iguais: conferido por hash nas 9 séries.</p></li>
+    <li><time datetime="2026-11-18">18/11/2026</time><strong>Motor 1.2.0</strong><p>Combinações de 2 ou 3 setups (confluência). Números das análises anteriores idênticos aos da 1.1.0. O hash de cada resultado novo muda porque leva a versão do motor; registros antigos continuam verificáveis.</p></li>
+    <li><time datetime="2026-11-15">15/11/2026</time><strong>Monitoramento de erros em todas as rotas</strong><p>Log estruturado sem corpo da requisição, IP ou segredo.</p></li>
+    <li><time datetime="2026-10-24">24/10/2026</time><strong>Site mais leve</strong><p>A página inicial deixa de baixar a plataforma; gráfico, motor e séries só entram quando alguém abre a plataforma.</p></li>
+    <li><time datetime="2026-10-18">18/10/2026</time><strong>Pré-registro do estudo v1.2</strong><p>Hipóteses, regras e correção estatística publicadas com hash antes de qualquer cálculo.</p></li>
+    <li><time datetime="2026-10-16">16/10/2026</time><strong>Calibração prospectiva</strong><p>As previsões já resolvidas passam a ser comparadas com o que de fato aconteceu (ECE, BSS e Brier), ao lado do erro que um motor perfeito teria só por acaso. Abaixo de 30 resolvidas, o resultado aparece como insuficiente.</p></li>
+    <li><time datetime="2026-10-15">15/10/2026</time><strong>Termômetro</strong><p>O motor passa a gravar todo dia, num banco que só aceita acréscimo, a probabilidade de cada gatilho em aberto, e grava o desfecho quando a janela fecha.</p></li>
+    <li><time datetime="2026-10-15">15/10/2026</time><strong>Argos AI com ferramentas no servidor</strong><p>O assistente só lê números calculados pelo motor no servidor. Está configurado e integrado; o primeiro relatório real ainda não foi gerado.</p></li>
+    <li><time datetime="2026-10-13">13/10/2026</time><strong>Fontes hospedadas no próprio site</strong><p>As páginas deixam de chamar serviços de terceiros para carregar fontes.</p></li>
+    <li><time datetime="2026-10-12">12/10/2026</time><strong>Prova de previsão</strong><p>Cada registro ganha hash, árvore de Merkle e carimbo no Bitcoin pelo OpenTimestamps. Qualquer pessoa confere em <a href="verificar.html">Verificar prova</a>, com as contas refeitas no navegador.</p></li>
+    <li><time datetime="2026-09-27">27/09/2026</time><strong>Motor 1.1.0 e estudo de referência</strong><p>72 testes (8 setups em BTC, ETH e SOL, nos tempos de 1h, 4h e 1D), publicados com o resultado inteiro, inclusive o que não mostrou vantagem.</p></li>
+  </ol>
+
+  <p class="note">O registro técnico completo fica no CHANGELOG do projeto. Uma correção nova entra aqui com data, mesmo quando muda pouco.</p>
+</main>
+
+<footer class="wrap">
+  <p>Este material é produzido pela Stratum Research &amp; Analytics e constitui research e análise estatística. Não constitui recomendação de investimento personalizada, consultoria financeira regulamentada, oferta ou solicitação de compra ou venda de qualquer ativo. Resultados estatísticos históricos, incluindo win rate, intervalos de confiança e Brier Score, não constituem garantia de resultados futuros. O CONTRATANTE é o único responsável por todas as decisões de investimento e por sua execução. A Stratum Research &amp; Analytics não é instituição financeira, gestora de recursos registrada na CVM ou corretora, não executa ordens, não gerencia e não custodia capital de clientes sob este Contrato.</p>
+  <p><a href="index.html">Voltar ao Argos</a></p>
+  <p class="brand-line"><span class="stratum-lockup"><img src="img/stratum-simbolo.svg" width="34" height="34" alt=""><span class="sl-text"><span class="sl-name">STRATUM</span><span class="sl-sub">RESEARCH</span></span></span><span class="brand-motto">Evidência · Disciplina · Transparência</span></p>
+</footer>
+</body>
+</html>
