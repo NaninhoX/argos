@@ -66,7 +66,7 @@ Rotas fechadas (`/api/argos-ai`, `POST /api/previsoes`, `/api/termometro/status`
 
 ## Prova de previsão
 
-Contrato em `docs/api-proof.md`. Cadeia: registro canônico → hash → caminho de Merkle → raiz do dia → manifesto → OpenTimestamps. O cliente nunca envia número: `POST /api/previsoes` roda o motor no servidor. `previsoes` é append-only; correção é linha nova. O recibo `.ots` sai de `lib/ots.js` (formato conferido contra a implementação de referência; não trocar por dependência). Fichas de pré-registro: `node tools/registrar-ficha.mjs hash|conferir|carimbar <ficha.json> ...` confere e carimba o hash canônico (`docs/registrar-ficha.md`); `carimbar` usa a rede e é decisão de Michel.
+Contrato em `docs/api-proof.md`. Cadeia: registro canônico → hash → caminho de Merkle → raiz do dia → manifesto → OpenTimestamps. O cliente nunca envia número: `POST /api/previsoes` roda o motor no servidor. `previsoes` é append-only; correção é linha nova. O recibo `.ots` sai de `lib/ots.js` (formato conferido contra a implementação de referência; não trocar por dependência). Fichas de pré-registro: `node tools/registrar-ficha.mjs hash|conferir|carimbar <ficha.json> ...` confere e carimba o hash canônico (`docs/registrar-ficha.md`); `carimbar` usa a rede e é decisão de Michel. Estudo v1.2: `node tools/estudo-v12.mjs --saida <arquivo fora do repositório>` roda UMA vez (decisão de Michel de 19/11/2026); `--so-fumaca` só prova que executa, sem taxa; o resultado nunca vai ao Git.
 
 ## Desenvolvimento local
 
