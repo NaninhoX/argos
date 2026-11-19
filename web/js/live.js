@@ -315,7 +315,8 @@
     { id: 'back', nm: 'Agente de Backtest', pill: ['prod', 'Produção'] },
     { id: 'deb', nm: 'Agente de Debate', pill: ['proto', 'Protótipo'] },
     { id: 'risk', nm: 'Agente de Risco', pill: ['proto', 'Protótipo'] },
-    { id: 'exec', nm: 'Agente de Execução', pill: ['lock', 'Desligado'], fixed: 'off' },
+    // ADR 0008: o agente que antes tinha nome de execução é a Montagem; a Stratum não executa ordens.
+    { id: 'exec', nm: 'Montagem', pill: ['proto', 'Protótipo'] },
     { id: 'rev', nm: 'Revisão', pill: ['hum', 'Humana'], fixed: 'human' }
   ];
   function pipeResults(A) {
@@ -325,9 +326,9 @@
     return {
       pesq: fmtInt(A.d.n) + ' candles ' + PAIR(state.sym) + ' ' + TF_LABEL[state.tf] + ' · Binance · ' + (gapsOf(A.d) ? gapsOf(A.d) + ' lacunas' : 'sem lacunas') + ' · indicadores e regime (' + E.REGIMES[T.regime.regime].short + ')',
       back: '8 setups × 3.000 sorteios aleatórios · ' + act + ' ' + pl(act, 'com gatilho recente', 'com gatilho recente') + ' · ' + edge + ' com vantagem estatística',
-      deb: dbt.pro.length + ' argumentos a favor da leitura de tendência · ' + dbt.con.length + ' contra',
+      deb: dbt.pro.length + ' ' + pl(dbt.pro.length, 'argumento', 'argumentos') + ' a favor da leitura de tendência · ' + dbt.con.length + ' contra',
       risk: 'ATR ' + fmtPct(T.atrPct, 2) + ' por candle · CVaR 5% de 1 candle ' + fmtSPct(T.cvar1bar, 2) + ' · maior queda recente ' + fmtSPct(T.maxDD, 1),
-      exec: 'Nenhuma ordem é enviada, em nenhuma versão. Princípio permanente do produto.',
+      exec: 'Relatório de 6 seções montado com os números do motor · nenhuma ordem é enviada, em nenhuma versão',
       rev: 'Vocabulário verificado: ' + (scan.length ? scan.length + ' ' + pl(scan.length, 'termo sinalizado', 'termos sinalizados') : 'nenhum termo de instrução ou promessa') + ' · envio a cliente só após revisão humana'
     };
   }
