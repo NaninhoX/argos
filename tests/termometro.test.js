@@ -100,6 +100,54 @@ test('recusa série de fallback, série atrasada e série sem banco: nada é reg
   assert.equal(whyNotFresh({ d, source: 'database' }, (d.t[d.n - 1] + d.dt) * 1000 - 1), 'candle_ainda_aberto');
 });
 
+test('registro atrasado ou série atrasada não registram, mas gravam o desfecho de previsões antigas (19/11/2026)', async () => {
+  await fresh();
+  await runTermometro(db, { ...only, now: nowFor(prefix(full, cutN)), loadSeries: loaderAt(cutN) });
+  const abertas = await count("select count(*)::int as c from previsoes where origin = 'termometro'");
+  assert.ok(abertas > 0);
+  // corte posterior com gatilho no último candle: sem a guarda do registro, algo seria registrado (validador, 19/11)
+  let k2 = null;
+  for (let k = cutN + 13; k < full.n && k2 === null; k++) if (lastBarOpens(run(prefix(full, k))).length) k2 = k;
+  assert.ok(k2 !== null, 'precisa de um corte com gatilho no último candle');
+  const later = run(prefix(full, k2));
+  assert.ok(lastBarOpens(later).length > 0);
+  const closeMs = (later.d.t[later.d.n - 1] + later.d.dt) * 1000;
+  // 55 min depois do fechamento com limite de 30 min: registro_tardio
+  const tardio = await runTermometro(db, { ...only, now: closeMs + 55 * 60_000, loadSeries: loaderAt(k2), env: { TERMOMETRO_ATRASO_MAX_MIN: '30' } });
+  assert.equal(tardio.series[0].error, 'registro_tardio');
+  assert.equal(tardio.registered, 0, 'nada novo é registrado com atraso');
+  assert.equal(await count("select count(*)::int as c from previsoes where origin = 'termometro'"), abertas);
+  const outs = (await db.query('select d.*, p.bar_time as pbar from desfechos d join previsoes p on p.id = d.previsao_id')).rows;
+  assert.ok(outs.length > 0 && tardio.resolved === outs.length, 'o desfecho é gravado mesmo com o registro recusado');
+  for (const d of outs) {
+    const i = later.d.t.indexOf(new Date(d.pbar).getTime() / 1000);
+    assert.equal(d.outcome, later.outs[i].type);
+    assert.equal(d.ret, later.outs[i].ret);
+  }
+  // série atrasada (dois candles sem ingestão): também resolve, sem registrar
+  await fresh();
+  await runTermometro(db, { ...only, now: nowFor(prefix(full, cutN)), loadSeries: loaderAt(cutN) });
+  const atrasada = await runTermometro(db, { ...only, now: closeMs + 2 * later.d.dt * 1000, loadSeries: loaderAt(k2) });
+  assert.equal(atrasada.series[0].error, 'serie_atrasada');
+  assert.equal(atrasada.registered, 0);
+  assert.ok(atrasada.resolved > 0);
+  assert.equal(await count("select count(*)::int as c from previsoes where origin = 'termometro'"), abertas, 'série atrasada não registra');
+});
+
+test('série fora do banco ou com candle aberto: nem registra nem resolve', async () => {
+  await fresh();
+  await runTermometro(db, { ...only, now: nowFor(prefix(full, cutN)), loadSeries: loaderAt(cutN) });
+  const later = prefix(full, cutN + 40);
+  const snap = async () => ({ d: later, source: 'snapshot' });
+  const r1 = await runTermometro(db, { ...only, now: nowFor(later), loadSeries: snap });
+  assert.equal(r1.series[0].error, 'serie_fora_do_banco');
+  assert.equal(r1.resolved, 0);
+  const aberto = await runTermometro(db, { ...only, now: (later.t[later.n - 1] + later.dt) * 1000 - 1, loadSeries: loaderAt(cutN + 40) });
+  assert.equal(aberto.series[0].error, 'candle_ainda_aberto');
+  assert.equal(aberto.resolved, 0);
+  assert.equal(await count('select count(*)::int as c from desfechos'), 0);
+});
+
 test('previsão com regra de saída diferente da padrão não recebe desfecho; janela com buraco também não', async () => {
   await fresh();
   const d = prefix(full, cutN);
