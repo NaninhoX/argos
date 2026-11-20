@@ -8,6 +8,12 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 Nenhuma mudança na lógica estatística nas entradas desta seção. O motor está na versão 1.3.0 (seção abaixo), aditiva.
 
+### Corrigido (Termômetro, 19/11/2026, noite)
+- `lib/jobs/termometro.js`: `serie_atrasada` e `registro_tardio` passam a recusar só o **registro**; o desfecho de previsões antigas continua sendo gravado (só candles fechados do banco, janela inteira, sem buraco). Antes a recusa bloqueava os dois, e uma previsão BTCUSDT 4h de 15/10 ficou sem desfecho (o agendador quase sempre chega depois do limite de 30 min). `serie_fora_do_banco` e `candle_ainda_aberto` continuam bloqueando tudo. O cron segue respondendo 207 com recusa, como antes. Revisado pelo Opus (lógica OK; teste reforçado com corte que tem gatilho no último candle). `docs/termometro.md` atualizado.
+
+### Adicionado (regressão dos agentes, 19/11/2026, noite)
+- `tests/agents-regressao-72.test.js`: as 9 séries de referência (9 × 8 setups = 72 casos) passam pelo pipeline do Relatório Estratégico com Debate simulado e chegam a `aguardando_aprovacao` pelas regras; as seções 1, 2, 4, 5 e 6 são idênticas às de `montarSecoesDeterministicas`; com o LLM desligado, a série com tese em debate fica `bloqueado` só pela seção 3, e a sem tese sai igual; repetir a rodada dá o mesmo `relatorioHash`.
+
 ### Adicionado (V3, 19/11/2026)
 
 - Agentes do Relatório Estratégico de 6 seções (`docs/agentes.md`): contratos (`lib/agents/contratos.js`), Risco por regra em código sobre campos do motor (`risco.js`), Debate com LLM verificado por provas (`debate.js`), Montagem determinística que bloqueia número sem prova (`montagem.js`), Revisão com regras próprias que recalcula hash e valores (`revisao.js`) e pipeline com portão humano (`pipeline.js`). Repositório `lib/repo/agentes.js` sobre `agent_runs` e `revisao_humana` (migração 001; nenhuma migração nova) e ferramenta `tools/relatorio-estrategico.mjs` (`gerar | estado | aprovar | recibo`). Testes `tests/agents-*.test.js`, todos offline, com provedor simulado. Nenhum relatório real: a conta do LLM está sem crédito. Decisões D1 a D9 pendentes de Michel, implementadas no padrão conservador e marcadas no texto do relatório. Sem mudança no motor.
